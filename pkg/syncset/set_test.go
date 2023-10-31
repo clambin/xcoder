@@ -1,14 +1,14 @@
-package synclist_test
+package syncset_test
 
 import (
-	"github.com/clambin/vidconv/pkg/synclist"
+	"github.com/clambin/vidconv/pkg/syncset"
 	"github.com/stretchr/testify/assert"
 	"slices"
 	"testing"
 )
 
-func TestList_Add(t *testing.T) {
-	s := synclist.UniqueList[string]{}
+func TestSet_Add(t *testing.T) {
+	s := syncset.New[string]()
 
 	assert.True(t, s.Add("foo"))
 	assert.False(t, s.Add("foo"))
@@ -21,8 +21,8 @@ func TestList_Add(t *testing.T) {
 	assert.True(t, s.Add("bar"))
 }
 
-func TestList_Remove(t *testing.T) {
-	s := synclist.UniqueList[string]{}
+func TestSet_Remove(t *testing.T) {
+	s := syncset.New[string]()
 
 	assert.False(t, s.Remove("foo"))
 	s.Add("foo")
@@ -33,8 +33,8 @@ func TestList_Remove(t *testing.T) {
 	assert.False(t, s.Remove("bar"))
 }
 
-func TestList_List(t *testing.T) {
-	s := synclist.UniqueList[string]{}
+func TestSet_List(t *testing.T) {
+	s := syncset.New[string]()
 
 	assert.Empty(t, s.List())
 	s.Add("foo")

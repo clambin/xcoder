@@ -1,4 +1,4 @@
-package feeder
+package video
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestParser(t *testing.T) {
-	testCases := []struct {
+	tt := []struct {
 		name     string
 		input    string
 		wantOK   bool
@@ -21,6 +21,14 @@ func TestParser(t *testing.T) {
 			want:     VideoInfo{Name: "foo", Extension: "mp4", IsSeries: true, Episode: "S01E01"},
 			isVideo:  true,
 			asString: "foo.S01E01.mp4",
+		},
+		{
+			name:     "valid multi-episode",
+			input:    "foo.S01E01E02.field.field.field.mp4",
+			wantOK:   true,
+			want:     VideoInfo{Name: "foo", Extension: "mp4", IsSeries: true, Episode: "S01E01E02"},
+			isVideo:  true,
+			asString: "foo.S01E01E02.mp4",
 		},
 		{
 			name:     "episode subtitles",
@@ -85,14 +93,16 @@ func TestParser(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		t.Run(tt.name, func(t *testing.T) {
-			info, ok := parseVideoInfo(tt.input)
-			assert.Equal(t, tt.wantOK, ok)
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			info, ok := ParseVideoFilename(tc.input)
+			assert.Equal(t, tc.wantOK, ok)
 			if ok {
-				assert.Equal(t, tt.want, info)
-				assert.Equal(t, tt.isVideo, info.IsVideo())
-				assert.Equal(t, tt.asString, info.String())
+				assert.Equal(t, tc.want, info)
+				assert.Equal(t, tc.isVideo, info.IsVideo())
+				assert.Equal(t, tc.asString, info.String())
 			}
 		})
 	}

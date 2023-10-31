@@ -1,7 +1,6 @@
-package feeder
+package video
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -14,27 +13,20 @@ type VideoInfo struct {
 }
 
 func (v VideoInfo) String() string {
+	var components []string
 	if v.IsSeries {
-		return fmt.Sprintf("%s.%s.%s", v.Name, v.Episode, v.Extension)
+		components = []string{v.Name, v.Episode, v.Extension}
+	} else {
+		components = []string{v.Name, v.Extension}
 	}
-	return v.Name + "." + v.Extension
+	return strings.Join(components, ".")
 }
 
 func (v VideoInfo) IsVideo() bool {
 	return v.Extension == "mkv" || v.Extension == "mp4" || v.Extension == "avi"
 }
 
-var (
-	regexpSeries = regexp.MustCompile(`^(.+)\.([Ss][0-9]+[Ee][0-9]+).*\.(.+?)$`)
-	regexpMovie  = []*regexp.Regexp{
-		regexp.MustCompile(`(.+\.\d{4}).*\.(.+?)$`),
-		regexp.MustCompile(`(.+ \d{4}) .+\.(.+?)$`),
-		regexp.MustCompile(`(.+ \(?\d{4}\)?).+?\.(.+?)$`),
-	}
-	regexpGeneric = regexp.MustCompile(`^(.+)\.(.+?)$`)
-)
-
-func parseVideoInfo(filename string) (VideoInfo, bool) {
+func ParseVideoFilename(filename string) (VideoInfo, bool) {
 	if info, ok := parseEpisode(filename); ok {
 		return info, true
 	}
@@ -44,6 +36,8 @@ func parseVideoInfo(filename string) (VideoInfo, bool) {
 	return parseGeneric(filename)
 }
 
+var regexpSeries = regexp.MustCompile(`^(.+)\.([Ss][0-9]+([Ee][0-9]+)+).*\.(.+?)$`)
+
 func parseEpisode(filename string) (VideoInfo, bool) {
 	match := regexpSeries.FindStringSubmatch(filename)
 	if len(match) == 0 {
@@ -51,10 +45,16 @@ func parseEpisode(filename string) (VideoInfo, bool) {
 	}
 	return VideoInfo{
 		Name:      match[1],
-		Extension: strings.ToLower(match[3]),
+		Extension: strings.ToLower(match[len(match)-1]),
 		IsSeries:  true,
 		Episode:   match[2],
 	}, true
+}
+
+var regexpMovie = []*regexp.Regexp{
+	regexp.MustCompile(`(.+?\.\d{4}).*\.(.+?)$`),
+	regexp.MustCompile(`(.+? \d{4}) .+\.(.+?)$`),
+	regexp.MustCompile(`(.+? \(?\d{4}\)?).+?\.(.+?)$`),
 }
 
 func parseMovie(filename string) (VideoInfo, bool) {
@@ -69,6 +69,8 @@ func parseMovie(filename string) (VideoInfo, bool) {
 	}
 	return VideoInfo{}, false
 }
+
+var regexpGeneric = regexp.MustCompile(`^(.+)\.(.+?)$`)
 
 func parseGeneric(filename string) (VideoInfo, bool) {
 	match := regexpGeneric.FindStringSubmatch(filename)

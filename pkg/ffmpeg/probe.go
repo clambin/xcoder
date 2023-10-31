@@ -1,6 +1,10 @@
 package ffmpeg
 
-import "fmt"
+import (
+	"log/slog"
+	"strconv"
+	"time"
+)
 
 type Probe struct {
 	Streams []Stream `json:"streams"`
@@ -91,11 +95,39 @@ type Format struct {
 	} `json:"tags"`
 }
 
-func (p Probe) GetVideoCodec() (string, error) {
-	for _, stream := range p.Streams {
-		if stream.CodecType == "video" {
-			return stream.CodecName, nil
+func (p Probe) VideoCodec() string {
+	for i := range p.Streams {
+		if p.Streams[i].CodecType == "video" {
+			return p.Streams[i].CodecName
 		}
 	}
-	return "", fmt.Errorf("no video stream found")
+	return ""
+}
+
+func (p Probe) BitRate() int {
+	value, _ := strconv.Atoi(p.Format.BitRate)
+	return value
+}
+
+func (p Probe) Height() int {
+	for i := range p.Streams {
+		if p.Streams[i].CodecType == "video" {
+			return p.Streams[i].Height
+		}
+	}
+	return 0
+}
+
+func (p Probe) Duration() time.Duration {
+	seconds, _ := strconv.ParseFloat(p.Format.Duration, 64)
+	return time.Duration(seconds) * time.Second
+}
+
+func (p Probe) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("codec", p.VideoCodec()),
+		slog.Int("bitrate", p.BitRate()/1024),
+		slog.Int("height", p.Height()),
+		slog.Duration("duration", p.Duration()),
+	)
 }

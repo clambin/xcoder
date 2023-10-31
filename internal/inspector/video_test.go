@@ -1,21 +1,19 @@
-package feeder
+package inspector
 
 import (
 	"github.com/stretchr/testify/assert"
 	"io/fs"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
 func Test_parseVideoFile(t *testing.T) {
 	timestamp := time.Date(2023, time.October, 30, 0, 0, 0, 0, time.UTC)
-	type args struct {
-		path string
-		d    fs.DirEntry
-	}
-	tests := []struct {
+	tt := []struct {
 		name     string
-		args     args
+		path     string
+		isDir    bool
 		want     Video
 		wantErr  assert.ErrorAssertionFunc
 		isVideo  bool
@@ -23,13 +21,7 @@ func Test_parseVideoFile(t *testing.T) {
 	}{
 		{
 			name: "valid episode",
-			args: args{
-				path: "foo/foo.bar.S01E01.field.field.field.mp4",
-				d: &fakeDirEntry{
-					name:    "foo.bar.S01E01.field.field.field.mp4",
-					modTime: timestamp,
-				},
-			},
+			path: "foo/foo.bar.S01E01.field.field.field.mp4",
 			want: Video{
 				Path:    "foo/foo.bar.S01E01.field.field.field.mp4",
 				ModTime: timestamp,
@@ -44,14 +36,8 @@ func Test_parseVideoFile(t *testing.T) {
 			isVideo: true,
 		},
 		{
-			name: "valid move",
-			args: args{
-				path: "foo/foo.bar.2021.field.field.field.mp4",
-				d: &fakeDirEntry{
-					name:    "foo.bar.2021.field.field.field.mp4",
-					modTime: timestamp,
-				},
-			},
+			name: "valid movie",
+			path: "foo/foo.bar.2021.field.field.field.mp4",
 			want: Video{
 				Path:    "foo/foo.bar.2021.field.field.field.mp4",
 				ModTime: timestamp,
@@ -64,49 +50,52 @@ func Test_parseVideoFile(t *testing.T) {
 			isVideo: true,
 		},
 		{
-			name: "directory",
-			args: args{
-				path: "foo/bar",
-				d: &fakeDirEntry{
-					name:    "bar",
-					isDir:   true,
-					modTime: timestamp,
+			name: "name has multiple 4digit series",
+			path: "foo/foo.bar.2021.field.1080p.field.field.mp4",
+			want: Video{
+				Path:    "foo/foo.bar.2021.field.1080p.field.field.mp4",
+				ModTime: timestamp,
+				Info: VideoInfo{
+					Name:      "foo.bar.2021",
+					Extension: "mp4",
 				},
 			},
+			wantErr: assert.NoError,
+			isVideo: true,
+		},
+		{
+			name:    "directory",
+			path:    "foo/bar",
+			isDir:   true,
 			wantErr: assert.NoError,
 			isVideo: false,
 		},
 		{
-			name: "text file",
-			args: args{
-				path: "foo/release.txt",
-				d: &fakeDirEntry{
-					name:    "release.txt",
-					modTime: timestamp,
-				},
-			},
+			name:    "text file",
+			path:    "foo/release.txt",
 			wantErr: assert.NoError,
 			isVideo: false,
 		},
 		{
-			name: "empty",
-			args: args{
-				path: "",
-				d: &fakeDirEntry{
-					modTime: timestamp,
-				},
-			},
+			name:    "empty",
+			path:    "",
 			wantErr: assert.NoError,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseVideoFile(tt.args.path, tt.args.d)
-			tt.wantErr(t, err)
+	for _, tc := range tt {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := parseVideoFile(tc.path, &fakeDirEntry{
+				name:    filepath.Base(tc.path),
+				isDir:   tc.isDir,
+				modTime: timestamp,
+			})
+			tc.wantErr(t, err)
 			if err == nil {
-				assert.Equal(t, tt.isVideo, got.Info.IsVideo())
-				if tt.isVideo {
-					assert.Equal(t, tt.want, got)
+				assert.Equal(t, tc.isVideo, got.Info.IsVideo())
+				if tc.isVideo {
+					assert.Equal(t, tc.want, got)
 				}
 			}
 		})

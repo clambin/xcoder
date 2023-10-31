@@ -1,18 +1,19 @@
-package feeder
+package inspector
 
 import (
 	"fmt"
+	"github.com/clambin/vidconv/pkg/ffmpeg"
 	"io/fs"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 type Video struct {
-	Path     string
-	ModTime  time.Time
-	Info     VideoInfo
-	Duration time.Duration
-	Codec    string
+	Path    string
+	ModTime time.Time
+	Info    VideoInfo
+	Stats   ffmpeg.Probe
 }
 
 func parseVideoFile(path string, d fs.DirEntry) (Video, error) {
@@ -23,7 +24,7 @@ func parseVideoFile(path string, d fs.DirEntry) (Video, error) {
 	if err != nil {
 		return Video{}, fmt.Errorf("file info: %w", err)
 	}
-	videoInfo, ok := parseVideoInfo(d.Name())
+	videoInfo, ok := parseVideoFilename(d.Name())
 	if !ok {
 		return Video{}, nil
 	}
@@ -39,14 +40,14 @@ func (s Video) String() string {
 }
 
 func (s Video) NameWithCodec(codec string) string {
-	var filename string
+	var components []string
 	if s.Info.IsSeries {
-		filename = fmt.Sprintf("%s.%s.%s.%s", s.Info.Name, s.Info.Episode, codec, s.Info.Extension)
+		components = []string{s.Info.Name, s.Info.Episode, codec, s.Info.Extension}
 	} else {
-		filename = s.Info.Name + "." + codec + "." + s.Info.Extension
+		components = []string{s.Info.Name, codec, s.Info.Extension}
 	}
 	return filepath.Join(
 		filepath.Dir(s.Path),
-		filename,
+		strings.Join(components, "."),
 	)
 }

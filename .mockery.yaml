@@ -4,7 +4,7 @@ dir: "{{.InterfaceDir}}/mocks"
 mockname: "{{.InterfaceName}}"
 outpkg: "mocks"
 packages:
-  github.com/clambin/vidconv/internal/feeder:
+  github.com/clambin/vidconv/internal/inspector:
     interfaces:
       VideoProcessor:
   github.com/clambin/vidconv/internal/processor:

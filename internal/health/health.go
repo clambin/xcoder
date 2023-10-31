@@ -17,7 +17,7 @@ type HealthChecker interface {
 	Health(ctx context.Context) any
 }
 
-func (h Health) Run(ctx context.Context) error {
+func (h *Health) Run(ctx context.Context) error {
 	r := http.NewServeMux()
 	r.Handle("/health", h)
 
@@ -39,11 +39,12 @@ func (h Health) Run(ctx context.Context) error {
 	return err
 }
 
-func (h Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response := make([]any, len(h.Components))
 	for i := range h.Components {
 		response[i] = h.Components[i].Health(r.Context())
 	}
+	w.Header().Add("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}

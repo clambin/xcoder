@@ -47,7 +47,7 @@ func (p Processor) Convert(ctx context.Context, input, output, targetCodec strin
 	return p.ConvertWithProgress(ctx, input, output, targetCodec, bitrate, nil)
 }
 
-func (p Processor) ConvertWithProgress(ctx context.Context, input, output, targetCodec string, bitrate int, progressCallback func(progress Progress)) error {
+func (p Processor) ConvertWithProgress(ctx context.Context, input string, output string, targetCodec string, bitrate int, progressCallback func(probe Progress)) error {
 	var sock string
 	var err error
 	if progressCallback != nil {

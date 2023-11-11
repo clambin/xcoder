@@ -22,7 +22,7 @@ type Processor struct {
 }
 
 func (p Processor) Probe(ctx context.Context, path string) (Probe, error) {
-	output, err := p.runCommand(ctx,
+	stdout, stderr, err := p.runCommand(ctx,
 		"ffprobe",
 		"-v", "quiet",
 		"-print_format", "json",
@@ -30,11 +30,11 @@ func (p Processor) Probe(ctx context.Context, path string) (Probe, error) {
 		path,
 	)
 	if err != nil {
-		return Probe{}, fmt.Errorf("probe: %w", err)
+		return Probe{}, fmt.Errorf("probe: %w (last line: %s)", err, lastLine(stderr))
 	}
 
 	var probe Probe
-	if err = json.NewDecoder(output).Decode(&probe); err != nil {
+	if err = json.NewDecoder(stdout).Decode(&probe); err != nil {
 		err = fmt.Errorf("decode: %w", err)
 	}
 
@@ -60,9 +60,9 @@ func (p Processor) ConvertWithProgress(ctx context.Context, input string, output
 		return err
 	}
 
-	stdout, err := p.runCommand(ctx, command, args...)
+	_, stderr, err := p.runCommand(ctx, command, args...)
 	if err != nil {
-		err = fmt.Errorf("ffmpeg failed. output: %s. err: %w", stdout.String(), err)
+		err = fmt.Errorf("ffmpeg: %w (last line: %s)", err, lastLine(stderr))
 	}
 	return err
 }

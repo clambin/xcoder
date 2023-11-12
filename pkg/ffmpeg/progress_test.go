@@ -56,3 +56,17 @@ func Test_getProgress(t *testing.T) {
 		})
 	}
 }
+
+func Benchmark_getProgress(b *testing.B) {
+	var input string
+	for i := 0; i < 100; i++ {
+		for j := 0; j < 20; j++ {
+			input += "token=value\n"
+		}
+		input += "speed=1.0x\nout_time_ms=1\n"
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = getProgress(input)
+	}
+}

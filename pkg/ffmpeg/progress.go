@@ -1,8 +1,8 @@
 package ffmpeg
 
 import (
-	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -11,43 +11,39 @@ type Progress struct {
 	Speed     float64
 }
 
-func getProgress(input string) (progress Progress, ok bool) {
-	if progress.Converted, ok = getLastProgress(input); !ok {
-		return progress, ok
+func getProgress(input string) (Progress, bool) {
+	var foundSpeed, foundConverted bool
+	var progress Progress
+	lines := strings.Split(input, "\n")
+
+	for i := len(lines) - 1; !(foundSpeed && foundConverted) && i >= 0; i-- {
+		if !foundSpeed {
+			progress.Speed, foundSpeed = getSpeed(lines[i])
+		}
+		if !foundConverted {
+			progress.Converted, foundConverted = getConverted(lines[i])
+		}
 	}
-	progress.Speed, ok = getLastSpeed(input)
-	return progress, ok
+	return progress, foundSpeed && foundConverted
 }
 
-var (
-	regexpOutTime = regexp.MustCompile(`out_time_ms=(\d+)\n`)
-	regexpSpeed   = regexp.MustCompile(`speed=(\d+\.\d+)x`)
-)
-
-func getLastProgress(input string) (time.Duration, bool) {
-	value, ok := parseProgress(regexpOutTime, input)
-	if !ok {
-		return 0, false
+func getSpeed(input string) (float64, bool) {
+	const prefix = "speed="
+	var speed float64
+	if strings.HasPrefix(input, prefix) {
+		line := strings.TrimPrefix(input, prefix)
+		line = strings.TrimSuffix(line, "x")
+		speed, _ = strconv.ParseFloat(line, 64)
 	}
-	progress, _ := strconv.Atoi(value)
-	return time.Duration(progress) * time.Microsecond, true
+	return speed, speed > 0
 }
 
-func getLastSpeed(input string) (float64, bool) {
-	value, ok := parseProgress(regexpSpeed, input)
-	if !ok {
-		return 0, false
+func getConverted(input string) (time.Duration, bool) {
+	const prefix = "out_time_ms="
+	var converted int
+	if strings.HasPrefix(input, prefix) {
+		line := strings.TrimPrefix(input, prefix)
+		converted, _ = strconv.Atoi(line)
 	}
-	speed, _ := strconv.ParseFloat(value, 64)
-	return speed, true
-}
-
-func parseProgress(re *regexp.Regexp, input string) (string, bool) {
-	matches := re.FindAllStringSubmatch(input, -1)
-	if len(matches) == 0 {
-		return "", false
-	}
-	count1 := len(matches)
-	count2 := len(matches[count1-1])
-	return matches[count1-1][count2-1], true
+	return time.Duration(converted) * time.Microsecond, converted != 0
 }

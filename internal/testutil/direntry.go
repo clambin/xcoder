@@ -6,9 +6,9 @@ import (
 )
 
 type FakeDirEntry struct {
+	FModTime time.Time
 	FName    string
 	FIsDir   bool
-	FModTime time.Time
 }
 
 func (f FakeDirEntry) Name() string {

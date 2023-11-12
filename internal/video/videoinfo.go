@@ -8,8 +8,8 @@ import (
 type VideoInfo struct {
 	Name      string
 	Extension string
-	IsSeries  bool
 	Episode   string
+	IsSeries  bool
 }
 
 func (v VideoInfo) String() string {

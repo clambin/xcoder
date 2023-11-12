@@ -15,9 +15,9 @@ import (
 // An Inspector receives files (from a Feeder).  It scans the file (using ffprobe) to determine the video characteristics of the file.
 // The scanned file is then sent to the Output channel for conversion.
 type Inspector struct {
+	rules rules.Rules
 	VideoProcessor
 	targetCodec string
-	rules       rules.Rules
 	input       <-chan feeder.Entry
 	Output      chan ConversionRequest
 	logger      *slog.Logger

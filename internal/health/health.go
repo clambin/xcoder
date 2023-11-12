@@ -9,8 +9,8 @@ import (
 )
 
 type Health struct {
-	Addr       string
 	Components []HealthChecker
+	Addr       string
 }
 
 type HealthChecker interface {

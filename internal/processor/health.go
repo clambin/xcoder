@@ -3,9 +3,9 @@ package processor
 import "context"
 
 type Health struct {
+	Processing []string
 	Received   int64
 	Accepted   int64
-	Processing []string
 }
 
 func (p *Processor) Health(_ context.Context) any {

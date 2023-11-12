@@ -10,10 +10,10 @@ import (
 )
 
 type Video struct {
-	Path    string
-	ModTime time.Time
-	Info    VideoInfo
 	Stats   ffmpeg.Probe
+	Info    VideoInfo
+	ModTime time.Time
+	Path    string
 }
 
 func parseVideoFile(path string, d fs.DirEntry) (Video, error) {

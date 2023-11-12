@@ -13,10 +13,10 @@ import (
 )
 
 type Application struct {
+	addr      string
 	Feeder    *feeder.Feeder
 	Inspector *inspector.Inspector
 	Processor *processor.Processor
-	addr      string
 	logger    *slog.Logger
 }
 

@@ -7,40 +7,12 @@ import (
 )
 
 type Probe struct {
-	Streams []Stream `json:"streams"`
 	Format  Format   `json:"format"`
+	Streams []Stream `json:"streams"`
 }
 
 type Stream struct {
-	Index              int    `json:"index"`
-	CodecName          string `json:"codec_name"`
-	CodecLongName      string `json:"codec_long_name"`
-	Profile            string `json:"profile"`
-	CodecType          string `json:"codec_type"`
-	CodecTagString     string `json:"codec_tag_string"`
-	CodecTag           string `json:"codec_tag"`
-	Width              int    `json:"width,omitempty"`
-	Height             int    `json:"height,omitempty"`
-	CodedWidth         int    `json:"coded_width,omitempty"`
-	CodedHeight        int    `json:"coded_height,omitempty"`
-	ClosedCaptions     int    `json:"closed_captions,omitempty"`
-	FilmGrain          int    `json:"film_grain,omitempty"`
-	HasBFrames         int    `json:"has_b_frames,omitempty"`
-	SampleAspectRatio  string `json:"sample_aspect_ratio,omitempty"`
-	DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
-	PixFmt             string `json:"pix_fmt,omitempty"`
-	Level              int    `json:"level,omitempty"`
-	ColorRange         string `json:"color_range,omitempty"`
-	ChromaLocation     string `json:"chroma_location,omitempty"`
-	FieldOrder         string `json:"field_order,omitempty"`
-	Refs               int    `json:"refs,omitempty"`
-	RFrameRate         string `json:"r_frame_rate"`
-	AvgFrameRate       string `json:"avg_frame_rate"`
-	TimeBase           string `json:"time_base"`
-	StartPts           int    `json:"start_pts"`
-	StartTime          string `json:"start_time"`
-	ExtradataSize      int    `json:"extradata_size"`
-	Disposition        struct {
+	Disposition struct {
 		Default         int `json:"default"`
 		Dub             int `json:"dub"`
 		Original        int `json:"original"`
@@ -66,26 +38,44 @@ type Stream struct {
 		DURATION    string `json:"DURATION"`
 		Language    string `json:"language,omitempty"`
 	} `json:"tags"`
-	SampleFmt      string `json:"sample_fmt,omitempty"`
-	SampleRate     string `json:"sample_rate,omitempty"`
-	Channels       int    `json:"channels,omitempty"`
-	ChannelLayout  string `json:"channel_layout,omitempty"`
-	BitsPerSample  int    `json:"bits_per_sample,omitempty"`
-	InitialPadding int    `json:"initial_padding,omitempty"`
+	CodecTagString     string `json:"codec_tag_string"`
+	CodecName          string `json:"codec_name"`
+	CodecType          string `json:"codec_type"`
+	RFrameRate         string `json:"r_frame_rate"`
+	CodecTag           string `json:"codec_tag"`
+	ChannelLayout      string `json:"channel_layout,omitempty"`
+	SampleRate         string `json:"sample_rate,omitempty"`
+	SampleFmt          string `json:"sample_fmt,omitempty"`
+	CodecLongName      string `json:"codec_long_name"`
+	Profile            string `json:"profile"`
+	StartTime          string `json:"start_time"`
+	TimeBase           string `json:"time_base"`
+	SampleAspectRatio  string `json:"sample_aspect_ratio,omitempty"`
+	DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
+	PixFmt             string `json:"pix_fmt,omitempty"`
+	AvgFrameRate       string `json:"avg_frame_rate"`
+	ColorRange         string `json:"color_range,omitempty"`
+	ChromaLocation     string `json:"chroma_location,omitempty"`
+	FieldOrder         string `json:"field_order,omitempty"`
+	CodedWidth         int    `json:"coded_width,omitempty"`
+	Refs               int    `json:"refs,omitempty"`
+	Level              int    `json:"level,omitempty"`
+	HasBFrames         int    `json:"has_b_frames,omitempty"`
+	StartPts           int    `json:"start_pts"`
+	FilmGrain          int    `json:"film_grain,omitempty"`
+	ExtradataSize      int    `json:"extradata_size"`
+	ClosedCaptions     int    `json:"closed_captions,omitempty"`
+	CodedHeight        int    `json:"coded_height,omitempty"`
+	Index              int    `json:"index"`
+	Height             int    `json:"height,omitempty"`
+	Channels           int    `json:"channels,omitempty"`
+	Width              int    `json:"width,omitempty"`
+	BitsPerSample      int    `json:"bits_per_sample,omitempty"`
+	InitialPadding     int    `json:"initial_padding,omitempty"`
 }
 
 type Format struct {
-	Filename       string `json:"filename"`
-	NbStreams      int    `json:"nb_streams"`
-	NbPrograms     int    `json:"nb_programs"`
-	FormatName     string `json:"format_name"`
-	FormatLongName string `json:"format_long_name"`
-	StartTime      string `json:"start_time"`
-	Duration       string `json:"duration"`
-	Size           string `json:"size"`
-	BitRate        string `json:"bit_rate"`
-	ProbeScore     int    `json:"probe_score"`
-	Tags           struct {
+	Tags struct {
 		Title            string `json:"title"`
 		COMMENT          string `json:"COMMENT"`
 		MAJORBRAND       string `json:"MAJOR_BRAND"`
@@ -93,6 +83,16 @@ type Format struct {
 		COMPATIBLEBRANDS string `json:"COMPATIBLE_BRANDS"`
 		ENCODER          string `json:"ENCODER"`
 	} `json:"tags"`
+	Filename       string `json:"filename"`
+	FormatName     string `json:"format_name"`
+	FormatLongName string `json:"format_long_name"`
+	StartTime      string `json:"start_time"`
+	Duration       string `json:"duration"`
+	Size           string `json:"size"`
+	BitRate        string `json:"bit_rate"`
+	NbStreams      int    `json:"nb_streams"`
+	NbPrograms     int    `json:"nb_programs"`
+	ProbeScore     int    `json:"probe_score"`
 }
 
 func (p Probe) VideoCodec() string {

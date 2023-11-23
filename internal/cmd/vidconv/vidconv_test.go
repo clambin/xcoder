@@ -30,7 +30,7 @@ func TestApplication_Run(t *testing.T) {
 	a.Inspector.VideoProcessor = vp
 	vc := mocks2.NewVideoConvertor(t)
 	done := make(chan struct{})
-	vc.EXPECT().ConvertWithProgress(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), "hevc", 4000*1024, mock.AnythingOfType("func(ffmpeg.Progress)")).RunAndReturn(func(_ context.Context, _, _, _ string, _ int, _ func(ffmpeg.Progress)) error {
+	vc.EXPECT().ConvertWithProgress(mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string"), "hevc", 0, 4000*1024, mock.AnythingOfType("func(ffmpeg.Progress)")).RunAndReturn(func(_ context.Context, _, _, _ string, _, _ int, _ func(ffmpeg.Progress)) error {
 		done <- struct{}{}
 		return nil
 	})

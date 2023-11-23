@@ -5,11 +5,16 @@ import (
 	"strconv"
 )
 
-func makeConvertCommand(input, output, targetCodec string, bitrate int, progressSocket string) (string, []string, error) {
+func makeConvertCommand(input, output, targetCodec string, bitsPerSample, bitrate int, progressSocket string) (string, []string, error) {
 	if targetCodec != "hevc" {
 		return "", nil, errors.New("only hvec supported right now")
 	}
 	targetCodec = "hevc_videotoolbox"
+
+	profile := "main"
+	if bitsPerSample == 10 {
+		profile = "main10"
+	}
 
 	ffmpegArgs := []string{
 		"-y",
@@ -17,7 +22,7 @@ func makeConvertCommand(input, output, targetCodec string, bitrate int, progress
 		"-hwaccel", "videotoolbox",
 		"-i", input,
 		"-map", "0",
-		"-c:v", targetCodec, "-profile:v", "main10", "-b:v", strconv.Itoa(bitrate),
+		"-c:v", targetCodec, "-profile:v", profile, "-b:v", strconv.Itoa(bitrate),
 		"-c:a", "copy",
 		"-c:s", "copy",
 	}

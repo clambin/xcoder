@@ -72,7 +72,7 @@ func TestProcessor_process(t *testing.T) {
 	}
 
 	touch(t, source)
-	c.EXPECT().ConvertWithProgress(mock.Anything, source, target, targetCodec, mock.AnythingOfType("int"), mock.Anything).Return(nil).Once()
+	c.EXPECT().ConvertWithProgress(mock.Anything, source, target, targetCodec, 0, mock.AnythingOfType("int"), mock.Anything).Return(nil).Once()
 	assert.NoError(t, err, p.process(ctx, input))
 }
 
@@ -98,8 +98,8 @@ func TestProcessor_Callback(t *testing.T) {
 		TargetCodec:   "hevc",
 		TargetBitrate: 900 * 1024,
 	}
-	vc.EXPECT().ConvertWithProgress(mock.Anything, mock.Anything, mock.Anything, "hevc", 921600, mock.Anything).RunAndReturn(
-		func(ctx context.Context, s string, s2 string, s3 string, i1 int, f func(ffmpeg.Progress)) error {
+	vc.EXPECT().ConvertWithProgress(mock.Anything, mock.Anything, mock.Anything, "hevc", 0, 921600, mock.Anything).RunAndReturn(
+		func(ctx context.Context, s string, s2 string, s3 string, i1, i2 int, f func(ffmpeg.Progress)) error {
 			f(ffmpeg.Progress{Converted: 15 * time.Minute, Speed: 1.0})
 			f(ffmpeg.Progress{Converted: 30 * time.Minute, Speed: 1.0})
 			f(ffmpeg.Progress{Converted: 45 * time.Minute, Speed: 1.0})

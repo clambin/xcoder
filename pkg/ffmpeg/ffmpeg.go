@@ -41,11 +41,11 @@ func (p Processor) Probe(ctx context.Context, path string) (Probe, error) {
 	return probe, err
 }
 
-func (p Processor) Convert(ctx context.Context, input, output, targetCodec string, bitrate int) error {
-	return p.ConvertWithProgress(ctx, input, output, targetCodec, bitrate, nil)
+func (p Processor) Convert(ctx context.Context, input, output, targetCodec string, bitsPerSample, bitrate int) error {
+	return p.ConvertWithProgress(ctx, input, output, targetCodec, bitsPerSample, bitrate, nil)
 }
 
-func (p Processor) ConvertWithProgress(ctx context.Context, input string, output string, targetCodec string, bitrate int, progressCallback func(probe Progress)) error {
+func (p Processor) ConvertWithProgress(ctx context.Context, input string, output string, targetCodec string, bitsPerSample, bitrate int, progressCallback func(probe Progress)) error {
 	var sock string
 	var err error
 	if progressCallback != nil {
@@ -55,7 +55,7 @@ func (p Processor) ConvertWithProgress(ctx context.Context, input string, output
 		}
 	}
 
-	command, args, err := makeConvertCommand(input, output, targetCodec, bitrate, sock)
+	command, args, err := makeConvertCommand(input, output, targetCodec, bitsPerSample, bitrate, sock)
 	if err != nil {
 		return err
 	}

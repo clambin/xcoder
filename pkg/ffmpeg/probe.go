@@ -123,10 +123,20 @@ func (p Probe) Duration() time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
+func (p Probe) BitsPerSample() int {
+	for i := range p.Streams {
+		if p.Streams[i].CodecType == "video" {
+			return p.Streams[i].BitsPerSample
+		}
+	}
+	return 0
+}
+
 func (p Probe) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("codec", p.VideoCodec()),
 		slog.Int("bitrate", p.BitRate()/1024),
+		slog.Int("depth", p.BitsPerSample()),
 		slog.Int("height", p.Height()),
 		slog.Duration("duration", p.Duration()),
 	)

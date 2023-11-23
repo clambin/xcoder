@@ -26,7 +26,7 @@ type Processor struct {
 var _ health.HealthChecker = &Processor{}
 
 type VideoConvertor interface {
-	ConvertWithProgress(ctx context.Context, input string, output string, targetCodec string, bitrate int, progressCallback func(probe ffmpeg.Progress)) error
+	ConvertWithProgress(ctx context.Context, input string, output string, targetCodec string, bitsPerSample, bitrate int, progressCallback func(probe ffmpeg.Progress)) error
 }
 
 const (
@@ -106,7 +106,7 @@ func (p *Processor) convert(ctx context.Context, l *slog.Logger, request inspect
 	duration := request.Input.Stats.Duration()
 	err := p.VideoConvertor.ConvertWithProgress(
 		ctx, request.Input.Path,
-		request.TargetFile, request.TargetCodec, request.TargetBitrate,
+		request.TargetFile, request.TargetCodec, request.Input.Stats.BitsPerSample(), request.TargetBitrate,
 		func(progress ffmpeg.Progress) {
 			//called++
 			ratio := float64(progress.Converted) / float64(duration)

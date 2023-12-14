@@ -15,10 +15,10 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%s: codec:%s bitrate:%d height:%d\n",
+		fmt.Printf("%s: codec:%s bitrate:%.1fmbps height:%d\n",
 			arg,
 			probe.VideoCodec(),
-			probe.BitRate(),
+			float64(probe.BitRate())/1024/1024,
 			probe.Height(),
 		)
 	}

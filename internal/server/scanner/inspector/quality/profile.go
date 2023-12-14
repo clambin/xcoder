@@ -59,7 +59,7 @@ func GetProfile(name string) (Profile, error) {
 }
 
 func (p Profile) MakeRequest(target, source string, sourceStats ffmpeg.VideoStats) (requests.Request, error) {
-	if err := p.ShouldConvert(sourceStats); err != nil {
+	if err := p.Rules.ShouldConvert(sourceStats); err != nil {
 		return requests.Request{}, err
 	}
 
@@ -81,22 +81,22 @@ func (p Profile) MakeRequest(target, source string, sourceStats ffmpeg.VideoStat
 	}, nil
 }
 
-func (p Profile) ShouldConvert(stats ffmpeg.VideoStats) error {
-	return p.Rules.ShouldConvert(stats)
-}
-
 func (p Profile) GetTargetBitrate(source ffmpeg.VideoStats) (int, bool) {
 	targetBitrate, ok := getMinimumBitrate(p.Codec, source.Height())
 	switch p.Quality {
 	case LowQuality:
 	case HighQuality:
+		// for high quality, we oversize the target's minimum bitrate by the ratio between the source's minimum & actual bitrates
+		// e.g. if the target's minimum bitrate is 100, the source's minimum bitrate is 200 and the actual bitrate is 400,
+		// then the target bitrate is 100 * ( 400 / 200) = 200
 		var sourceMinimumBitrate int
 		if sourceMinimumBitrate, ok = getMinimumBitrate(source.VideoCodec(), source.Height()); ok {
 			oversized := float64(source.BitRate()) / float64(sourceMinimumBitrate)
 			targetBitrate = int(float64(targetBitrate) * oversized)
 		}
 	case MaxQuality:
-		// TODO: magic number
+		// for max quality, set the bitrate so that it does not cause an increase in file size between source & target video.
+		// Note: this value is calculated using a couple of sample videos and most definitely "wrong".
 		targetBitrate = int(float64(source.BitRate()) / 1.2)
 	}
 	return targetBitrate, ok

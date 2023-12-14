@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	requests2 "github.com/clambin/videoConvertor/internal/server/requests"
+	"github.com/clambin/videoConvertor/internal/server/requests"
 	"github.com/clambin/videoConvertor/internal/server/scanner/inspector"
 	"github.com/clambin/videoConvertor/internal/testutil"
 	"github.com/clambin/videoConvertor/pkg/ffmpeg"
@@ -23,8 +23,8 @@ func TestApplication_Run(t *testing.T) {
 	fs := testutil.MakeTempFS(t, validVideoFiles)
 	defer func() { assert.NoError(t, os.RemoveAll(fs)) }()
 
-	var r requests2.Requests
-	a := New(fs, "hevc-max", &r, slog.Default())
+	var r requests.Requests
+	a, _ := New(fs, "hevc-max", &r, slog.Default())
 	a.Inspector.VideoProcessor = fakeProcessor{stats: testutil.MakeProbe("h264", 8000, 1080, time.Hour)}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -46,9 +46,9 @@ func TestApplication_Run(t *testing.T) {
 }
 
 func TestScanner_Health(t *testing.T) {
-	var r requests2.Requests
-	a := New("/tmp", "hevc-max", &r, slog.Default())
-	r.Add(requests2.Request{
+	var r requests.Requests
+	a, _ := New("/tmp", "hevc-max", &r, slog.Default())
+	r.Add(requests.Request{
 		Request: ffmpeg.Request{Source: "foo.mkv"},
 	})
 

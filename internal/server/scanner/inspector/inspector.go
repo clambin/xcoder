@@ -26,19 +26,19 @@ type VideoProcessor interface {
 	Probe(ctx context.Context, path string) (ffmpeg.VideoStats, error)
 }
 
-func New(input <-chan feeder.Entry, profile string, requests *requests.Requests, logger *slog.Logger) *Inspector {
+func New(input <-chan feeder.Entry, profile string, requests *requests.Requests, logger *slog.Logger) (*Inspector, error) {
 	p, err := quality.GetProfile(profile)
 	if err != nil {
-		// TODO
-		panic("invalid profile")
+		return nil, fmt.Errorf("invalid profile: %s", profile)
 	}
-	return &Inspector{
+	i := Inspector{
 		VideoProcessor: ffmpeg.Processor{Logger: logger.With(slog.String("component", "ffprobe"))},
 		profile:        p,
 		input:          input,
 		requests:       requests,
 		logger:         logger,
 	}
+	return &i, nil
 }
 
 func (i Inspector) Run(ctx context.Context) error {

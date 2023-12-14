@@ -19,16 +19,20 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func New(addr, rootDir, profile string, removeConverted bool, logger *slog.Logger) *Server {
+func New(addr, rootDir, profile string, removeConverted bool, logger *slog.Logger) (*Server, error) {
 	r := requests.Requests{}
+	scan, err := scanner.New(rootDir, profile, &r, logger.With(slog.String("component", "scanner")))
+	if err != nil {
+		return nil, err
+	}
 	s := Server{
-		Scanner:   scanner.New(rootDir, profile, &r, logger.With(slog.String("component", "scanner"))),
+		Scanner:   scan,
 		Convertor: convertor.New(&r, removeConverted, logger.With("component", "processor")),
 		logger:    logger,
 	}
 	s.HTTPServer = s.makeHTTPServer(addr)
 
-	return &s
+	return &s, nil
 }
 
 func (s Server) Run(ctx context.Context) error {

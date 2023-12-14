@@ -20,14 +20,19 @@ type Scanner struct {
 
 const scanInterval = time.Hour
 
-func New(rootDir string, profile string, r *requests.Requests, logger *slog.Logger) *Scanner {
+func New(rootDir string, profile string, r *requests.Requests, logger *slog.Logger) (*Scanner, error) {
 	f := feeder.New(rootDir, scanInterval, logger.With(slog.String("component", "feeder")))
-	return &Scanner{
+	i, err := inspector.New(f.Feed, profile, r, logger.With(slog.String("component", "inspector")))
+	if err != nil {
+		return nil, err
+	}
+	s := Scanner{
 		Feeder:    f,
-		Inspector: inspector.New(f.Feed, profile, r, logger.With(slog.String("component", "inspector"))),
+		Inspector: i,
 		requests:  r,
 		logger:    logger,
 	}
+	return &s, nil
 }
 
 func (a Scanner) Run(ctx context.Context, concurrent int) error {

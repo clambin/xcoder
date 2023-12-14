@@ -11,7 +11,8 @@ import (
 )
 
 func TestServer_HTTPServer(t *testing.T) {
-	s := server.New(":8080", "/tmp", "hevc-max", false, slog.Default())
+	s, err := server.New(":8080", "/tmp", "hevc-max", false, slog.Default())
+	require.NoError(t, err)
 
 	for _, path := range []string{"/convertor/active/on", "/convertor/active/off"} {
 		req, _ := http.NewRequest(http.MethodPost, path, nil)
@@ -22,7 +23,8 @@ func TestServer_HTTPServer(t *testing.T) {
 }
 
 func TestServer_Health(t *testing.T) {
-	s := server.New(":8080", "/tmp", "hevc-max", false, slog.Default())
+	s, err := server.New(":8080", "/tmp", "hevc-max", false, slog.Default())
+	require.NoError(t, err)
 
 	req, _ := http.NewRequest(http.MethodGet, "/health", nil)
 	resp := httptest.NewRecorder()

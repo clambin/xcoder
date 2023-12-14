@@ -28,12 +28,15 @@ func main() {
 	}
 
 	l := slog.New(slog.NewTextHandler(os.Stderr, &handlerOpts))
-	s := server.New(":9090", *input, *profile, *remove, l)
+	s, err := server.New(":9090", *input, *profile, *remove, l)
+	if err != nil {
+		l.Error("failed to create server", "err", err)
+	}
 	s.Convertor.SetActive(*active)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	if err := s.Run(ctx); err != nil {
+	if err = s.Run(ctx); err != nil {
 		l.Error("feeder failed", "err", err)
 	}
 }

@@ -82,7 +82,7 @@ func TestInspector_process(t *testing.T) {
 			defer func() { assert.NoError(t, os.RemoveAll(tmpDir)) }()
 
 			r := requests.Requests{}
-			i := New(make(chan feeder.Entry), "hevc-max", &r, slog.Default())
+			i, _ := New(make(chan feeder.Entry), "hevc-max", &r, slog.Default())
 			i.VideoProcessor = fakeProcessor{stats: tt.probe.stats, err: tt.probe.err}
 
 			tt.entry.Path = filepath.Join(tmpDir, tt.entry.Path)

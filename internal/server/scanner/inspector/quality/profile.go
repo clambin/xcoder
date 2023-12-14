@@ -1,6 +1,7 @@
 package quality
 
 import (
+	"errors"
 	"fmt"
 	"github.com/clambin/videoConvertor/internal/server/requests"
 	"github.com/clambin/videoConvertor/pkg/ffmpeg"
@@ -64,9 +65,10 @@ func (p Profile) MakeRequest(target, source string, sourceStats ffmpeg.VideoStat
 
 	bitrate, ok := p.GetTargetBitrate(sourceStats)
 	if !ok {
-		// TODO: ShouldConvert should already have validated the source's codec
-		panic("unable to get target bitrate from source stats")
+		// ShouldConvert will have already validated the source's codec, so this should never happen.
+		return requests.Request{}, errors.New("unable to get target bitrate from source stats")
 	}
+
 	return requests.Request{
 		Request: ffmpeg.Request{
 			Source:        source,

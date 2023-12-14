@@ -13,7 +13,7 @@ type Set[T cmp.Ordered] struct {
 }
 
 func New[T cmp.Ordered]() *Set[T] {
-	return &Set[T]{content: set.Create[T]()}
+	return &Set[T]{content: set.New[T]()}
 }
 
 func (s *Set[T]) Add(t T) bool {

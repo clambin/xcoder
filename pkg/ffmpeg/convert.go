@@ -94,3 +94,19 @@ func (p Processor) readProgressSocket(conn io.Reader, progressCallback func(Prog
 		}
 	}
 }
+
+func makeConvertCommand(request Request, progressSocket string) (string, []string, error) {
+	ffmpegArgs, err := getConvertArgsByOS(request)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if progressSocket != "" {
+		ffmpegArgs = append(ffmpegArgs,
+			"-progress", "unix://"+progressSocket,
+		)
+	}
+
+	ffmpegArgs = append(ffmpegArgs, request.Target)
+	return "ffmpeg", ffmpegArgs, nil
+}

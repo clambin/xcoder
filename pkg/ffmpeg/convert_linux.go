@@ -5,10 +5,10 @@ import (
 	"strconv"
 )
 
-func makeConvertCommand(request Request, progressSocket string) (string, []string, error) {
+func getConvertArgsByOS(request Request) ([]string, error) {
 	// TODO: not yet tested on Linux
 	if request.VideoCodec != "hevc" {
-		return "", nil, errors.New("only hvec supported right now")
+		return nil, errors.New("only hvec supported right now")
 	}
 	request.VideoCodec = "libx265"
 
@@ -17,7 +17,7 @@ func makeConvertCommand(request Request, progressSocket string) (string, []strin
 		profile = "main10"
 	}
 
-	ffmpegArgs := []string{
+	return []string{
 		"-y",
 		"-nostats", "-loglevel", "error",
 		//"-threads", "8",
@@ -27,15 +27,5 @@ func makeConvertCommand(request Request, progressSocket string) (string, []strin
 		"-c:a", "copy",
 		"-c:s", "copy",
 		"-f", "matroska",
-	}
-
-	if progressSocket != "" {
-		ffmpegArgs = append(ffmpegArgs,
-			"-progress", "unix://"+progressSocket,
-		)
-	}
-
-	ffmpegArgs = append(ffmpegArgs, request.Target)
-
-	return "ffmpeg", ffmpegArgs, nil
+	}, nil
 }

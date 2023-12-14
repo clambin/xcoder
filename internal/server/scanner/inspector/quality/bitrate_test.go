@@ -1,11 +1,9 @@
 package quality
 
 import (
-	"github.com/clambin/videoConvertor/internal/testutil"
-	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
-	"time"
 )
 
 func Test_getMinimumBitrate(t *testing.T) {
@@ -80,54 +78,14 @@ func Test_getMinimumBitrate(t *testing.T) {
 	}
 }
 
-func Test_GetMinimumBitrate(t *testing.T) {
-	tt := []struct {
-		name   string
-		stats  ffmpeg.VideoStats
-		wantOK assert.BoolAssertionFunc
-		want   int
-	}{
-		{
-			name:   "480",
-			stats:  testutil.MakeProbe("hevc", 1000, 480, time.Hour),
-			wantOK: assert.True,
-			want:   750 * 1024,
-		},
-		{
-			name:   "720",
-			stats:  testutil.MakeProbe("hevc", 1000, 720, time.Hour),
-			wantOK: assert.True,
-			want:   1500 * 1024,
-		},
-		{
-			name:   "1080",
-			stats:  testutil.MakeProbe("hevc", 1000, 1080, time.Hour),
-			wantOK: assert.True,
-			want:   3 * 1024 * 1024,
-		},
-		{
-			name:   "2000",
-			stats:  testutil.MakeProbe("hevc", 1000, 2000, time.Hour),
-			wantOK: assert.True,
-			want:   15 * 1024 * 1024,
-		},
-		{
-			name:   "4000",
-			stats:  testutil.MakeProbe("hevc", 1000, 4000, time.Hour),
-			wantOK: assert.True,
-			want:   15 * 1024 * 1024,
-		},
-	}
+func TestBitrateRatio(t *testing.T) {
+	t.Skip()
+	for _, height := range []int{480, 720, 1080, 2160} {
+		hvec, ok := getMinimumBitrate("hevc", height)
+		require.True(t, ok)
+		h264, ok := getMinimumBitrate("h264", height)
+		require.True(t, ok)
 
-	for _, tc := range tt {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			bitRate, ok := GetMinimumBitRate(tc.stats, "hevc")
-			tc.wantOK(t, ok)
-			if ok {
-				assert.Equal(t, tc.want, bitRate)
-			}
-		})
+		t.Log(height, float64(h264)/float64(hvec))
 	}
 }

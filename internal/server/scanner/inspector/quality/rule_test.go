@@ -1,8 +1,8 @@
 package quality
 
 import (
-	"github.com/clambin/vidconv/internal/testutil"
-	"github.com/clambin/vidconv/pkg/ffmpeg"
+	"github.com/clambin/videoConvertor/internal/testutil"
+	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

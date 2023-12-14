@@ -1,7 +1,7 @@
 package quality_test
 
 import (
-	"github.com/clambin/vidconv/internal/server/scanner/inspector/quality"
+	"github.com/clambin/videoConvertor/internal/server/scanner/inspector/quality"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

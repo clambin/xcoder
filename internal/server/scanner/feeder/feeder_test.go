@@ -2,8 +2,8 @@ package feeder_test
 
 import (
 	"context"
-	"github.com/clambin/vidconv/internal/server/scanner/feeder"
-	"github.com/clambin/vidconv/internal/testutil"
+	"github.com/clambin/videoConvertor/internal/server/scanner/feeder"
+	"github.com/clambin/videoConvertor/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"os"

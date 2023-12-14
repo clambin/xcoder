@@ -2,9 +2,9 @@ package requests_test
 
 import (
 	"bytes"
-	"github.com/clambin/vidconv/internal/server/requests"
-	"github.com/clambin/vidconv/internal/testutil"
-	"github.com/clambin/vidconv/pkg/ffmpeg"
+	"github.com/clambin/videoConvertor/internal/server/requests"
+	"github.com/clambin/videoConvertor/internal/testutil"
+	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"testing"

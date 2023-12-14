@@ -3,9 +3,9 @@ package scanner
 import (
 	"context"
 	"fmt"
-	"github.com/clambin/vidconv/internal/server/requests"
-	"github.com/clambin/vidconv/internal/server/scanner/feeder"
-	"github.com/clambin/vidconv/internal/server/scanner/inspector"
+	"github.com/clambin/videoConvertor/internal/server/requests"
+	"github.com/clambin/videoConvertor/internal/server/scanner/feeder"
+	"github.com/clambin/videoConvertor/internal/server/scanner/inspector"
 	"log/slog"
 	"sync"
 	"time"

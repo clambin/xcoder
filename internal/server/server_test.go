@@ -1,7 +1,7 @@
 package server_test
 
 import (
-	"github.com/clambin/vidconv/internal/server"
+	"github.com/clambin/videoConvertor/internal/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log/slog"

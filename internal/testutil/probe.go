@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"github.com/clambin/vidconv/pkg/ffmpeg"
+	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"strconv"
 	"time"
 )

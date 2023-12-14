@@ -1,8 +1,8 @@
 package requests_test
 
 import (
-	requests2 "github.com/clambin/vidconv/internal/server/requests"
-	"github.com/clambin/vidconv/pkg/ffmpeg"
+	requests2 "github.com/clambin/videoConvertor/internal/server/requests"
+	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

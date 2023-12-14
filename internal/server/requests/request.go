@@ -1,7 +1,7 @@
 package requests
 
 import (
-	"github.com/clambin/vidconv/pkg/ffmpeg"
+	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"log/slog"
 )
 

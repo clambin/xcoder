@@ -1,6 +1,6 @@
 package quality
 
-import "github.com/clambin/vidconv/pkg/ffmpeg"
+import "github.com/clambin/videoConvertor/pkg/ffmpeg"
 
 type minimumBitrate struct {
 	height  int

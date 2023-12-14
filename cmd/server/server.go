@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/clambin/vidconv/internal/server"
+	"github.com/clambin/videoConvertor/internal/server"
 	"log/slog"
 	"os"
 	"os/signal"

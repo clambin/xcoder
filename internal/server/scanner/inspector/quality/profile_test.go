@@ -1,9 +1,9 @@
 package quality_test
 
 import (
-	"github.com/clambin/vidconv/internal/server/scanner/inspector/quality"
-	"github.com/clambin/vidconv/internal/testutil"
-	"github.com/clambin/vidconv/pkg/ffmpeg"
+	"github.com/clambin/videoConvertor/internal/server/scanner/inspector/quality"
+	"github.com/clambin/videoConvertor/internal/testutil"
+	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"

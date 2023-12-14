@@ -1,9 +1,8 @@
-module github.com/clambin/vidconv
+module github.com/clambin/videoConvertor
 
 go 1.21
 
 require (
-	github.com/clambin/go-common/set v0.3.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/stretchr/testify v1.8.4
 )

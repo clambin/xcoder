@@ -23,7 +23,7 @@ var minimumBitrates = map[string][]minimumBitrate{
 	},
 }
 
-func getMinimumBitrate(codec string, height int) (int, bool) {
+func GetMinimumBitrate(codec string, height int) (int, bool) {
 	var bitRate int
 	bitRates, ok := minimumBitrates[codec]
 	if ok {

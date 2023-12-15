@@ -51,7 +51,7 @@ func TestConvertor_Router(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := convertor.New(&requests.Requests{}, false, slog.Default())
+			c := convertor.New(false, &requests.Requests{}, slog.Default())
 			m := chi.NewMux()
 			m.Route("/convertor", c.Router)
 
@@ -67,7 +67,7 @@ func TestConvertor_Router(t *testing.T) {
 }
 
 func TestConvertor_Health(t *testing.T) {
-	c := convertor.New(&requests.Requests{}, false, slog.Default())
+	c := convertor.New(false, &requests.Requests{}, slog.Default())
 
 	var health bytes.Buffer
 	err := json.NewEncoder(&health).Encode(c.Health(context.Background()))

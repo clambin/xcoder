@@ -28,11 +28,11 @@ func SkipCodec(codec string) Rule {
 	}
 }
 
-// MinimumSourceBitrate rejects any source video with a bitrate lower than the codec's recommended bitrate
-func MinimumSourceBitrate() Rule {
+// MinimumBitrate rejects any source video with a bitrate lower than the codec's recommended bitrate
+func MinimumBitrate() Rule {
 	return func(stats ffmpeg.VideoStats) error {
 		codec := stats.VideoCodec()
-		bitRate, ok := getMinimumBitrate(codec, stats.Height())
+		bitRate, ok := GetMinimumBitrate(codec, stats.Height())
 		if !ok {
 			return ErrSourceRejected{Reason: "unsupported codec: " + codec}
 		}

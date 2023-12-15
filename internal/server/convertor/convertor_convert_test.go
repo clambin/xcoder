@@ -26,7 +26,7 @@ func TestConvertor_convert(t *testing.T) {
 	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	store := requests.Requests{}
 
-	c := convertor.New(&store, true, l)
+	c := convertor.New(true, &store, l)
 	c.VideoConvertor = &fakeConvertor{}
 
 	const payload = "0123456789"

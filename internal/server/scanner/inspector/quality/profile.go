@@ -21,7 +21,7 @@ var profiles = map[string]Profile{
 		Quality: LowQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
-			MinimumSourceBitrate(),
+			MinimumBitrate(),
 		},
 	},
 	"hevc-high": {
@@ -30,7 +30,7 @@ var profiles = map[string]Profile{
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumHeight(1080),
-			MinimumSourceBitrate(),
+			MinimumBitrate(),
 		},
 	},
 	"hevc-max": {
@@ -39,7 +39,7 @@ var profiles = map[string]Profile{
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumHeight(1080),
-			MinimumSourceBitrate(),
+			MinimumBitrate(),
 		},
 	},
 }
@@ -82,7 +82,7 @@ func (p Profile) MakeRequest(target, source string, sourceStats ffmpeg.VideoStat
 }
 
 func (p Profile) GetTargetBitrate(source ffmpeg.VideoStats) (int, bool) {
-	targetBitrate, ok := getMinimumBitrate(p.Codec, source.Height())
+	targetBitrate, ok := GetMinimumBitrate(p.Codec, source.Height())
 	switch p.Quality {
 	case LowQuality:
 	case HighQuality:
@@ -90,7 +90,7 @@ func (p Profile) GetTargetBitrate(source ffmpeg.VideoStats) (int, bool) {
 		// e.g. if the target's minimum bitrate is 100, the source's minimum bitrate is 200 and the actual bitrate is 400,
 		// then the target bitrate is 100 * ( 400 / 200) = 200
 		var sourceMinimumBitrate int
-		if sourceMinimumBitrate, ok = getMinimumBitrate(source.VideoCodec(), source.Height()); ok {
+		if sourceMinimumBitrate, ok = GetMinimumBitrate(source.VideoCodec(), source.Height()); ok {
 			oversized := float64(source.BitRate()) / float64(sourceMinimumBitrate)
 			targetBitrate = int(float64(targetBitrate) * oversized)
 		}

@@ -2,7 +2,6 @@ package quality
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -71,21 +70,23 @@ func Test_getMinimumBitrate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bitrate, ok := getMinimumBitrate(tt.args.codec, tt.args.height)
+			bitrate, ok := GetMinimumBitrate(tt.args.codec, tt.args.height)
 			tt.wantOK(t, ok)
 			assert.Equal(t, tt.want, bitrate)
 		})
 	}
 }
 
+/*
 func TestBitrateRatio(t *testing.T) {
 	t.Skip()
 	for _, height := range []int{480, 720, 1080, 2160} {
-		hvec, ok := getMinimumBitrate("hevc", height)
+		hvec, ok := GetMinimumBitrate("hevc", height)
 		require.True(t, ok)
-		h264, ok := getMinimumBitrate("h264", height)
+		h264, ok := GetMinimumBitrate("h264", height)
 		require.True(t, ok)
 
 		t.Log(height, float64(h264)/float64(hvec))
 	}
 }
+*/

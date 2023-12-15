@@ -28,7 +28,7 @@ type Convertor struct {
 	stats           stats
 }
 
-func New(req *requests.Requests, removeConverted bool, logger *slog.Logger) *Convertor {
+func New(removeConverted bool, req *requests.Requests, logger *slog.Logger) *Convertor {
 	return &Convertor{
 		VideoConvertor:  ffmpeg.Processor{Logger: logger.With("component", "ffmpeg")},
 		RemoveConverted: removeConverted,

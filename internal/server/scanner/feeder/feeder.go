@@ -33,8 +33,21 @@ func New(rootDir string, interval time.Duration, logger *slog.Logger) *Feeder {
 func (f Feeder) Run(ctx context.Context) error {
 	f.Logger.Debug("started")
 	defer f.Logger.Debug("stopped")
-	// TODO: run scan on recurring basis. Add -once option to only scan once and exit
-	return f.scan(ctx)
+
+	ticker := time.NewTicker(f.Interval)
+	defer ticker.Stop()
+
+	for {
+		if err := f.scan(ctx); err != nil {
+			f.Logger.Error("scan failed", slog.Any("err", err))
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+		}
+	}
 }
 
 var videoExtensions = map[string]struct{}{

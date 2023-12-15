@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/clambin/videoConvertor/internal/server"
+	"github.com/clambin/videoConvertor/internal/server/scanner"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -28,7 +29,16 @@ func main() {
 	}
 
 	l := slog.New(slog.NewTextHandler(os.Stderr, &handlerOpts))
-	s, err := server.New(":9090", *input, *profile, *remove, l)
+
+	cfg := server.Config{
+		Addr: ":9090",
+		ScannerConfig: scanner.Config{
+			RootDir: *input,
+			Profile: *profile,
+		},
+		RemoveConverted: *remove,
+	}
+	s, err := server.New(cfg, l)
 	if err != nil {
 		l.Error("failed to create server", "err", err)
 	}

@@ -24,7 +24,7 @@ func TestApplication_Run(t *testing.T) {
 	defer func() { assert.NoError(t, os.RemoveAll(fs)) }()
 
 	var r requests.Requests
-	a, _ := New(fs, "hevc-max", &r, slog.Default())
+	a, _ := New(Config{RootDir: fs, Profile: "hevc-max"}, &r, slog.Default())
 	a.Inspector.VideoProcessor = fakeProcessor{stats: testutil.MakeProbe("h264", 8000, 1080, time.Hour)}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -47,7 +47,7 @@ func TestApplication_Run(t *testing.T) {
 
 func TestScanner_Health(t *testing.T) {
 	var r requests.Requests
-	a, _ := New("/tmp", "hevc-max", &r, slog.Default())
+	a, _ := New(Config{RootDir: "/tmp", Profile: "hevc-max"}, &r, slog.Default())
 	r.Add(requests.Request{
 		Request: ffmpeg.Request{Source: "foo.mkv"},
 	})

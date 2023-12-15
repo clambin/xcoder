@@ -19,20 +19,30 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func New(addr, rootDir, profile string, removeConverted bool, logger *slog.Logger) (*Server, error) {
+type Config struct {
+	Addr            string
+	ScannerConfig   scanner.Config
+	RemoveConverted bool
+}
+
+func New(cfg Config, logger *slog.Logger) (*Server, error) {
 	r := requests.Requests{}
-	scan, err := scanner.New(rootDir, profile, &r, logger.With(slog.String("component", "scanner")))
+	s, err := scanner.New(cfg.ScannerConfig, &r, logger.With(slog.String("component", "scanner")))
 	if err != nil {
 		return nil, err
 	}
-	s := Server{
-		Scanner:   scan,
-		Convertor: convertor.New(&r, removeConverted, logger.With("component", "processor")),
-		logger:    logger,
+	server := Server{
+		Scanner:    s,
+		Convertor:  convertor.New(cfg.RemoveConverted, &r, logger.With("component", "processor")),
+		HTTPServer: &http.Server{Addr: cfg.Addr},
+		logger:     logger,
 	}
-	s.HTTPServer = s.makeHTTPServer(addr)
+	m := chi.NewMux()
+	m.Get("/health", server.Health)
+	m.Route("/convertor", server.Convertor.Router)
+	server.HTTPServer.Handler = m
 
-	return &s, nil
+	return &server, nil
 }
 
 func (s Server) Run(ctx context.Context) error {
@@ -56,16 +66,6 @@ func (s Server) Run(ctx context.Context) error {
 	}
 	_ = s.HTTPServer.Shutdown(context.Background())
 	return errs
-}
-
-func (s Server) makeHTTPServer(addr string) *http.Server {
-	m := chi.NewMux()
-	m.Get("/health", s.Health)
-	m.Route("/convertor", s.Convertor.Router)
-	return &http.Server{
-		Addr:    addr,
-		Handler: m,
-	}
 }
 
 type HealthChecker interface {

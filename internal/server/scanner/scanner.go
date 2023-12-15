@@ -2,7 +2,6 @@ package scanner
 
 import (
 	"context"
-	"fmt"
 	"github.com/clambin/videoConvertor/internal/server/requests"
 	"github.com/clambin/videoConvertor/internal/server/scanner/feeder"
 	"github.com/clambin/videoConvertor/internal/server/scanner/inspector"
@@ -18,11 +17,16 @@ type Scanner struct {
 	logger    *slog.Logger
 }
 
+type Config struct {
+	RootDir string
+	Profile string
+}
+
 const scanInterval = time.Hour
 
-func New(rootDir string, profile string, r *requests.Requests, logger *slog.Logger) (*Scanner, error) {
-	f := feeder.New(rootDir, scanInterval, logger.With(slog.String("component", "feeder")))
-	i, err := inspector.New(f.Feed, profile, r, logger.With(slog.String("component", "inspector")))
+func New(cfg Config, r *requests.Requests, logger *slog.Logger) (*Scanner, error) {
+	f := feeder.New(cfg.RootDir, scanInterval, logger.With(slog.String("component", "feeder")))
+	i, err := inspector.New(f.Feed, cfg.Profile, r, logger.With(slog.String("component", "inspector")))
 	if err != nil {
 		return nil, err
 	}
@@ -46,14 +50,25 @@ func (a Scanner) Run(ctx context.Context, concurrent int) error {
 			}
 		}()
 	}
+
+	for {
+		if err := a.scan(ctx); err != nil {
+			a.logger.Error("scan failed", slog.Any("err", err))
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(time.Hour):
+		}
+	}
+}
+
+func (a Scanner) scan(ctx context.Context) error {
 	start := time.Now()
 	defer func(start time.Time) {
 		a.logger.Info("scan done", slog.Duration("duration", time.Since(start)))
 	}(start)
-	if err := a.Feeder.Run(ctx); err != nil {
-		return fmt.Errorf("feeder failed: %w", err)
-	}
-	return nil
+	return a.Feeder.Run(ctx)
 }
 
 func (a Scanner) Health(_ context.Context) any {

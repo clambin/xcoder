@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"github.com/clambin/videoConvertor/internal/server"
+	"github.com/clambin/videoConvertor/internal/server/scanner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log/slog"
@@ -11,7 +12,15 @@ import (
 )
 
 func TestServer_HTTPServer(t *testing.T) {
-	s, err := server.New(":8080", "/tmp", "hevc-max", false, slog.Default())
+	cfg := server.Config{
+		Addr: ":8080",
+		ScannerConfig: scanner.Config{
+			RootDir: "/tmp",
+			Profile: "hevc-max",
+		},
+		RemoveConverted: false,
+	}
+	s, err := server.New(cfg, slog.Default())
 	require.NoError(t, err)
 
 	for _, path := range []string{"/convertor/active/on", "/convertor/active/off"} {
@@ -23,7 +32,15 @@ func TestServer_HTTPServer(t *testing.T) {
 }
 
 func TestServer_Health(t *testing.T) {
-	s, err := server.New(":8080", "/tmp", "hevc-max", false, slog.Default())
+	cfg := server.Config{
+		Addr: ":8080",
+		ScannerConfig: scanner.Config{
+			RootDir: "/tmp",
+			Profile: "hevc-max",
+		},
+		RemoveConverted: false,
+	}
+	s, err := server.New(cfg, slog.Default())
 	require.NoError(t, err)
 
 	req, _ := http.NewRequest(http.MethodGet, "/health", nil)

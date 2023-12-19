@@ -13,6 +13,7 @@ import (
 
 var (
 	debug   = flag.Bool("debug", false, "switch on debug logging")
+	addr    = flag.String("addr", ":9090", "listener address for API")
 	input   = flag.String("input", "/media", "input directory")
 	profile = flag.String("profile", "hevc-max", "conversion profile")
 	active  = flag.Bool("active", false, "start convertor in active mode")
@@ -31,7 +32,7 @@ func main() {
 	l := slog.New(slog.NewTextHandler(os.Stderr, &handlerOpts))
 
 	cfg := server.Config{
-		Addr: ":9090",
+		Addr: *addr,
 		ScannerConfig: scanner.Config{
 			RootDir: *input,
 			Profile: *profile,
@@ -41,6 +42,7 @@ func main() {
 	s, err := server.New(cfg, l)
 	if err != nil {
 		l.Error("failed to create server", "err", err)
+		return
 	}
 	s.Convertor.SetActive(*active)
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

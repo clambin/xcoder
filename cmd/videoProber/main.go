@@ -2,24 +2,38 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"log/slog"
 	"os"
 )
 
+var asJSON = flag.Bool("json", false, "dump stats as json")
+
 func main() {
+	flag.Parse()
 	p := ffmpeg.Processor{Logger: slog.Default()}
-	for _, arg := range os.Args[1:] {
+
+	for _, arg := range flag.Args() {
 		probe, err := p.Probe(context.Background(), arg)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%s: codec:%s bitrate:%.1fmbps height:%d\n",
-			arg,
-			probe.VideoCodec(),
-			float64(probe.BitRate())/1024/1024,
-			probe.Height(),
-		)
+
+		if *asJSON {
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			_ = enc.Encode(probe)
+		} else {
+			fmt.Printf("%s: codec:%s bitrate:%.1fmbps height:%d width:%d\n",
+				arg,
+				probe.VideoCodec(),
+				float64(probe.BitRate())/1024/1024,
+				probe.Height(),
+				probe.Width(),
+			)
+		}
 	}
 }

@@ -18,7 +18,6 @@ var (
 	profile = flag.String("profile", "hevc-max", "conversion profile")
 	active  = flag.Bool("active", false, "start convertor in active mode")
 	remove  = flag.Bool("remove", false, "remove source files after successful conversion")
-	//concurrent = flag.Int("concurrent", 1, "number of concurrent video convertors ")
 )
 
 func main() {

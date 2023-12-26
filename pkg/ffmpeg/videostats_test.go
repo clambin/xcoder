@@ -16,7 +16,7 @@ func TestVideoStats(t *testing.T) {
 		},
 		Streams: []Stream{
 			{CodecType: "audio", CodecName: "aac"},
-			{CodecType: "video", CodecName: "hevc", Height: 720, BitsPerSample: 10},
+			{CodecType: "video", CodecName: "hevc", Height: 720, Width: 1280, BitsPerSample: 10},
 		},
 	}
 
@@ -25,6 +25,7 @@ func TestVideoStats(t *testing.T) {
 	assert.Equal(t, time.Hour, stats.Duration())
 	assert.Equal(t, "hevc", stats.VideoCodec())
 	assert.Equal(t, 720, stats.Height())
+	assert.Equal(t, 1280, stats.Width())
 }
 
 func TestVideoStats_LogValue(t *testing.T) {

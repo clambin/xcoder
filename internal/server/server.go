@@ -37,6 +37,7 @@ func New(cfg Config, logger *slog.Logger) (*Server, error) {
 		HTTPServer: &http.Server{Addr: cfg.Addr},
 		logger:     logger,
 	}
+	// TODO: once we're on Go 1.22, see if we can remove chi dependency
 	m := chi.NewMux()
 	m.Get("/health", server.Health)
 	m.Route("/convertor", server.Convertor.Router)

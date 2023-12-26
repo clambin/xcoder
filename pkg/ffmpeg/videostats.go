@@ -118,6 +118,15 @@ func (p VideoStats) Height() int {
 	return 0
 }
 
+func (p VideoStats) Width() any {
+	for i := range p.Streams {
+		if p.Streams[i].CodecType == "video" {
+			return p.Streams[i].Width
+		}
+	}
+	return 0
+}
+
 func (p VideoStats) Duration() time.Duration {
 	seconds, _ := strconv.ParseFloat(p.Format.Duration, 64)
 	return time.Duration(seconds) * time.Second

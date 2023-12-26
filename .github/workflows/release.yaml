@@ -10,7 +10,7 @@ jobs:
     uses: clambin/workflows/.github/workflows/test.yaml@main
   release:
     needs:
-      - build
+      - test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -16,7 +16,7 @@ func (s *stats) push(path string) {
 	if s.processing == nil {
 		s.processing = set.New[string]()
 	}
-	s.processing[path] = struct{}{}
+	s.processing.Add(path)
 }
 
 func (s *stats) pop(path string) {

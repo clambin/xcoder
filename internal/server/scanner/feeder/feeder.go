@@ -2,6 +2,7 @@ package feeder
 
 import (
 	"context"
+	"github.com/clambin/go-common/set"
 	"io/fs"
 	"log/slog"
 	"path/filepath"
@@ -50,7 +51,7 @@ func (f Feeder) Run(ctx context.Context) error {
 	}
 }
 
-var videoExtensions = map[string]struct{}{
+var videoExtensions = set.Set[string]{
 	".mkv": {},
 	".mp4": {},
 	".avi": {},
@@ -73,7 +74,7 @@ func (f Feeder) scan(ctx context.Context) error {
 			l.Debug("not a file")
 			return nil
 		}
-		if _, ok := videoExtensions[filepath.Ext(path)]; !ok {
+		if !videoExtensions.Contains(filepath.Ext(path)) {
 			l.Debug("not a video file")
 			return nil
 		}

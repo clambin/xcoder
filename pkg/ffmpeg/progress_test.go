@@ -47,7 +47,6 @@ func Test_getProgress(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -62,14 +61,14 @@ func Test_getProgress(t *testing.T) {
 
 func Benchmark_getProgress(b *testing.B) {
 	var input string
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 20; j++ {
+	for range 100 {
+		for range 20 {
 			input += "token=value\n"
 		}
 		input += "speed=1.0x\nout_time_ms=1\n"
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = getProgress(input)
 	}
 }

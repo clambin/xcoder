@@ -24,7 +24,7 @@ func TestFeeder_Run(t *testing.T) {
 	errCh := make(chan error)
 	go func() { errCh <- f.Run(ctx) }()
 
-	for i := 0; i < len(validVideoFiles); i++ {
+	for range len(validVideoFiles) {
 		entry := <-f.Feed
 		assert.Contains(t, validVideoFiles, filepath.Base(entry.Path))
 	}

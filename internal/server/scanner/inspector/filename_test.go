@@ -6,7 +6,7 @@ import (
 )
 
 func Test_makeTargetFilename(t *testing.T) {
-	tt := []struct {
+	tests := []struct {
 		name  string
 		input string
 		want  string
@@ -43,12 +43,11 @@ func Test_makeTargetFilename(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tt {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			target := makeTargetFilename(tc.input, "/directory", "hevc", "mkv")
-			assert.Equal(t, tc.want, target)
+			target := makeTargetFilename(tt.input, "/directory", "hevc", "mkv")
+			assert.Equal(t, tt.want, target)
 		})
 	}
 }

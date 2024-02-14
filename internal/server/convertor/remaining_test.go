@@ -7,7 +7,7 @@ import (
 )
 
 func Test_calculateRemaining(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		start   time.Time
 		now     time.Time
@@ -49,8 +49,7 @@ func Test_calculateRemaining(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.want, calculateRemaining(tt.start, tt.now, tt.elapsed, tt.total))

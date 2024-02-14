@@ -16,7 +16,7 @@ import (
 )
 
 func TestConvertor_Router(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name     string
 		method   string
 		path     string
@@ -46,8 +46,7 @@ func TestConvertor_Router(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

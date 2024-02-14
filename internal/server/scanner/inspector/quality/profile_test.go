@@ -11,7 +11,7 @@ import (
 )
 
 func TestProfile_MakeRequest(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name        string
 		profile     string
 		sourceStats ffmpeg.VideoStats
@@ -103,8 +103,7 @@ func TestProfile_MakeRequest(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

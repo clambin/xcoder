@@ -1,18 +1,18 @@
 package requests_test
 
 import (
-	requests2 "github.com/clambin/videoConvertor/internal/server/requests"
+	"github.com/clambin/videoConvertor/internal/server/requests"
 	"github.com/clambin/videoConvertor/pkg/ffmpeg"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestRequests(t *testing.T) {
-	r := requests2.Requests{}
+	r := requests.Requests{}
 
 	sources := []string{"1", "2", "3"}
 	for _, source := range sources {
-		r.Add(requests2.Request{Request: ffmpeg.Request{Source: source}})
+		r.Add(requests.Request{Request: ffmpeg.Request{Source: source}})
 	}
 
 	assert.Equal(t, len(sources), r.Len())

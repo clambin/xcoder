@@ -25,7 +25,7 @@ func TestCompressionFactor_LogValue(t *testing.T) {
 }
 
 func TestCalculateCompression(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		source  int
 		target  int
@@ -60,9 +60,10 @@ func TestCalculateCompression(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			tmpDir, err := os.MkdirTemp("", "")
 			require.NoError(t, err)
 			defer func() { assert.NoError(t, os.RemoveAll(tmpDir)) }()

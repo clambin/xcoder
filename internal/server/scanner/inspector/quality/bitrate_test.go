@@ -10,7 +10,7 @@ func Test_getMinimumBitrate(t *testing.T) {
 		codec  string
 		height int
 	}
-	testCases := []struct {
+	tests := []struct {
 		name   string
 		args   args
 		wantOK assert.BoolAssertionFunc
@@ -65,8 +65,7 @@ func Test_getMinimumBitrate(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

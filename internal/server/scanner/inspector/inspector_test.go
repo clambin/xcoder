@@ -21,7 +21,7 @@ func TestInspector_process(t *testing.T) {
 		stats ffmpeg.VideoStats
 		err   error
 	}
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		entry   feeder.Entry
 		probe   probe
@@ -74,8 +74,7 @@ func TestInspector_process(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpDir, err := os.MkdirTemp("", "")
 			require.NoError(t, err)

@@ -39,7 +39,7 @@ func Benchmark_serveSocket(b *testing.B) {
 }
 
 func write(conn io.Writer, batches, lines int) error {
-	for b := 0; b < batches; b++ {
+	for range batches {
 		for l := 0; l < lines; l++ {
 			if _, err := conn.Write([]byte("other_info\n")); err != nil {
 				return fmt.Errorf("write: %w", err)

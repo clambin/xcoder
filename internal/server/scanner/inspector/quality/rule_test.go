@@ -45,7 +45,6 @@ func TestMinimumHeight(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			err := MinimumHeight(tt.minHeight)(tt.stats)
@@ -58,7 +57,7 @@ func TestMinimumHeight(t *testing.T) {
 }
 
 func TestMinimumSourceBitrate(t *testing.T) {
-	testCases := []struct {
+	tests := []struct {
 		name    string
 		stats   ffmpeg.VideoStats
 		wantErr assert.ErrorAssertionFunc
@@ -80,8 +79,7 @@ func TestMinimumSourceBitrate(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
-		tt := tt
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := MinimumBitrate()(tt.stats)
 			tt.wantErr(t, err)

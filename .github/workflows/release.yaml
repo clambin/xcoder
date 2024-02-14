@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    uses: clambin/workflows/.github/workflows/test.yaml@main
+    uses: clambin/workflows/.github/workflows/test.yaml@go122
   release:
     needs:
       - test

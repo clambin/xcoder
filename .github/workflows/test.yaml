@@ -10,5 +10,5 @@ on:
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@go122
-    with:
-      all-tests: true
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}

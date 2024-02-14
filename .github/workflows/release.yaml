@@ -8,6 +8,8 @@ on:
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@go122
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
   release:
     needs:
       - test

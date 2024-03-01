@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/clambin/go-common/set v0.4.2
 	github.com/go-chi/chi/v5 v5.0.12
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 )
 
 require (

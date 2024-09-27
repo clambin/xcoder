@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/clambin/videoConvertor/pkg/ffmpeg"
+	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"log/slog"
 	"os"
 )
@@ -17,7 +17,7 @@ func main() {
 	p := ffmpeg.Processor{Logger: slog.Default()}
 
 	for _, arg := range flag.Args() {
-		probe, err := p.Probe(context.Background(), arg)
+		probe, err := p.Scan(context.Background(), arg)
 		if err != nil {
 			panic(err)
 		}

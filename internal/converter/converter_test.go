@@ -105,6 +105,7 @@ func TestFsFileChecker_TargetIsNewer(t *testing.T) {
 
 	filenameA := filepath.Join(tmpDir, "a")
 	require.NoError(t, os.WriteFile(filenameA, []byte("A"), 0644))
+	require.NoError(t, os.Chtimes(filenameA, time.Now().Add(-time.Hour), time.Now().Add(-time.Hour)))
 	filenameB := filepath.Join(tmpDir, "b")
 	require.NoError(t, os.WriteFile(filenameB, []byte("B"), 0644))
 

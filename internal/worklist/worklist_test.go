@@ -46,6 +46,15 @@ func TestWorkList_Active(t *testing.T) {
 	assert.False(t, l.Active())
 }
 
+func TestWorkItem_Stats(t *testing.T) {
+	stats := ffmpeg.NewVideoStats("h264", 1080, 5_000_000)
+	var item WorkItem
+	item.AddSourceStats(stats)
+	assert.Equal(t, stats, item.SourceVideoStats())
+	item.AddTargetStats(stats)
+	assert.Equal(t, stats, item.TargetVideoStats())
+}
+
 func TestWorkStatus_String(t *testing.T) {
 	for val, label := range workStatusToString {
 		assert.Equal(t, label, val.String())
@@ -58,6 +67,7 @@ func TestProgress(t *testing.T) {
 		name          string
 		duration      time.Duration
 		progress      ffmpeg.Progress
+		prevSpeed     float64
 		wantCompleted float64
 		wantRemaining time.Duration
 	}{
@@ -88,12 +98,21 @@ func TestProgress(t *testing.T) {
 			wantCompleted: 1,
 			wantRemaining: 0,
 		},
+		{
+			name:          "zero speed",
+			duration:      time.Hour,
+			progress:      ffmpeg.Progress{Converted: 30 * time.Minute},
+			prevSpeed:     2,
+			wantCompleted: .5,
+			wantRemaining: 15 * time.Minute,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			p := Progress{Duration: tt.duration}
+			p.progress.Speed = tt.prevSpeed
 			p.Update(tt.progress)
 			assert.Equal(t, tt.wantCompleted, p.Completed())
 			assert.Equal(t, tt.wantRemaining, p.Remaining())

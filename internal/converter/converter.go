@@ -76,13 +76,13 @@ func (c *Converter) convertItem(ctx context.Context, item *worklist.WorkItem) {
 	err := c.convert(ctx, item)
 	if err == nil {
 		c.Logger.Info("converted successfully", "source", item.Source)
-		item.Done(worklist.Converted, nil)
+		item.SetStatus(worklist.Converted, nil)
 	} else if errors.Is(err, ErrAlreadyConverted) {
 		c.Logger.Info("already converted", "source", item.Source)
-		item.Done(worklist.Skipped, err)
+		item.SetStatus(worklist.Skipped, err)
 	} else {
 		c.Logger.Warn("conversion failed", "err", err, "source", item.Source)
-		item.Done(worklist.Failed, err)
+		item.SetStatus(worklist.Failed, err)
 	}
 }
 

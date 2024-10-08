@@ -41,7 +41,7 @@ func (wl *WorkList) dequeue() *WorkItem {
 	var item *WorkItem
 	if len(wl.queued) > 0 {
 		item = wl.queued[0]
-		item.setStatus(Converting, nil)
+		item.SetStatus(Converting, nil)
 		wl.queued = wl.queued[1:]
 	}
 	return item
@@ -52,7 +52,7 @@ func (wl *WorkList) checkout(current, next WorkStatus) *WorkItem {
 	defer wl.lock.RUnlock()
 	for _, item := range wl.list {
 		if status, _ := item.Status(); status == current {
-			item.setStatus(next, nil)
+			item.SetStatus(next, nil)
 			return item
 		}
 	}
@@ -141,15 +141,11 @@ func (w *WorkItem) Status() (WorkStatus, error) {
 	return w.status, w.err
 }
 
-func (w *WorkItem) setStatus(status WorkStatus, err error) {
+func (w *WorkItem) SetStatus(status WorkStatus, err error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.status = status
 	w.err = err
-}
-
-func (w *WorkItem) Done(status WorkStatus, err error) {
-	w.setStatus(status, err)
 }
 
 func (w *WorkItem) SourceVideoStats() ffmpeg.VideoStats {
@@ -188,7 +184,12 @@ type Progress struct {
 func (p *Progress) Update(progress ffmpeg.Progress) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	p.progress = progress
+	p.progress.Converted = progress.Converted
+	// if speed is zero, we won't be able to calculate the remaining time. in this case, we don't update and the
+	// remaining time will be calculated using the last  reported speed.
+	if progress.Speed != 0 {
+		p.progress.Speed = progress.Speed
+	}
 }
 
 func (p *Progress) Completed() float64 {
@@ -203,6 +204,5 @@ func (p *Progress) Remaining() time.Duration {
 	if p.progress.Speed == 0 {
 		return -1
 	}
-	remaining := p.Duration - p.progress.Converted
-	return time.Duration(float64(remaining) / p.progress.Speed)
+	return time.Duration(float64(p.Duration-p.progress.Converted) / p.progress.Speed)
 }

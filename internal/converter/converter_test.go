@@ -63,7 +63,7 @@ func TestConverter_convert(t *testing.T) {
 			go func() { c.Run(ctx); done <- struct{}{} }()
 
 			i := l.Add("foo.mkv")
-			i.Done(worklist.Inspected, nil)
+			i.SetStatus(worklist.Inspected, nil)
 			i.AddSourceStats(ffmpeg.VideoStats{Format: ffmpeg.Format{BitRate: "4000000"}, Streams: []ffmpeg.Stream{{CodecName: "h264", CodecType: "video"}}})
 
 			assert.Eventually(t, func() bool {

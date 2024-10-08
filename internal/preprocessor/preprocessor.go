@@ -40,7 +40,7 @@ func preProcess(ctx context.Context, item *worklist.WorkItem, codec FFMPEG, vide
 	if err != nil {
 		l.Warn("failed to preprocess file", "err", err)
 		err = fmt.Errorf("preprocessing failed: %w", err)
-		item.Done(worklist.Failed, err)
+		item.SetStatus(worklist.Failed, err)
 		return err
 	}
 	item.AddSourceStats(sourceStats)
@@ -54,12 +54,12 @@ func preProcess(ctx context.Context, item *worklist.WorkItem, codec FFMPEG, vide
 		if errors.Is(err, profile.ErrSourceInTargetCodec) {
 			status = worklist.Skipped
 		}
-		item.Done(status, err)
+		item.SetStatus(status, err)
 		return err
 	}
 	item.AddTargetStats(targetStats)
 
 	// Add the sourceStats
-	item.Done(worklist.Inspected, nil)
+	item.SetStatus(worklist.Inspected, nil)
 	return nil
 }

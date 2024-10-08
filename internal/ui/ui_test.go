@@ -12,7 +12,7 @@ import (
 func TestUI(t *testing.T) {
 	var list worklist.WorkList
 	list.Add("foo")
-	list.List()[0].Done(worklist.Skipped, nil)
+	list.List()[0].SetStatus(worklist.Skipped, nil)
 
 	cfg := configuration.Configuration{Input: "/foo", ProfileName: "foo"}
 	ui := New(&list, cfg)
@@ -56,7 +56,7 @@ func TestUI(t *testing.T) {
 
 	// Request a file to be converted
 	ui.Select(1, 0)
-	list.List()[0].Done(worklist.Inspected, nil)
+	list.List()[0].SetStatus(worklist.Inspected, nil)
 	ui.handleInput(tcell.NewEventKey(tcell.KeyEnter, rune(tcell.KeyEnter), tcell.ModNone))
 	item := list.NextToConvert()
 	require.NotNil(t, item)

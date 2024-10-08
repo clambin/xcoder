@@ -116,31 +116,33 @@ type Progress struct {
 }
 
 func progress(r io.Reader) iter.Seq2[Progress, error] {
-	var convertedMarker = []byte("out_time_ms=")
-	var speedMarker = []byte("speed=")
-	var endMarker = []byte("progress=end")
+	var (
+		convertedMarker = []byte("out_time_ms=")
+		speedMarker     = []byte("speed=")
+		endMarker       = []byte("progress=end")
+	)
 
 	return func(yield func(Progress, error) bool) {
 		s := bufio.NewScanner(r)
 		var haveProgress, haveSpeed bool
-		var progress Progress
+		var prog Progress
 		for s.Scan() {
 			line := s.Bytes()
-			if bytes.Compare(line, endMarker) == 0 {
+			if bytes.Equal(line, endMarker) {
 				return
 			}
 			if bytes.HasPrefix(line, convertedMarker) {
 				if microSeconds, err := strconv.Atoi(string(line[len(convertedMarker):])); err == nil {
-					progress.Converted = time.Duration(microSeconds) * time.Microsecond
+					prog.Converted = time.Duration(microSeconds) * time.Microsecond
 					haveProgress = true
 				}
 			} else if bytes.HasPrefix(line, speedMarker) {
 				line = bytes.TrimSuffix(line, []byte("x"))
-				progress.Speed, _ = strconv.ParseFloat(string(line[len(speedMarker):]), 64)
+				prog.Speed, _ = strconv.ParseFloat(string(line[len(speedMarker):]), 64)
 				haveSpeed = true
 			}
 			if haveProgress && haveSpeed {
-				if !yield(progress, nil) {
+				if !yield(prog, nil) {
 					return
 				}
 				haveProgress = false

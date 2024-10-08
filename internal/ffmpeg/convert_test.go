@@ -74,6 +74,7 @@ func Test_progress(t *testing.T) {
 	}
 }
 
+// Before: 47821 ns/op           31536 B/op          4 allocs/op
 func Benchmark_progress(b *testing.B) {
 	var input string
 	for range 100 {

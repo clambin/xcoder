@@ -87,10 +87,12 @@ func (p Processor) readProgressSocket(conn io.Reader, progressCallback func(Prog
 			progressCallback(progress)
 		}
 
-		// w/out data trimming: 1885038999 ns/op
-		// with data trimming:     3802577 ns/op
-		if len(data) > 2*bufSize {
-			data = data[bufSize:]
+		// oversize buffer:       2904326 ns/op         4793430 B/op       6614 allocs/op
+		// smarter:               1364488 ns/op         2001133 B/op       6411 allocs/op
+
+		// last line may have been incomplete. process it after we get more data.
+		if pos := strings.LastIndexByte(data, '\n'); pos != -1 {
+			data = data[pos+1:]
 		}
 	}
 }

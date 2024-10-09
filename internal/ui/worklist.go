@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/clambin/go-common/set"
 	"github.com/clambin/videoConvertor/internal/worklist"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"path/filepath"
 	"strconv"
@@ -39,6 +40,7 @@ func newWorkListViewer(list *worklist.WorkList) *workListViewer {
 		Table:   tview.NewTable(),
 		filters: &filters{statuses: set.New[worklist.WorkStatus]()},
 	}
+	v.SetInputCapture(v.handleInput)
 	v.Table.
 		SetEvaluateAllRows(true).
 		SetFixed(1, 0).
@@ -136,6 +138,40 @@ func (v *workListViewer) title(list []*worklist.WorkItem, rows int) string {
 		title += " [" + strconv.Itoa(rows) + "]"
 	}
 	return " " + title + " "
+}
+
+func (v *workListViewer) handleInput(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyRune:
+		switch event.Rune() {
+		case 's':
+			v.filters.toggle(worklist.Skipped)
+			return nil
+		case 'c':
+			v.filters.toggle(worklist.Converted)
+			return nil
+		case 'r':
+			v.filters.toggle(worklist.Rejected)
+			return nil
+		case 'f':
+			v.fullName.Store(!v.fullName.Load())
+			return nil
+		case 'p':
+			v.list.ToggleActive()
+			return nil
+		default:
+			return event
+		}
+	case tcell.KeyEnter:
+		row, _ := v.GetSelection()
+		item := v.GetCell(row, 0).GetReference().(*worklist.WorkItem)
+		if status, _ := item.Status(); status == worklist.Inspected || status == worklist.Failed {
+			v.list.Queue(item)
+		}
+		return nil
+	default:
+		return event
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

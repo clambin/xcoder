@@ -22,11 +22,8 @@ type Application interface {
 }
 
 func New(list *worklist.WorkList, cfg configuration.Configuration) *UI {
-	root := tview.NewGrid()
 	h := newHeader(list, cfg)
 	b := tview.NewPages()
-	root.AddItem(h, 0, 0, 1, 1, 0, 0, false)
-	root.AddItem(b, 1, 0, 3, 1, 0, 0, true)
 
 	wlv := newWorkListViewer(list)
 	b.AddPage("worklist", wlv, true, true)
@@ -34,6 +31,10 @@ func New(list *worklist.WorkList, cfg configuration.Configuration) *UI {
 	lv := newLogViewer()
 	b.AddPage("logs", lv, true, false)
 	h.shortcutsView.addPage("logs", logViewerShortCuts, false)
+
+	root := tview.NewGrid()
+	root.AddItem(h, 0, 0, 1, 1, 0, 0, false)
+	root.AddItem(b, 1, 0, 3, 1, 0, 0, true)
 
 	u := UI{
 		Root:           root,
@@ -71,21 +72,6 @@ func (u *UI) handleInput(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyRune:
 		switch event.Rune() {
-		case 's':
-			u.workListViewer.filters.toggle(worklist.Skipped)
-			return nil
-		case 'c':
-			u.workListViewer.filters.toggle(worklist.Converted)
-			return nil
-		case 'r':
-			u.workListViewer.filters.toggle(worklist.Rejected)
-			return nil
-		case 'f':
-			u.workListViewer.fullName.Store(!u.workListViewer.fullName.Load())
-			return nil
-		case 'p':
-			u.workListViewer.list.ToggleActive()
-			return nil
 		case 'l':
 			page, _ := u.pages.GetFrontPage()
 			switch page {
@@ -104,13 +90,6 @@ func (u *UI) handleInput(event *tcell.EventKey) *tcell.EventKey {
 		default:
 			return event
 		}
-	case tcell.KeyEnter:
-		row, _ := u.workListViewer.GetSelection()
-		item := u.workListViewer.GetCell(row, 0).GetReference().(*worklist.WorkItem)
-		if status, _ := item.Status(); status == worklist.Inspected || status == worklist.Failed {
-			u.workListViewer.list.Queue(item)
-		}
-		return nil
 	default:
 		return event
 	}

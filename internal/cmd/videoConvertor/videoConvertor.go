@@ -44,7 +44,7 @@ func Run(ctx context.Context, _ io.Writer) error {
 
 	var g errgroup.Group
 	g.Go(func() error { return scanner.Scan(subCtx, cfg.Input, &list, itemCh, l.With("component", "scanner")) })
-	const inspectorCount = 4
+	const inspectorCount = 8
 	for range inspectorCount {
 		g.Go(func() error {
 			preprocessor.Run(subCtx, itemCh, &ff, cfg.Profile, l.With("component", "preprocessor"))

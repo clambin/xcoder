@@ -35,11 +35,11 @@ func TestUI(t *testing.T) {
 	assert.Equal(t, "foo", ui.workListViewer.Table.GetCell(1, 0).Text)
 
 	// validate that filters work
-	ui.handleInput(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone))
-	ui.refresh()
+	ui.workListViewer.handleInput(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone))
+	ui.workListViewer.refresh()
 	assert.Equal(t, 1, ui.workListViewer.Table.GetRowCount())
-	ui.handleInput(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone))
-	ui.refresh()
+	ui.workListViewer.handleInput(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone))
+	ui.workListViewer.refresh()
 	assert.Equal(t, 2, ui.workListViewer.Table.GetRowCount())
 
 	// verify switching between different pages
@@ -57,7 +57,7 @@ func TestUI(t *testing.T) {
 	// Request a file to be converted
 	ui.Select(1, 0)
 	list.List()[0].SetStatus(worklist.Inspected, nil)
-	ui.handleInput(tcell.NewEventKey(tcell.KeyEnter, rune(tcell.KeyEnter), tcell.ModNone))
+	ui.workListViewer.handleInput(tcell.NewEventKey(tcell.KeyEnter, rune(tcell.KeyEnter), tcell.ModNone))
 	item := list.NextToConvert()
 	require.NotNil(t, item)
 	assert.Equal(t, "foo", item.Source)

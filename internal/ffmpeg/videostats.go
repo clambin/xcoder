@@ -1,7 +1,6 @@
 package ffmpeg
 
 import (
-	"github.com/clambin/videoConvertor/internal/bits"
 	"log/slog"
 	"strconv"
 	"time"
@@ -136,7 +135,7 @@ func (s VideoStats) String() string {
 		output += "/" + strconv.Itoa(height)
 	}
 	if bitRate := s.BitRate(); bitRate > 0 {
-		output += "/" + bits.Bits(bitRate).Format(2) + "ps"
+		output += "/" + Bits(bitRate).Format(2) + "ps"
 	}
 	return output
 }
@@ -200,4 +199,20 @@ func (s VideoStats) LogValue() slog.Value {
 		slog.Int("height", s.Height()),
 		slog.Duration("duration", s.Duration()),
 	)
+}
+
+type Bits int
+
+func (b Bits) Format(decimals int) string {
+	floatBits := float64(b)
+	unit := "b"
+	if floatBits > 1000 {
+		floatBits /= 1000
+		unit = "kb"
+	}
+	if floatBits > 1000 {
+		floatBits /= 1000
+		unit = "mb"
+	}
+	return strconv.FormatFloat(floatBits, 'f', decimals, 64) + " " + unit
 }

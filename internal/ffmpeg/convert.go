@@ -8,7 +8,6 @@ import (
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io"
 	"iter"
-	"math/rand"
 	"net"
 	"os"
 	"path"
@@ -29,26 +28,28 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 		}
 	}
 	stream, err := p.makeConvertCommand(ctx, request, sock)
-	//	stream.Context = ctx
-	if err == nil {
-		p.Logger.Info("converting", "cmd", stream.Compile().String())
-		err = stream.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create command: %w", err)
 	}
-	return err
+	p.Logger.Info("converting", "cmd", stream.Compile().String())
+	return stream.Run()
 }
 
 // progressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
 // track of the progress of the conversion.
 func (p Processor) progressSocket(progressCallback func(Progress)) (string, error) {
-	// TODO: not sufficiently random?
-	sockFileName := path.Join(os.TempDir(), "ffmpeg_socket_"+strconv.Itoa(rand.Int()))
+	tmpDir, err := os.MkdirTemp("", "ffmpeg-")
+	if err != nil {
+		return "", err
+	}
+	sockFileName := path.Join(tmpDir, "ffmpeg.sock")
 	l, err := net.Listen("unix", sockFileName)
 	if err != nil {
 		return "", fmt.Errorf("progress socket: listen: %w", err)
 	}
 	go func() {
 		defer func() {
-			if err := os.Remove(sockFileName); err != nil {
+			if err := os.RemoveAll(tmpDir); err != nil {
 				p.Logger.Error("failed to clean up status socket", "err", err)
 			}
 		}()

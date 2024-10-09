@@ -80,8 +80,11 @@ func Test_makeConvertCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// ffmpeg-go.Silent() uses a global variable. :-(
+			//t.Parallel()
+
 			p := Processor{Logger: slog.Default()}
-			ctx := context.Background()
+			ctx := context.WithValue(context.Background(), "test", "test")
 			s, err := p.makeConvertCommand(ctx, tt.args.request, tt.args.progressSocket)
 			tt.wantErr(t, err)
 			if err != nil {
@@ -89,6 +92,7 @@ func Test_makeConvertCommand(t *testing.T) {
 			}
 			clArgs := strings.Join(s.Compile().Args[1:], " ")
 			assert.Equal(t, tt.wantCmd, clArgs)
+			assert.Equal(t, "test", s.Context.Value("test"))
 		})
 	}
 }

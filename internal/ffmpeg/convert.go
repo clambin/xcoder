@@ -100,8 +100,13 @@ func (p Processor) makeConvertCommand(ctx context.Context, request Request, prog
 
 	cmd := ffmpeg.Input(request.Source, inputArguments).Output(request.Target, outputArguments).GlobalArgs(globalArgs...)
 	cmd.Context = ctx
-	cmd.OverWriteOutput().Silent(true)
+	cmd.OverWriteOutput() //.Silent(true)
 	return cmd, nil
+}
+
+func init() {
+	// ffmpeg-go's Silent() uses a global variable, so isn't thread-safe. So instead, we set the global variable here.
+	ffmpeg.LogCompiledCommand = false
 }
 
 type Progress struct {

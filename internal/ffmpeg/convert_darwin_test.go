@@ -94,7 +94,8 @@ func Test_makeConvertCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			// ffmpeg-go.Silent() uses a global variable. :-(
+			//t.Parallel()
 
 			p := Processor{Logger: slog.Default()}
 			ctx := context.WithValue(context.Background(), "test", "test")

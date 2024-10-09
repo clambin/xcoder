@@ -61,7 +61,7 @@ func Test_makeConvertCommand(t *testing.T) {
 				},
 				progressSocket: "socket",
 			},
-			wantCmd: "-i foo.mkv -b:v 4096000 -c:a copy -c:s copy -c:v libx265 -f matroska -map 0:0 -profile:v main foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+			wantCmd: "-i foo.mkv -b:v 4096000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
 			wantErr: assert.NoError,
 		},
 		{
@@ -80,8 +80,6 @@ func Test_makeConvertCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			p := Processor{Logger: slog.Default()}
 			ctx := context.Background()
 			s, err := p.makeConvertCommand(ctx, tt.args.request, tt.args.progressSocket)

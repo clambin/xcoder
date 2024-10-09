@@ -5,12 +5,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io"
 	"iter"
-	"math/rand"
 	"net"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"time"
@@ -22,40 +21,35 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 	}
 
 	var sock string
-	var err error
 	if request.ProgressCB != nil {
-		sock, err = p.progressSocket(request.ProgressCB)
-		if err != nil {
+		var err error
+		if sock, err = p.progressSocket(request.ProgressCB); err != nil {
 			return fmt.Errorf("progress socket: %w", err)
 		}
 	}
-
-	command, args, err := makeConvertCommand(request, sock)
+	stream, err := p.makeConvertCommand(ctx, request, sock)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create command: %w", err)
 	}
-
-	cmd := exec.CommandContext(ctx, command, args...)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err = cmd.Run(); err != nil {
-		err = fmt.Errorf("ffmpeg: %w. error: %s", err, lastLine(&stderr))
-	}
-	return err
+	p.Logger.Info("converting", "cmd", stream.Compile().String())
+	return stream.Run()
 }
 
 // progressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
 // track of the progress of the conversion.
 func (p Processor) progressSocket(progressCallback func(Progress)) (string, error) {
-	// TODO: not sufficiently random?
-	sockFileName := path.Join(os.TempDir(), "ffmpeg_socket_"+strconv.Itoa(rand.Int()))
+	tmpDir, err := os.MkdirTemp("", "ffmpeg-")
+	if err != nil {
+		return "", err
+	}
+	sockFileName := path.Join(tmpDir, "ffmpeg.sock")
 	l, err := net.Listen("unix", sockFileName)
 	if err != nil {
 		return "", fmt.Errorf("progress socket: listen: %w", err)
 	}
 	go func() {
 		defer func() {
-			if err := os.Remove(sockFileName); err != nil {
+			if err := os.RemoveAll(tmpDir); err != nil {
 				p.Logger.Error("failed to clean up status socket", "err", err)
 			}
 		}()
@@ -78,36 +72,42 @@ func (p Processor) progressSocket(progressCallback func(Progress)) (string, erro
 	return sockFileName, nil
 }
 
-func makeConvertCommand(request Request, progressSocket string) (string, []string, error) {
-	videoCodec, ok := videoCodecs[request.VideoCodec]
+func (p Processor) makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {
+	codecName, ok := videoCodecs[request.VideoCodec]
 	if !ok {
-		return "", nil, fmt.Errorf("ffmpeg: unsupported video codec: %s", request.VideoCodec)
+		return nil, fmt.Errorf("unsupported video codec: %s", request.VideoCodec)
 	}
-
 	profile := "main"
 	if request.BitsPerSample == 10 {
 		profile = "main10"
 	}
 
-	args := []string{
-		"-y",
-		"-nostats", "-loglevel", "error",
+	globalArgs := []string{
+		"-nostats",
+		"-loglevel", "error",
 	}
-	args = append(args, prefixArguments...)
-	args = append(args,
-		//"-threads", "8",
-		"-i", request.Source,
-		"-map", "0",
-		"-c:v", videoCodec, "-profile:v", profile, "-b:v", strconv.Itoa(request.BitRate),
-		"-c:a", "copy",
-		"-c:s", "copy",
-		"-f", "matroska",
-	)
 	if progressSocket != "" {
-		args = append(args, "-progress", "unix://"+progressSocket)
+		globalArgs = append(globalArgs, "-progress", "unix://"+progressSocket)
 	}
-	args = append(args, request.Target)
-	return "ffmpeg", args, nil
+	outputArguments := ffmpeg.KwArgs{
+		//"map":       "0:0",
+		"c:v":       codecName,
+		"profile:v": profile,
+		"b:v":       request.BitRate,
+		"c:a":       "copy",
+		"c:s":       "copy",
+		"f":         "matroska",
+	}
+
+	cmd := ffmpeg.Input(request.Source, inputArguments).Output(request.Target, outputArguments).GlobalArgs(globalArgs...)
+	cmd.Context = ctx
+	cmd.OverWriteOutput() //.Silent(true)
+	return cmd, nil
+}
+
+func init() {
+	// ffmpeg-go's Silent() uses a global variable, so isn't thread-safe. So instead, we set the global variable here.
+	ffmpeg.LogCompiledCommand = false
 }
 
 type Progress struct {
@@ -128,14 +128,10 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 		var prog Progress
 		for s.Scan() {
 			line := s.Bytes()
-			if bytes.Equal(line, endMarker) {
-				return
-			}
 			if bytes.HasPrefix(line, convertedMarker) {
-				if microSeconds, err := strconv.Atoi(string(line[len(convertedMarker):])); err == nil {
-					prog.Converted = time.Duration(microSeconds) * time.Microsecond
-					haveProgress = true
-				}
+				microSeconds, _ := strconv.Atoi(string(line[len(convertedMarker):]))
+				prog.Converted = time.Duration(microSeconds) * time.Microsecond
+				haveProgress = true
 			} else if bytes.HasPrefix(line, speedMarker) {
 				line = bytes.TrimSuffix(line, []byte("x"))
 				prog.Speed, _ = strconv.ParseFloat(string(line[len(speedMarker):]), 64)
@@ -147,6 +143,9 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 				}
 				haveProgress = false
 				haveSpeed = false
+			}
+			if bytes.Equal(line, endMarker) {
+				return
 			}
 		}
 		if err := s.Err(); err != nil {

@@ -8,9 +8,10 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-var videoExtensions = set.New(".mkv", ".mp4", ".avi")
+var videoExtensions = set.New(".mkv", ".mp4", ".avi", ".mov")
 
 func Scan(ctx context.Context, baseDir string, list *worklist.WorkList, ch chan<- *worklist.WorkItem, logger *slog.Logger) error {
 	return ScanFS(ctx, os.DirFS(baseDir), baseDir, list, ch, logger)
@@ -32,7 +33,7 @@ func ScanFS(ctx context.Context, fileSystem fs.FS, baseDir string, list *worklis
 			l.Debug("not a file")
 			return nil
 		}
-		if !videoExtensions.Contains(filepath.Ext(path)) {
+		if !videoExtensions.Contains(strings.ToLower(filepath.Ext(path))) {
 			l.Debug("not a video file")
 			return nil
 		}

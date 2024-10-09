@@ -39,7 +39,7 @@ func TestProfile_Evaluate(t *testing.T) {
 			name:           "height too low",
 			profileName:    "hevc-max",
 			wantProfileErr: assert.NoError,
-			sourceStats:    ffmpeg.NewVideoStats("h264", 720, 8_000_000),
+			sourceStats:    ffmpeg.NewVideoStats("h264", 300, 8_000_000),
 			wantEvalErr:    assert.Error,
 		},
 		{

@@ -2,12 +2,41 @@ package ffmpeg
 
 import (
 	"bytes"
+	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"log/slog"
 	"net"
+	"strings"
 	"testing"
 	"time"
 )
+
+func Test_makeConvertCommand(t *testing.T) {
+	for _, tt := range makeConvertCommandTests {
+		t.Run(tt.name, func(t *testing.T) {
+			// ffmpeg-go.Silent() uses a global variable. :-(
+			//t.Parallel()
+
+			p := Processor{Logger: slog.Default()}
+
+			type ctxKey string
+			key := ctxKey("test")
+			ctx := context.WithValue(context.Background(), key, "test")
+
+			s, err := p.makeConvertCommand(ctx, tt.request, tt.progressSocket)
+			tt.wantErr(t, err)
+			if err != nil {
+				return
+			}
+
+			clArgs := strings.Join(s.Compile().Args[1:], " ")
+			assert.Equal(t, tt.want, clArgs)
+			// check that the cmd will be run with our context
+			assert.Equal(t, "test", s.Context.Value(key))
+		})
+	}
+}
 
 func TestProcessor_progressSocket(t *testing.T) {
 	var p Processor
@@ -74,18 +103,21 @@ func Test_progress(t *testing.T) {
 	}
 }
 
-// Before: 47821 ns/op           31536 B/op          4 allocs/op
+// Current:
+// Benchmark_progress-16                607           1965400 ns/op         1233087 B/op          4 allocs/op
 func Benchmark_progress(b *testing.B) {
-	var input string
-	for range 100 {
-		for range 20 {
-			input += "token=value\n"
+	var input strings.Builder
+	for range 1000 {
+		for range 100 {
+			input.WriteString("token=value\n")
 		}
-		input += "speed=1.1x\nout_time_ms=1\n"
+		input.WriteString("speed=1.1x\nout_time_ms=1\n")
 	}
+	input.WriteString("progress=end\n")
+	buf := input.String()
 	b.ResetTimer()
 	for range b.N {
-		for p, err := range progress(bytes.NewBufferString(input)) {
+		for p, err := range progress(bytes.NewBufferString(buf)) {
 			if err != nil {
 				b.Fatal(err)
 			}

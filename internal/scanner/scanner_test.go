@@ -16,7 +16,7 @@ func TestScanFS(t *testing.T) {
 	fs := memfs.New()
 
 	require.NoError(t, fs.MkdirAll("foo", 0755))
-	require.NoError(t, fs.WriteFile("foo/video.mkv", []byte(""), 0644))
+	require.NoError(t, fs.WriteFile("foo/video.MKV", []byte(""), 0644))
 	require.NoError(t, fs.WriteFile("foo/info.txt", []byte(""), 0644))
 	require.NoError(t, fs.MkdirAll("bar", 0000))
 
@@ -25,9 +25,9 @@ func TestScanFS(t *testing.T) {
 	errCh := make(chan error)
 	go func() { errCh <- ScanFS(ctx, fs, "/", &list, ch, slog.Default()) }()
 	item := <-ch
-	assert.Equal(t, "/foo/video.mkv", item.Source)
+	assert.Equal(t, "/foo/video.MKV", item.Source)
 	assert.NoError(t, <-errCh)
 
 	require.Len(t, list.List(), 1)
-	assert.Equal(t, "/foo/video.mkv", list.List()[0].Source)
+	assert.Equal(t, "/foo/video.MKV", list.List()[0].Source)
 }

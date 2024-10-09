@@ -35,7 +35,7 @@ var profiles = map[string]Profile{
 		Quality: MaxQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
-			MinimumHeight(1080),
+			MinimumHeight(720),
 			MinimumBitrate(MaxQuality),
 		},
 	},

@@ -16,7 +16,7 @@ func TestVideoStats(t *testing.T) {
 		},
 		Streams: []Stream{
 			{CodecType: "audio", CodecName: "aac"},
-			{CodecType: "video", CodecName: "hevc", Height: 720, Width: 1280, BitsPerSample: 10},
+			{CodecType: "video", CodecName: "hevc", Height: 720, Width: 1280, BitsPerRawSample: "10"},
 		},
 	}
 
@@ -49,7 +49,7 @@ func TestVideoStats_LogValue(t *testing.T) {
 		},
 		Streams: []Stream{
 			{CodecType: "audio", CodecName: "aac"},
-			{CodecType: "video", CodecName: "hevc", Height: 720, BitsPerSample: 10},
+			{CodecType: "video", CodecName: "hevc", Height: 720, BitsPerRawSample: "10"},
 		},
 	}
 

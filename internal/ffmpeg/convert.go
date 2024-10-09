@@ -127,14 +127,10 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 		var prog Progress
 		for s.Scan() {
 			line := s.Bytes()
-			if bytes.Equal(line, endMarker) {
-				return
-			}
 			if bytes.HasPrefix(line, convertedMarker) {
-				if microSeconds, err := strconv.Atoi(string(line[len(convertedMarker):])); err == nil {
-					prog.Converted = time.Duration(microSeconds) * time.Microsecond
-					haveProgress = true
-				}
+				microSeconds, _ := strconv.Atoi(string(line[len(convertedMarker):]))
+				prog.Converted = time.Duration(microSeconds) * time.Microsecond
+				haveProgress = true
 			} else if bytes.HasPrefix(line, speedMarker) {
 				line = bytes.TrimSuffix(line, []byte("x"))
 				prog.Speed, _ = strconv.ParseFloat(string(line[len(speedMarker):]), 64)
@@ -146,6 +142,9 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 				}
 				haveProgress = false
 				haveSpeed = false
+			}
+			if bytes.Equal(line, endMarker) {
+				return
 			}
 		}
 		if err := s.Err(); err != nil {

@@ -103,18 +103,21 @@ func Test_progress(t *testing.T) {
 	}
 }
 
-// Before: 47821 ns/op           31536 B/op          4 allocs/op
+// Current:
+// Benchmark_progress-16                607           1965400 ns/op         1233087 B/op          4 allocs/op
 func Benchmark_progress(b *testing.B) {
-	var input string
-	for range 100 {
-		for range 20 {
-			input += "token=value\n"
+	var input strings.Builder
+	for range 1000 {
+		for range 100 {
+			input.WriteString("token=value\n")
 		}
-		input += "speed=1.1x\nout_time_ms=1\n"
+		input.WriteString("speed=1.1x\nout_time_ms=1\n")
 	}
+	input.WriteString("progress=end\n")
+	buf := input.String()
 	b.ResetTimer()
 	for range b.N {
-		for p, err := range progress(bytes.NewBufferString(input)) {
+		for p, err := range progress(bytes.NewBufferString(buf)) {
 			if err != nil {
 				b.Fatal(err)
 			}

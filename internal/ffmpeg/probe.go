@@ -1,42 +1,23 @@
 package ffmpeg
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
-func (p Processor) Scan(ctx context.Context, path string) (VideoStats, error) {
+func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 	var probe VideoStats
 
-	cmd := exec.CommandContext(ctx,
-		"ffprobe",
-		//"-v", "quiet",
-		"-print_format", "json",
-		"-show_format", "-show_streams",
-		path,
-	)
-
-	stdout, _ := cmd.StdoutPipe()
-	defer func() { _ = stdout.Close() }()
-
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	err := cmd.Start()
+	output, err := ffmpeg.Probe(path)
 	if err != nil {
-		return probe, fmt.Errorf("start: %w", err)
+		return probe, fmt.Errorf("probe: %w", err)
 	}
 
-	if err = json.NewDecoder(stdout).Decode(&probe); err != nil {
+	if err = json.Unmarshal([]byte(output), &probe); err != nil {
 		return probe, fmt.Errorf("decode: %w", err)
 	}
 
-	if err = cmd.Wait(); err == nil {
-		return probe, nil
-	}
-
-	return VideoStats{}, fmt.Errorf("probe: %w. error: %s", err, lastLine(&stderr))
+	return probe, nil
 }

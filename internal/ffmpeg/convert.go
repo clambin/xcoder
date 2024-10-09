@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io"
 	"iter"
 	"math/rand"
 	"net"
 	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"time"
@@ -22,24 +22,17 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 	}
 
 	var sock string
-	var err error
 	if request.ProgressCB != nil {
-		sock, err = p.progressSocket(request.ProgressCB)
-		if err != nil {
+		var err error
+		if sock, err = p.progressSocket(request.ProgressCB); err != nil {
 			return fmt.Errorf("progress socket: %w", err)
 		}
 	}
-
-	command, args, err := makeConvertCommand(request, sock)
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.CommandContext(ctx, command, args...)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err = cmd.Run(); err != nil {
-		err = fmt.Errorf("ffmpeg: %w. error: %s", err, lastLine(&stderr))
+	stream, err := p.makeConvertCommand(ctx, request, sock)
+	//	stream.Context = ctx
+	if err == nil {
+		p.Logger.Info("converting", "cmd", stream.Compile().String())
+		err = stream.Run()
 	}
 	return err
 }
@@ -78,36 +71,37 @@ func (p Processor) progressSocket(progressCallback func(Progress)) (string, erro
 	return sockFileName, nil
 }
 
-func makeConvertCommand(request Request, progressSocket string) (string, []string, error) {
-	videoCodec, ok := videoCodecs[request.VideoCodec]
+func (p Processor) makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {
+	codecName, ok := videoCodecs[request.VideoCodec]
 	if !ok {
-		return "", nil, fmt.Errorf("ffmpeg: unsupported video codec: %s", request.VideoCodec)
+		return nil, fmt.Errorf("unsupported video codec: %s", request.VideoCodec)
 	}
-
 	profile := "main"
 	if request.BitsPerSample == 10 {
 		profile = "main10"
 	}
 
-	args := []string{
-		"-y",
-		"-nostats", "-loglevel", "error",
+	globalArgs := []string{
+		"-nostats",
+		"-loglevel", "error",
 	}
-	args = append(args, prefixArguments...)
-	args = append(args,
-		//"-threads", "8",
-		"-i", request.Source,
-		"-map", "0",
-		"-c:v", videoCodec, "-profile:v", profile, "-b:v", strconv.Itoa(request.BitRate),
-		"-c:a", "copy",
-		"-c:s", "copy",
-		"-f", "matroska",
-	)
 	if progressSocket != "" {
-		args = append(args, "-progress", "unix://"+progressSocket)
+		globalArgs = append(globalArgs, "-progress", "unix://"+progressSocket)
 	}
-	args = append(args, request.Target)
-	return "ffmpeg", args, nil
+	outputArguments := ffmpeg.KwArgs{
+		//"map":       "0:0",
+		"c:v":       codecName,
+		"profile:v": profile,
+		"b:v":       request.BitRate,
+		"c:a":       "copy",
+		"c:s":       "copy",
+		"f":         "matroska",
+	}
+
+	cmd := ffmpeg.Input(request.Source, inputArguments).Output(request.Target, outputArguments).GlobalArgs(globalArgs...)
+	cmd.Context = ctx
+	cmd.OverWriteOutput().Silent(true)
+	return cmd, nil
 }
 
 type Progress struct {

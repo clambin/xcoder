@@ -5,5 +5,5 @@ var videoCodecs = map[string]string{
 	"hevc": "libx265",
 }
 
-// prefixArguments are added before the input chain.
-var prefixArguments = []string{}
+// inputArguments are added before the input chain.
+var inputArguments = ffmpeg.KwArgs{}

@@ -1,7 +1,10 @@
 package ffmpeg
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
+	"log/slog"
+	"strings"
 	"testing"
 )
 
@@ -11,11 +14,10 @@ func Test_makeConvertCommand(t *testing.T) {
 		progressSocket string
 	}
 	tests := []struct {
-		name     string
-		args     args
-		wantCmd  string
-		wantArgs []string
-		wantErr  assert.ErrorAssertionFunc
+		name    string
+		args    args
+		wantCmd string
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "hevc 8 bit",
@@ -29,9 +31,8 @@ func Test_makeConvertCommand(t *testing.T) {
 				},
 				progressSocket: "socket",
 			},
-			wantCmd:  "ffmpeg",
-			wantArgs: []string{"-y", "-nostats", "-loglevel", "error", "-hwaccel", "videotoolbox", "-i", "foo.mkv", "-map", "0", "-c:v", "hevc_videotoolbox", "-profile:v", "main", "-b:v", "4096000", "-c:a", "copy", "-c:s", "copy", "-f", "matroska", "-progress", "unix://socket", "foo.hevc.mkv"},
-			wantErr:  assert.NoError,
+			wantCmd: "-hwaccel videotoolbox -i foo.mkv -b:v 4096000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "hevc 10 bit",
@@ -45,9 +46,8 @@ func Test_makeConvertCommand(t *testing.T) {
 				},
 				progressSocket: "socket",
 			},
-			wantCmd:  "ffmpeg",
-			wantArgs: []string{"-y", "-nostats", "-loglevel", "error", "-hwaccel", "videotoolbox", "-i", "foo.mkv", "-map", "0", "-c:v", "hevc_videotoolbox", "-profile:v", "main10", "-b:v", "4096000", "-c:a", "copy", "-c:s", "copy", "-f", "matroska", "-progress", "unix://socket", "foo.hevc.mkv"},
-			wantErr:  assert.NoError,
+			wantCmd: "-hwaccel videotoolbox -i foo.mkv -b:v 4096000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main10 foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "default is 8 bit",
@@ -61,9 +61,22 @@ func Test_makeConvertCommand(t *testing.T) {
 				},
 				progressSocket: "socket",
 			},
-			wantCmd:  "ffmpeg",
-			wantArgs: []string{"-y", "-nostats", "-loglevel", "error", "-hwaccel", "videotoolbox", "-i", "foo.mkv", "-map", "0", "-c:v", "hevc_videotoolbox", "-profile:v", "main", "-b:v", "4096000", "-c:a", "copy", "-c:s", "copy", "-f", "matroska", "-progress", "unix://socket", "foo.hevc.mkv"},
-			wantErr:  assert.NoError,
+			wantCmd: "-hwaccel videotoolbox -i foo.mkv -b:v 4096000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+			wantErr: assert.NoError,
+		},
+		{
+			name: "no progress socket",
+			args: args{
+				request: Request{
+					Source:        "foo.mkv",
+					Target:        "foo.hevc.mkv",
+					VideoCodec:    "hevc",
+					BitsPerSample: 8,
+					BitRate:       4000 * 1024,
+				},
+			},
+			wantCmd: "-hwaccel videotoolbox -i foo.mkv -b:v 4096000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -y",
+			wantErr: assert.NoError,
 		},
 		{
 			name: "only support for hevc",
@@ -75,7 +88,6 @@ func Test_makeConvertCommand(t *testing.T) {
 					BitsPerSample: 8,
 					BitRate:       4000 * 1024,
 				},
-				progressSocket: "socket",
 			},
 			wantErr: assert.Error,
 		},
@@ -84,13 +96,16 @@ func Test_makeConvertCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, got1, err := makeConvertCommand(tt.args.request, tt.args.progressSocket)
+			p := Processor{Logger: slog.Default()}
+			ctx := context.WithValue(context.Background(), "test", "test")
+			s, err := p.makeConvertCommand(ctx, tt.args.request, tt.args.progressSocket)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
 			}
-			assert.Equal(t, tt.wantCmd, got)
-			assert.Equal(t, tt.wantArgs, got1)
+			clArgs := strings.Join(s.Compile().Args[1:], " ")
+			assert.Equal(t, tt.wantCmd, clArgs)
+			assert.Equal(t, "test", s.Context.Value("test"))
 		})
 	}
 }

@@ -27,10 +27,10 @@ func main() {
 			enc.SetIndent("", "  ")
 			_ = enc.Encode(probe)
 		} else {
-			fmt.Printf("%s: codec:%s bitrate:%.1fmbps height:%d width:%d\n",
+			fmt.Printf("%s: codec:%s bitrate:%s height:%d width:%d\n",
 				arg,
 				probe.VideoCodec(),
-				float64(probe.BitRate())/1024/1024,
+				ffmpeg.Bits(probe.BitRate()).Format(2),
 				probe.Height(),
 				probe.Width(),
 			)

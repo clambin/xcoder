@@ -135,7 +135,7 @@ func (s VideoStats) String() string {
 		output += "/" + strconv.Itoa(height)
 	}
 	if bitRate := s.BitRate(); bitRate > 0 {
-		output += "/" + Bits(bitRate).Format(2) + "ps"
+		output += "/" + Bits(bitRate).Format(2)
 	}
 	return output
 }
@@ -214,5 +214,5 @@ func (b Bits) Format(decimals int) string {
 		floatBits /= 1000
 		unit = "mb"
 	}
-	return strconv.FormatFloat(floatBits, 'f', decimals, 64) + " " + unit
+	return strconv.FormatFloat(floatBits, 'f', decimals, 64) + " " + unit + "ps"
 }

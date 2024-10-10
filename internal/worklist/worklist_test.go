@@ -55,6 +55,63 @@ func TestWorkItem_Stats(t *testing.T) {
 	assert.Equal(t, stats, item.TargetVideoStats())
 }
 
+func TestWorkItem_RemainingFormatted(t *testing.T) {
+	tests := []struct {
+		name     string
+		status   WorkStatus
+		input    time.Duration
+		expected string
+	}{
+		{"No duration", Converting, 0, ""},
+		{"Only seconds", Converting, 10 * time.Second, "10s"},
+		{"Only minutes", Converting, 5 * time.Minute, "5m"},
+		{"Only hours", Converting, 2 * time.Hour, "2h"},
+		{"Days and hours", Converting, 26 * time.Hour, "1d2h"},
+		{"Hours and minutes", Converting, 3*time.Hour + 45*time.Minute, "3h45m"},
+		{"Hours, minutes, seconds", Converting, 1*time.Hour + 30*time.Minute + 20*time.Second, "1h30m20s"},
+		{"Hours and seconds", Converting, 1*time.Hour + 2*time.Second, "1h2s"},
+		{"Exactly two days", Converting, 48 * time.Hour, "2d"},
+		{"Multiple units", Converting, 72*time.Hour + 10*time.Minute + 15*time.Second, "3d10m15s"},
+		{"Not converting", Converted, 72*time.Hour + 10*time.Minute + 15*time.Second, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var item WorkItem
+			item.SetStatus(tt.status, nil)
+			item.Progress.Duration = 2 * tt.input
+			item.Progress.Update(ffmpeg.Progress{Converted: tt.input, Speed: 1})
+			assert.Equal(t, tt.expected, item.RemainingFormatted())
+		})
+	}
+}
+
+func TestWorkItem_CompletedFormatted(t *testing.T) {
+	tests := []struct {
+		name   string
+		status WorkStatus
+		input  time.Duration
+		want   string
+	}{
+		{"not converting", Converted, time.Second, ""},
+		{"starting", Converting, 0, ""},
+		{"half done", Converting, 30 * time.Minute, "50.0%"},
+		{"done", Converting, time.Hour, "100.0%"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var item WorkItem
+			item.SetStatus(tt.status, nil)
+			item.Progress.Duration = time.Hour
+			item.Progress.Update(ffmpeg.Progress{Converted: tt.input, Speed: 1})
+			assert.Equal(t, tt.want, item.CompletedFormatted())
+		})
+	}
+}
+
 func TestWorkStatus_String(t *testing.T) {
 	for val, label := range workStatusToString {
 		assert.Equal(t, label, val.String())

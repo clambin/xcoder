@@ -3,6 +3,7 @@ package worklist
 import (
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"slices"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -171,6 +172,49 @@ func (w *WorkItem) AddTargetStats(stats ffmpeg.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.targetStats = stats
+}
+
+func (w *WorkItem) RemainingFormatted() string {
+	w.lock.RLock()
+	defer w.lock.RUnlock()
+	if w.status != Converting {
+		return ""
+	}
+	var output string
+	if d := w.Progress.Remaining(); d >= 0 { // not sure why I added this check?
+		var days int
+		for d >= 24*time.Hour {
+			days++
+			d -= 24 * time.Hour
+		}
+		if days > 0 {
+			output = strconv.Itoa(days) + "d"
+		}
+		if hours := int(d.Hours()); hours > 0 {
+			output += strconv.Itoa(hours) + "h"
+			d -= time.Duration(hours) * time.Hour
+		}
+		if minutes := int(d.Minutes()); minutes > 0 {
+			output += strconv.Itoa(minutes) + "m"
+			d -= time.Duration(minutes) * time.Minute
+		}
+		if seconds := int(d.Seconds()); seconds > 0 {
+			output += strconv.Itoa(seconds) + "s"
+		}
+	}
+	return output
+}
+
+func (w *WorkItem) CompletedFormatted() string {
+	w.lock.RLock()
+	defer w.lock.RUnlock()
+	if w.status != Converting {
+		return ""
+	}
+	if p := w.Progress.Completed(); p > 0 {
+		return strconv.FormatFloat(100*p, 'f', 1, 64) + "%"
+	}
+	return ""
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

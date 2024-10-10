@@ -1,32 +1,106 @@
 package ui
 
 import (
+	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
-	"time"
 )
 
-func Test_formatDuration(t *testing.T) {
+func Test_workListViewer(t *testing.T) {
+	var list worklist.WorkList
+	list.Add("A").SetStatus(worklist.Skipped, profile.ErrSourceInTargetCodec)
+	list.Add("B").SetStatus(worklist.Rejected, profile.ErrSourceRejected{Reason: "bitrate too low"})
+	list.Add("C").SetStatus(worklist.Inspected, nil)
+	list.Add("D").SetStatus(worklist.Converted, nil)
+
 	tests := []struct {
-		name     string
-		input    time.Duration
-		expected string
+		name      string
+		filters   []worklist.WorkStatus
+		wantCount int
+		wantFirst string
 	}{
-		{"No duration", 0, ""},
-		{"Only seconds", 10 * time.Second, "10s"},
-		{"Only minutes", 5 * time.Minute, "5m"},
-		{"Only hours", 2 * time.Hour, "2h"},
-		{"Days and hours", 26 * time.Hour, "1d2h"},
-		{"Hours and minutes", 3*time.Hour + 45*time.Minute, "3h45m"},
-		{"Hours, minutes, seconds", 1*time.Hour + 30*time.Minute + 20*time.Second, "1h30m20s"},
-		{"Hours and seconds", 1*time.Hour + 2*time.Second, "1h2s"},
-		{"Exactly two days", 48 * time.Hour, "2d"},
-		{"Multiple units", 72*time.Hour + 10*time.Minute + 15*time.Second, "3d10m15s"},
+		{
+			name:      "no filters",
+			wantCount: 1 + len(list.List()),
+			wantFirst: "A",
+		},
+		{
+			name:      "filter skipped",
+			filters:   []worklist.WorkStatus{worklist.Skipped},
+			wantCount: 1 + len(list.List()) - 1,
+			wantFirst: "B",
+		},
+		{
+			name:      "filter rejected",
+			filters:   []worklist.WorkStatus{worklist.Rejected},
+			wantCount: 1 + len(list.List()) - 1,
+			wantFirst: "A",
+		},
+		{
+			name:      "filter skipped & rejected",
+			filters:   []worklist.WorkStatus{worklist.Skipped, worklist.Rejected},
+			wantCount: 1 + len(list.List()) - 2,
+			wantFirst: "C",
+		},
+		{
+			name:      "all filter skipped & rejected",
+			filters:   []worklist.WorkStatus{worklist.Skipped, worklist.Rejected, worklist.Inspected, worklist.Converted},
+			wantCount: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := newWorkListViewer(&list)
+			v.filters.toggle(tt.filters...)
+			v.refresh()
+
+			assert.Equal(t, tt.wantCount, v.GetRowCount())
+			if tt.wantFirst != "" {
+				require.Greater(t, v.GetRowCount(), 1)
+				assert.Equal(t, tt.wantFirst, v.GetCell(1, 0).Text)
+			}
+		})
+	}
+
+}
+
+func Test_workListViewer_title(t *testing.T) {
+	tests := []struct {
+		name          string
+		filters       []worklist.WorkStatus
+		itemCount     int
+		rowCount      int
+		expectedTitle string
+	}{
+		{
+			name:          "No filter, multiple items",
+			itemCount:     10,
+			rowCount:      5,
+			expectedTitle: " files [5] ",
+		},
+		{
+			name:          "With filter, multiple items",
+			filters:       []worklist.WorkStatus{worklist.Skipped},
+			itemCount:     10,
+			rowCount:      5,
+			expectedTitle: " files (filtered: skipped)[5/10] ",
+		},
+		{
+			name:          "With filter, single item",
+			filters:       []worklist.WorkStatus{worklist.Skipped, worklist.Rejected},
+			itemCount:     1,
+			rowCount:      1,
+			expectedTitle: " files (filtered: rejected, skipped)[1/1] ",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, formatDuration(tt.input))
+			v := newWorkListViewer(nil)
+			v.filters.toggle(tt.filters...)
+			assert.Equal(t, tt.expectedTitle, v.title(tt.itemCount, tt.rowCount))
 		})
 	}
 }

@@ -6,11 +6,11 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 var workListShortCuts = shortcutsPage{
@@ -40,13 +40,14 @@ func newWorkListViewer(list *worklist.WorkList) *workListViewer {
 		Table:   tview.NewTable(),
 		filters: &filters{statuses: set.New[worklist.WorkStatus]()},
 	}
-	v.SetInputCapture(v.handleInput)
-	v.Table.
+	v.
 		SetEvaluateAllRows(true).
 		SetFixed(1, 0).
 		SetSelectable(true, false).
+		Select(1, 0).
 		SetBorder(true).
-		SetBorderPadding(0, 0, 1, 1)
+		SetBorderPadding(0, 0, 1, 1).
+		SetInputCapture(v.handleInput)
 	return &v
 }
 
@@ -66,6 +67,7 @@ var columns = []column{
 }
 
 func (v *workListViewer) refresh() {
+	selectedItem := v.selectedItem()
 	v.Clear()
 	list := v.list.List()
 
@@ -77,65 +79,61 @@ func (v *workListViewer) refresh() {
 		)
 	}
 	var rowCount int
-	for _, entry := range list {
-		status, err := entry.Status()
+	for _, item := range list {
+		status, err := item.Status()
 		if v.filters.on(status) {
 			continue
 		}
 		rowCount++
-		source := entry.Source
+		source := item.Source
 		if !v.fullName.Load() {
 			source = filepath.Base(source)
 		}
-		v.SetCell(rowCount, 0, tview.NewTableCell(source).SetReference(entry))
-		v.SetCell(rowCount, 1, tview.NewTableCell(entry.SourceVideoStats().String()))
-		v.SetCell(rowCount, 2, tview.NewTableCell(entry.TargetVideoStats().String()))
-		statusColor, ok := tableColorStatus[status]
-		if !ok {
-			statusColor = tview.Styles.PrimaryTextColor
-		}
-		v.SetCell(rowCount, 3, tview.NewTableCell(status.String()).SetTextColor(statusColor))
-		var progress string
-		var remaining string
-		if status == worklist.Converting {
-			if p := entry.Progress.Completed(); p > 0 {
-				progress = strconv.FormatFloat(100*p, 'f', 1, 64) + "%"
-			}
-			if r := entry.Remaining(); r >= 0 {
-				remaining = formatDuration(r)
-			}
-		}
-		v.SetCell(rowCount, 4, tview.NewTableCell(progress).SetAlign(tview.AlignRight))
-		v.SetCell(rowCount, 5, tview.NewTableCell(remaining).SetAlign(tview.AlignRight))
+		v.SetCell(rowCount, 0, tview.NewTableCell(source).SetExpansion(10).SetReference(item))
+		v.SetCell(rowCount, 1, tview.NewTableCell(item.SourceVideoStats().String()))
+		v.SetCell(rowCount, 2, tview.NewTableCell(item.TargetVideoStats().String()))
+		v.SetCell(rowCount, 3, tview.NewTableCell(status.String()).SetTextColor(colorStatus(item)))
+		v.SetCell(rowCount, 4, tview.NewTableCell(item.CompletedFormatted()).SetAlign(tview.AlignRight))
+		v.SetCell(rowCount, 5, tview.NewTableCell(item.RemainingFormatted()).SetAlign(tview.AlignRight))
 		var errString string
 		if err != nil {
 			errString = err.Error()
 		}
-		v.SetCell(rowCount, 6, tview.NewTableCell(errString))
+		v.SetCell(rowCount, 6, tview.NewTableCell(errString).SetExpansion(1))
 	}
-	v.Table.SetTitle(v.title(list, rowCount))
+	v.Table.SetTitle(v.title(len(list), rowCount))
 
-	if currentRow, _ := v.Table.GetSelection(); currentRow == 0 && rowCount > 0 {
-		v.Table.ScrollToBeginning()
+	v.selectRow(selectedItem)
+}
+
+func (v *workListViewer) selectedItem() *worklist.WorkItem {
+	selectedRow, _ := v.Table.GetSelection()
+	if item, ok := v.Table.GetCell(selectedRow, 0).GetReference().(*worklist.WorkItem); ok {
+		return item
+	}
+	return nil
+}
+
+func (v *workListViewer) selectRow(item *worklist.WorkItem) {
+	for r := range v.Table.GetRowCount() {
+		if v.Table.GetCell(r, 0).GetReference() == item {
+			v.Table.Select(r, 0)
+			return
+		}
+	}
+	v.ScrollToBeginning()
+	if v.GetRowCount() > 1 {
+		v.Select(1, 0)
 	}
 }
 
-func (v *workListViewer) title(list []*worklist.WorkItem, rows int) string {
+func (v *workListViewer) title(itemCount, rowCount int) string {
 	title := "files"
-	var filtered bool
-	if f := v.filters.list(); len(f) > 0 {
-		fs := make([]string, len(f))
-		for i, e := range f {
-			fs[i] = e.String()
-		}
-		title += " (filtered: " + strings.Join(fs, ", ") + ")"
-		filtered = len(fs) > 0
-	}
-	if filtered {
-		title += " [" + strconv.Itoa(rows) + "/" + strconv.Itoa(len(list)) + "]"
-
+	filtered := v.filters.Format()
+	if filtered != "" {
+		title += " (filtered: " + filtered + ")[" + strconv.Itoa(rowCount) + "/" + strconv.Itoa(itemCount) + "]"
 	} else {
-		title += " [" + strconv.Itoa(rows) + "]"
+		title += " [" + strconv.Itoa(rowCount) + "]"
 	}
 	return " " + title + " "
 }
@@ -205,28 +203,25 @@ func (f *filters) list() []worklist.WorkStatus {
 	return f.statuses.ListOrdered()
 }
 
+func (f *filters) Format() string {
+	filtered := f.list()
+	if len(filtered) == 0 {
+		return ""
+	}
+	fs := make([]string, len(filtered))
+	for i, e := range filtered {
+		fs[i] = e.String()
+	}
+	slices.Sort(fs)
+	return strings.Join(fs, ", ")
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func formatDuration(d time.Duration) string {
-	var output string
-	var days int
-	for d >= 24*time.Hour {
-		days++
-		d -= 24 * time.Hour
+func colorStatus(item *worklist.WorkItem) tcell.Color {
+	status, _ := item.Status()
+	if statusColor, ok := tableColorStatus[status]; ok {
+		return statusColor
 	}
-	if days > 0 {
-		output = strconv.Itoa(days) + "d"
-	}
-	if hours := int(d.Hours()); hours > 0 {
-		output += strconv.Itoa(hours) + "h"
-		d -= time.Duration(hours) * time.Hour
-	}
-	if minutes := int(d.Minutes()); minutes > 0 {
-		output += strconv.Itoa(minutes) + "m"
-		d -= time.Duration(minutes) * time.Minute
-	}
-	if seconds := int(d.Seconds()); seconds > 0 {
-		output += strconv.Itoa(seconds) + "s"
-	}
-	return output
+	return tview.Styles.PrimaryTextColor
 }

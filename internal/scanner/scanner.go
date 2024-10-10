@@ -40,9 +40,7 @@ func ScanFS(ctx context.Context, fileSystem fs.FS, baseDir string, list *worklis
 
 		path = filepath.Join(baseDir, path)
 		logger.Info("found video file", "path", path)
-		//go func() {
 		ch <- list.Add(path)
-		//}()
 		return nil
 	})
 }

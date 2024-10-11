@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/clambin/go-common/set"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +54,7 @@ func Test_workListViewer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := newWorkListViewer(&list)
-			v.filters.toggle(tt.filters...)
+			v.DataSource.(*workItems).toggle(tt.filters...)
 			v.refresh()
 
 			assert.Equal(t, tt.wantCount, v.GetRowCount())
@@ -66,7 +67,7 @@ func Test_workListViewer(t *testing.T) {
 
 }
 
-func Test_workListViewer_title(t *testing.T) {
+func Test_workItems_title(t *testing.T) {
 	tests := []struct {
 		name          string
 		filters       []worklist.WorkStatus
@@ -98,9 +99,9 @@ func Test_workListViewer_title(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := newWorkListViewer(nil)
-			v.filters.toggle(tt.filters...)
-			assert.Equal(t, tt.expectedTitle, v.title(tt.itemCount, tt.rowCount))
+			ds := workItems{filters: filters{statuses: set.Set[worklist.WorkStatus]{}}}
+			ds.filters.toggle(tt.filters...)
+			assert.Equal(t, tt.expectedTitle, ds.title(tt.itemCount, tt.rowCount))
 		})
 	}
 }

@@ -28,132 +28,34 @@ var workListShortCuts = shortcutsPage{
 }
 
 type workListViewer struct {
-	*tview.Table
-	list     *worklist.WorkList
-	filters  *filters
-	fullName atomic.Bool
+	*Table
+	list *worklist.WorkList
+	DataSource
 }
 
 func newWorkListViewer(list *worklist.WorkList) *workListViewer {
-	v := workListViewer{
+	dataSource := &workItems{
 		list:    list,
-		Table:   tview.NewTable(),
-		filters: &filters{statuses: set.New[worklist.WorkStatus]()},
+		filters: filters{statuses: set.New[worklist.WorkStatus]()},
 	}
-	v.
-		SetEvaluateAllRows(true).
-		SetFixed(1, 0).
-		SetSelectable(true, false).
-		Select(1, 0).
-		SetBorder(true).
-		SetBorderPadding(0, 0, 1, 1).
-		SetInputCapture(v.handleInput)
-	return &v
-}
-
-type column struct {
-	name        string
-	orientation int
-}
-
-var columns = []column{
-	{"SOURCE", tview.AlignLeft},
-	{"SOURCE STATS", tview.AlignLeft},
-	{"TARGET STATS", tview.AlignLeft},
-	{"STATUS    ", tview.AlignLeft},
-	{"COMPLETED", tview.AlignRight},
-	{"REMAINING", tview.AlignRight},
-	{"ERROR", tview.AlignLeft},
+	return &workListViewer{
+		Table:      NewTable(dataSource),
+		list:       list,
+		DataSource: dataSource,
+	}
 }
 
 func (v *workListViewer) refresh() {
-	selectedItem := v.selectedItem()
-	v.Clear()
-	list := v.list.List()
-
-	for i, col := range columns {
-		v.SetCell(0, i, tview.NewTableCell(col.name).
-			SetAlign(col.orientation).
-			SetSelectable(false).
-			SetTextColor(tview.Styles.SecondaryTextColor),
-		)
-	}
-	var rowCount int
-	for _, item := range list {
-		status, err := item.Status()
-		if v.filters.on(status) {
-			continue
-		}
-		rowCount++
-		source := item.Source
-		if !v.fullName.Load() {
-			source = filepath.Base(source)
-		}
-		v.SetCell(rowCount, 0, tview.NewTableCell(source).SetExpansion(10).SetReference(item))
-		v.SetCell(rowCount, 1, tview.NewTableCell(item.SourceVideoStats().String()))
-		v.SetCell(rowCount, 2, tview.NewTableCell(item.TargetVideoStats().String()))
-		v.SetCell(rowCount, 3, tview.NewTableCell(status.String()).SetTextColor(colorStatus(item)))
-		v.SetCell(rowCount, 4, tview.NewTableCell(item.CompletedFormatted()).SetAlign(tview.AlignRight))
-		v.SetCell(rowCount, 5, tview.NewTableCell(item.RemainingFormatted()).SetAlign(tview.AlignRight))
-		var errString string
-		if err != nil {
-			errString = err.Error()
-		}
-		v.SetCell(rowCount, 6, tview.NewTableCell(errString).SetExpansion(1))
-	}
-	v.Table.SetTitle(v.title(len(list), rowCount))
-
-	v.selectRow(selectedItem)
-}
-
-func (v *workListViewer) selectedItem() *worklist.WorkItem {
-	selectedRow, _ := v.Table.GetSelection()
-	if item, ok := v.Table.GetCell(selectedRow, 0).GetReference().(*worklist.WorkItem); ok {
-		return item
-	}
-	return nil
-}
-
-func (v *workListViewer) selectRow(item *worklist.WorkItem) {
-	for r := range v.Table.GetRowCount() {
-		if v.Table.GetCell(r, 0).GetReference() == item {
-			v.Table.Select(r, 0)
-			return
-		}
-	}
-	v.ScrollToBeginning()
-	if v.GetRowCount() > 1 {
-		v.Select(1, 0)
-	}
-}
-
-func (v *workListViewer) title(itemCount, rowCount int) string {
-	title := "files"
-	filtered := v.filters.Format()
-	if filtered != "" {
-		title += " (filtered: " + filtered + ")[" + strconv.Itoa(rowCount) + "/" + strconv.Itoa(itemCount) + "]"
-	} else {
-		title += " [" + strconv.Itoa(rowCount) + "]"
-	}
-	return " " + title + " "
+	v.Table.Update()
 }
 
 func (v *workListViewer) handleInput(event *tcell.EventKey) *tcell.EventKey {
+	if v.DataSource.HandleInput(event) == nil {
+		return nil
+	}
 	switch event.Key() {
 	case tcell.KeyRune:
 		switch event.Rune() {
-		case 's':
-			v.filters.toggle(worklist.Skipped)
-			return nil
-		case 'c':
-			v.filters.toggle(worklist.Converted)
-			return nil
-		case 'r':
-			v.filters.toggle(worklist.Rejected)
-			return nil
-		case 'f':
-			v.fullName.Store(!v.fullName.Load())
-			return nil
 		case 'p':
 			v.list.ToggleActive()
 			return nil
@@ -161,8 +63,8 @@ func (v *workListViewer) handleInput(event *tcell.EventKey) *tcell.EventKey {
 			return event
 		}
 	case tcell.KeyEnter:
-		row, _ := v.GetSelection()
-		item := v.GetCell(row, 0).GetReference().(*worklist.WorkItem)
+		row, _ := v.Table.GetSelection()
+		item := v.Table.GetCell(row, 0).GetReference().(*worklist.WorkItem)
 		if status, _ := item.Status(); status == worklist.Inspected || status == worklist.Failed {
 			v.list.Queue(item)
 		}
@@ -176,6 +78,7 @@ func (v *workListViewer) handleInput(event *tcell.EventKey) *tcell.EventKey {
 
 type filters struct {
 	statuses set.Set[worklist.WorkStatus]
+	changed  bool
 	lock     sync.RWMutex
 }
 
@@ -188,6 +91,7 @@ func (f *filters) toggle(statuses ...worklist.WorkStatus) {
 		} else {
 			f.statuses.Add(status)
 		}
+		f.changed = true
 	}
 }
 
@@ -216,6 +120,14 @@ func (f *filters) Format() string {
 	return strings.Join(fs, ", ")
 }
 
+func (f *filters) updated() bool {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	changed := f.changed
+	f.changed = false
+	return changed
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func colorStatus(item *worklist.WorkItem) tcell.Color {
@@ -224,4 +136,96 @@ func colorStatus(item *worklist.WorkItem) tcell.Color {
 		return statusColor
 	}
 	return tview.Styles.PrimaryTextColor
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var _ DataSource = &workItems{}
+
+type workItems struct {
+	list *worklist.WorkList
+	filters
+	fullName atomic.Bool
+}
+
+func (w *workItems) Update() Update {
+	var u Update
+
+	u.Headers = []*tview.TableCell{
+		tview.NewTableCell(padString("SOURCE", 100)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+		tview.NewTableCell("SOURCE STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+		tview.NewTableCell("TARGET STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+		tview.NewTableCell(padString("STATUS", 9)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+		tview.NewTableCell("COMPLETED").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
+		tview.NewTableCell("REMAINING").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
+		tview.NewTableCell(padString("ERROR", 20)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+	}
+
+	list := w.list.List()
+	for _, item := range list {
+		status, err := item.Status()
+		if w.filters.on(status) {
+			continue
+		}
+		source := item.Source
+		if !w.fullName.Load() {
+			source = filepath.Base(source)
+		}
+		var errString string
+		if err != nil {
+			errString = err.Error()
+		}
+		u.Rows = append(u.Rows, []*tview.TableCell{
+			tview.NewTableCell(source).SetReference(item),
+			tview.NewTableCell(item.SourceVideoStats().String()),
+			tview.NewTableCell(item.TargetVideoStats().String()),
+			tview.NewTableCell(status.String()).SetTextColor(colorStatus(item)),
+			tview.NewTableCell(item.CompletedFormatted()).SetAlign(tview.AlignRight),
+			tview.NewTableCell(item.RemainingFormatted()).SetAlign(tview.AlignRight),
+			tview.NewTableCell(errString),
+		})
+	}
+	u.Title = w.title(len(list), len(u.Rows))
+	u.Reload = w.updated()
+
+	return u
+}
+
+func padString(s string, width int) string {
+	if toPad := width - len(s); toPad > 0 {
+		s += strings.Repeat(" ", toPad)
+	}
+	return s
+}
+
+func (w *workItems) title(itemCount, rowCount int) string {
+	title := "files"
+	filtered := w.filters.Format()
+	if filtered != "" {
+		title += " (filtered: " + filtered + ")[" + strconv.Itoa(rowCount) + "/" + strconv.Itoa(itemCount) + "]"
+	} else {
+		title += " [" + strconv.Itoa(rowCount) + "]"
+	}
+	return " " + title + " "
+}
+
+func (w *workItems) HandleInput(event *tcell.EventKey) *tcell.EventKey {
+	if event.Key() != tcell.KeyRune {
+		return event
+	}
+	switch event.Rune() {
+	case 's':
+		w.filters.toggle(worklist.Skipped)
+		return nil
+	case 'c':
+		w.filters.toggle(worklist.Converted)
+		return nil
+	case 'r':
+		w.filters.toggle(worklist.Rejected)
+		return nil
+	case 'f':
+		w.fullName.Store(!w.fullName.Load())
+		return nil
+	}
+	return event
 }

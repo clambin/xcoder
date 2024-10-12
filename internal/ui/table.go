@@ -38,21 +38,21 @@ func NewTable(source DataSource) *Table {
 }
 
 func (t *Table) Update() {
-	u := t.DataSource.Update()
-	for i, h := range u.Headers {
+	update := t.DataSource.Update()
+	t.Table.SetTitle(update.Title)
+	for i, h := range update.Headers {
 		t.Table.SetCell(0, i, h)
 	}
-	for i, row := range u.Rows {
+	for i, row := range update.Rows {
 		for j, cell := range row {
 			t.Table.SetCell(i+1, j, cell)
 		}
 	}
-	t.trimRows(len(u.Rows) + 1)
-	if u.Reload {
+	t.trimRows(len(update.Rows) + 1)
+	if update.Reload {
 		t.Table.Select(1, 0)
 		t.Table.ScrollToBeginning()
 	}
-	t.Table.SetTitle(u.Title)
 }
 
 func (t *Table) trimRows(rows int) {

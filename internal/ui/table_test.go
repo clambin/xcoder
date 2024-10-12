@@ -23,7 +23,7 @@ func TestTable_Update(t *testing.T) {
 }
 
 func BenchmarkTable_Update(b *testing.B) {
-	dataSource := fakeDataSource{rows: make([]string, b.N)}
+	dataSource := fakeDataSource{rows: make([]string, 1000)}
 	for i := range len(dataSource.rows) {
 		dataSource.rows[i] = strconv.Itoa(i)
 	}
@@ -31,7 +31,7 @@ func BenchmarkTable_Update(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		table.Update()
-		dataSource.rows = dataSource.rows[1:]
+		//dataSource.rows = dataSource.rows[1:]
 	}
 }
 

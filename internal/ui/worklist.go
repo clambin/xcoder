@@ -16,8 +16,8 @@ import (
 var workListShortCuts = shortcutsPage{
 	{
 		shortcut{key: "p", description: "enable/disable processing"},
-		shortcut{key: "l", description: "show logs"},
 		shortcut{key: "enter", description: "convert selected file"},
+		shortcut{key: "l", description: "show logs"},
 	},
 	{
 		shortcut{key: "s", description: "show/hide skipped files"},
@@ -148,47 +148,14 @@ type workItems struct {
 	fullName atomic.Bool
 }
 
-func (w *workItems) Update() Update {
-	var u Update
-
-	u.Headers = []*tview.TableCell{
-		tview.NewTableCell(padString("SOURCE", 100)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-		tview.NewTableCell("SOURCE STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-		tview.NewTableCell("TARGET STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-		tview.NewTableCell(padString("STATUS", 9)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-		tview.NewTableCell("COMPLETED").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
-		tview.NewTableCell("REMAINING").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
-		tview.NewTableCell(padString("ERROR", 20)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	}
-
-	list := w.list.List()
-	for _, item := range list {
-		status, err := item.Status()
-		if w.filters.on(status) {
-			continue
-		}
-		source := item.Source
-		if !w.fullName.Load() {
-			source = filepath.Base(source)
-		}
-		var errString string
-		if err != nil {
-			errString = err.Error()
-		}
-		u.Rows = append(u.Rows, []*tview.TableCell{
-			tview.NewTableCell(source).SetReference(item),
-			tview.NewTableCell(item.SourceVideoStats().String()),
-			tview.NewTableCell(item.TargetVideoStats().String()),
-			tview.NewTableCell(status.String()).SetTextColor(colorStatus(item)),
-			tview.NewTableCell(item.CompletedFormatted()).SetAlign(tview.AlignRight),
-			tview.NewTableCell(item.RemainingFormatted()).SetAlign(tview.AlignRight),
-			tview.NewTableCell(errString),
-		})
-	}
-	u.Title = w.title(len(list), len(u.Rows))
-	u.Reload = w.updated()
-
-	return u
+var headerCells = []*tview.TableCell{
+	tview.NewTableCell(padString("SOURCE", 100)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+	tview.NewTableCell("SOURCE STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+	tview.NewTableCell("TARGET STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+	tview.NewTableCell(padString("STATUS", 9)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+	tview.NewTableCell("COMPLETED").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
+	tview.NewTableCell("REMAINING").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
+	tview.NewTableCell(padString("ERROR", 20)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
 }
 
 func padString(s string, width int) string {
@@ -196,6 +163,47 @@ func padString(s string, width int) string {
 		s += strings.Repeat(" ", toPad)
 	}
 	return s
+}
+
+func (w *workItems) Update() Update {
+	list := w.list.List()
+	update := Update{
+		Headers: headerCells,
+		Rows:    make([][]*tview.TableCell, 0, len(list)),
+		Reload:  w.filters.updated(),
+	}
+	for _, item := range list {
+		if row := w.buildRow(item); row != nil {
+			update.Rows = append(update.Rows, row)
+		}
+	}
+	update.Title = w.title(len(list), len(update.Rows))
+
+	return update
+}
+
+func (w *workItems) buildRow(item *worklist.WorkItem) []*tview.TableCell {
+	status, err := item.Status()
+	if w.filters.on(status) {
+		return nil
+	}
+	source := item.Source
+	if !w.fullName.Load() {
+		source = filepath.Base(source)
+	}
+	var errString string
+	if err != nil {
+		errString = err.Error()
+	}
+	return []*tview.TableCell{
+		tview.NewTableCell(source).SetReference(item),
+		tview.NewTableCell(item.SourceVideoStats().String()),
+		tview.NewTableCell(item.TargetVideoStats().String()),
+		tview.NewTableCell(status.String()).SetTextColor(colorStatus(item)),
+		tview.NewTableCell(item.CompletedFormatted()).SetAlign(tview.AlignRight),
+		tview.NewTableCell(item.RemainingFormatted()).SetAlign(tview.AlignRight),
+		tview.NewTableCell(errString),
+	}
 }
 
 func (w *workItems) title(itemCount, rowCount int) string {

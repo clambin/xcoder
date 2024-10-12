@@ -38,11 +38,13 @@ func newWorkListViewer(list *worklist.WorkList) *workListViewer {
 		list:    list,
 		filters: filters{statuses: set.New[worklist.WorkStatus]()},
 	}
-	return &workListViewer{
+	v := workListViewer{
 		Table:      NewTable(dataSource),
 		list:       list,
 		DataSource: dataSource,
 	}
+	v.Table.SetInputCapture(v.handleInput)
+	return &v
 }
 
 func (v *workListViewer) refresh() {

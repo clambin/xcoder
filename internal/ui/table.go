@@ -32,8 +32,7 @@ func NewTable(source DataSource) *Table {
 		SetSelectable(true, false).
 		Select(1, 0).
 		SetBorder(true).
-		SetBorderPadding(0, 0, 1, 1).
-		SetInputCapture(t.handleInput)
+		SetBorderPadding(0, 0, 1, 1)
 	return &t
 }
 
@@ -59,8 +58,4 @@ func (t *Table) trimRows(rows int) {
 	for t.Table.GetRowCount() > rows {
 		t.Table.RemoveRow(t.Table.GetRowCount() - 1)
 	}
-}
-
-func (t *Table) handleInput(event *tcell.EventKey) *tcell.EventKey {
-	return t.DataSource.HandleInput(event)
 }

@@ -150,29 +150,20 @@ type workItems struct {
 	fullName atomic.Bool
 }
 
-var headerCells = []*tview.TableCell{
-	tview.NewTableCell(padString("SOURCE", 100)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell("SOURCE STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell("TARGET STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell(padString("STATUS", 9)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell("COMPLETED").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
-	tview.NewTableCell("REMAINING").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
-	tview.NewTableCell(padString("ERROR", 20)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-}
-
-func padString(s string, width int) string {
-	if toPad := width - len(s); toPad > 0 {
-		s += strings.Repeat(" ", toPad)
-	}
-	return s
-}
-
 func (w *workItems) Update() Update {
 	list := w.list.List()
 	update := Update{
-		Headers: headerCells,
-		Rows:    make([][]*tview.TableCell, 0, len(list)),
-		Reload:  w.filters.updated(),
+		Headers: []*tview.TableCell{
+			tview.NewTableCell(padString("SOURCE", 100)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+			tview.NewTableCell("SOURCE STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+			tview.NewTableCell("TARGET STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+			tview.NewTableCell(padString("STATUS", 9)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+			tview.NewTableCell("COMPLETED").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
+			tview.NewTableCell("REMAINING").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
+			tview.NewTableCell(padString("ERROR", 20)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
+		},
+		Rows:   make([][]*tview.TableCell, 0, len(list)),
+		Reload: w.filters.updated(),
 	}
 	for _, item := range list {
 		if row := w.buildRow(item); row != nil {
@@ -182,6 +173,13 @@ func (w *workItems) Update() Update {
 	update.Title = w.title(len(list), len(update.Rows))
 
 	return update
+}
+
+func padString(s string, width int) string {
+	if toPad := width - len(s); toPad > 0 {
+		s += strings.Repeat(" ", toPad)
+	}
+	return s
 }
 
 func (w *workItems) buildRow(item *worklist.WorkItem) []*tview.TableCell {

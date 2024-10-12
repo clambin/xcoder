@@ -29,10 +29,10 @@ func main() {
 		} else {
 			fmt.Printf("%s: codec:%s bitrate:%s height:%d width:%d\n",
 				arg,
-				probe.VideoCodec(),
-				ffmpeg.Bits(probe.BitRate()).Format(2),
-				probe.Height(),
-				probe.Width(),
+				probe.VideoCodec,
+				ffmpeg.Bits(probe.BitRate).Format(2),
+				probe.Height,
+				probe.Width,
 			)
 		}
 	}

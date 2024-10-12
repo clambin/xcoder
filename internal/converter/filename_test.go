@@ -8,14 +8,7 @@ import (
 )
 
 func Test_makeTargetFilename(t *testing.T) {
-	stats1080 := ffmpeg.VideoStats{
-		Streams: []ffmpeg.Stream{
-			{
-				CodecType: "video",
-				Height:    1080,
-			},
-		},
-	}
+	stats1080 := ffmpeg.VideoStats{Height: 1080}
 
 	tests := []struct {
 		name   string
@@ -76,7 +69,7 @@ func Test_makeTargetFilename(t *testing.T) {
 			t.Parallel()
 			item := worklist.WorkItem{Source: tt.source}
 			item.AddSourceStats(tt.stats)
-			target := makeTargetFilename(&item, "/directory", "hevc", "mkv")
+			target := buildTargetFilename(&item, "/directory", "hevc", "mkv")
 			assert.Equal(t, tt.want, target)
 		})
 	}

@@ -159,7 +159,7 @@ func (w *WorkItem) AddSourceStats(stats ffmpeg.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.sourceStats = stats
-	w.Progress.Duration = stats.Duration()
+	w.Progress.Duration = stats.Duration
 }
 
 func (w *WorkItem) TargetVideoStats() ffmpeg.VideoStats {

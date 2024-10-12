@@ -27,7 +27,7 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 			return fmt.Errorf("progress socket: %w", err)
 		}
 	}
-	stream, err := p.makeConvertCommand(ctx, request, sock)
+	stream, err := makeConvertCommand(ctx, request, sock)
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
@@ -72,13 +72,13 @@ func (p Processor) progressSocket(progressCallback func(Progress)) (string, erro
 	return sockFileName, nil
 }
 
-func (p Processor) makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {
-	codecName, ok := videoCodecs[request.VideoCodec]
+func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {
+	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
 	if !ok {
-		return nil, fmt.Errorf("unsupported video codec: %s", request.VideoCodec)
+		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetStats.VideoCodec)
 	}
 	profile := "main"
-	if request.BitsPerSample == 10 {
+	if request.TargetStats.BitsPerSample == 10 {
 		profile = "main10"
 	}
 
@@ -93,7 +93,7 @@ func (p Processor) makeConvertCommand(ctx context.Context, request Request, prog
 		//"map":       "0:0",
 		"c:v":       codecName,
 		"profile:v": profile,
-		"b:v":       request.BitRate,
+		"b:v":       request.TargetStats.BitRate,
 		"c:a":       "copy",
 		"c:s":       "copy",
 		"f":         "matroska",
@@ -121,7 +121,6 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 		speedMarker     = []byte("speed=")
 		endMarker       = []byte("progress=end")
 	)
-
 	return func(yield func(Progress, error) bool) {
 		s := bufio.NewScanner(r)
 		var haveProgress, haveSpeed bool

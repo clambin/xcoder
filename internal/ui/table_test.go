@@ -22,6 +22,10 @@ func TestTable_Update(t *testing.T) {
 	}
 }
 
+// Current:
+// BenchmarkTable_Update-16            9244            109370 ns/op          272835 B/op       2003 allocs/op
+// With cellPool:
+// BenchmarkTable_Update-16           15936             75340 ns/op           33383 B/op       1003 allocs/op
 func BenchmarkTable_Update(b *testing.B) {
 	dataSource := fakeDataSource{rows: make([]string, 1000)}
 	for i := range len(dataSource.rows) {
@@ -62,26 +66,40 @@ func (f fakeDataSource) HandleInput(_ *tcell.EventKey) *tcell.EventKey {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func TestCellAllocator(t *testing.T) {
-	c := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
+	c := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignRight)
 	assert.Equal(t, "foo", c.Text)
+	fg, bg, _ := c.Style.Decompose()
+	assert.Equal(t, tcell.ColorWhite, fg)
+	assert.Equal(t, tcell.ColorBlack, bg)
+	assert.Equal(t, tview.AlignRight, c.Align)
 	putTableCell(c)
 	c = getTableCell("bar", tcell.ColorRed, tcell.ColorBlue, tview.AlignRight)
+	fg, bg, _ = c.Style.Decompose()
 	assert.Equal(t, "bar", c.Text)
-	assert.Equal(t, tcell.ColorRed, c.Color)
-	assert.Equal(t, tcell.ColorBlue, c.BackgroundColor)
+	assert.Equal(t, tcell.ColorRed, fg)
+	assert.Equal(t, tcell.ColorBlue, bg)
 	assert.Equal(t, tview.AlignRight, c.Align)
 
 }
 
 func BenchmarkCellAllocator(b *testing.B) {
-	for range b.N {
-		cell := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
-		if cell == nil {
-			b.Fatal("no cell allocated")
+	b.Run("pool", func(b *testing.B) {
+		for range b.N {
+			cell := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
+			if cell == nil {
+				b.Fatal("no cell allocated")
+			}
+			if cell.Text != "foo" {
+				b.Fatal("cell allocated does not match foo")
+			}
+			putTableCell(cell)
 		}
-		if cell.Text != "foo" {
-			b.Fatal("cell allocated does not match foo")
+	})
+	b.Run("direct", func(b *testing.B) {
+		for range b.N {
+			if cell := tview.NewTableCell("foo").SetTextColor(tcell.ColorWhite).SetBackgroundColor(tcell.ColorBlack).SetAlign(tview.AlignLeft); cell == nil {
+				b.Fatal("no cell allocated")
+			}
 		}
-		putTableCell(cell)
-	}
+	})
 }

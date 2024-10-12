@@ -33,8 +33,7 @@ func NewTable(source DataSource) *Table {
 		SetSelectable(true, false).
 		Select(1, 0).
 		SetBorder(true).
-		SetBorderPadding(0, 0, 1, 1).
-		SetInputCapture(t.handleInput)
+		SetBorderPadding(0, 0, 1, 1)
 	return &t
 }
 
@@ -67,10 +66,6 @@ func (t *Table) trimRows(rows int) {
 	}
 }
 
-func (t *Table) handleInput(event *tcell.EventKey) *tcell.EventKey {
-	return t.DataSource.HandleInput(event)
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // cellPool reduces memory allocations for tview.TableCell objects
@@ -82,7 +77,8 @@ var cellPool = sync.Pool{
 
 func getTableCell(label string, fgColor, bgColor tcell.Color, align int) *tview.TableCell {
 	cell := cellPool.Get().(*tview.TableCell)
-	cell.SetText(label).SetTextColor(fgColor).SetBackgroundColor(bgColor).SetAlign(align)
+	cell.Style = tcell.StyleDefault.Foreground(fgColor).Background(bgColor)
+	cell.SetText(label).SetAlign(align)
 	return cell
 }
 

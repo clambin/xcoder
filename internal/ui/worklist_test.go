@@ -109,6 +109,7 @@ func Test_workItems_title(t *testing.T) {
 
 // Current:
 // Benchmark_workItems_Update-16               1633            699725 ns/op         1776819 B/op       8005 allocs/op
+// With cellPool:
 // Benchmark_workItems_Update-16               2130            523429 ns/op          105566 B/op       1016 allocs/op
 func Benchmark_workItems_Update(b *testing.B) {
 	var list worklist.WorkList

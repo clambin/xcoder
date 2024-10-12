@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"sync"
 )
 
 type DataSource interface {
@@ -45,6 +46,7 @@ func (t *Table) Update() {
 	}
 	for i, row := range update.Rows {
 		for j, cell := range row {
+			putTableCell(t.Table.GetCell(i+1, j))
 			t.Table.SetCell(i+1, j, cell)
 		}
 	}
@@ -57,10 +59,33 @@ func (t *Table) Update() {
 
 func (t *Table) trimRows(rows int) {
 	for t.Table.GetRowCount() > rows {
-		t.Table.RemoveRow(t.Table.GetRowCount() - 1)
+		r := t.Table.GetRowCount() - 1
+		for c := range t.Table.GetColumnCount() {
+			putTableCell(t.Table.GetCell(r, c))
+		}
+		t.Table.RemoveRow(r)
 	}
 }
 
 func (t *Table) handleInput(event *tcell.EventKey) *tcell.EventKey {
 	return t.DataSource.HandleInput(event)
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// cellPool reduces memory allocations for tview.TableCell objects
+var cellPool = sync.Pool{
+	New: func() any {
+		return tview.NewTableCell("")
+	},
+}
+
+func getTableCell(label string, fgColor, bgColor tcell.Color, align int) *tview.TableCell {
+	cell := cellPool.Get().(*tview.TableCell)
+	cell.SetText(label).SetTextColor(fgColor).SetBackgroundColor(bgColor).SetAlign(align)
+	return cell
+}
+
+func putTableCell(cell *tview.TableCell) {
+	cellPool.Put(cell)
 }

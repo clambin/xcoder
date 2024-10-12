@@ -130,8 +130,7 @@ func (f *filters) updated() bool {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func colorStatus(item *worklist.WorkItem) tcell.Color {
-	status, _ := item.Status()
+func colorStatus(status worklist.WorkStatus) tcell.Color {
 	if statusColor, ok := tableColorStatus[status]; ok {
 		return statusColor
 	}
@@ -148,29 +147,20 @@ type workItems struct {
 	fullName atomic.Bool
 }
 
-var headerCells = []*tview.TableCell{
-	tview.NewTableCell(padString("SOURCE", 100)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell("SOURCE STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell("TARGET STATS").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell(padString("STATUS", 9)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-	tview.NewTableCell("COMPLETED").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
-	tview.NewTableCell("REMAINING").SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignRight),
-	tview.NewTableCell(padString("ERROR", 20)).SetSelectable(false).SetTextColor(tview.Styles.SecondaryTextColor).SetAlign(tview.AlignLeft),
-}
-
-func padString(s string, width int) string {
-	if toPad := width - len(s); toPad > 0 {
-		s += strings.Repeat(" ", toPad)
-	}
-	return s
-}
-
 func (w *workItems) Update() Update {
 	list := w.list.List()
 	update := Update{
-		Headers: headerCells,
-		Rows:    make([][]*tview.TableCell, 0, len(list)),
-		Reload:  w.filters.updated(),
+		Headers: []*tview.TableCell{
+			getTableCell(padString("SOURCE", 100), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+			getTableCell("SOURCE STATS", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+			getTableCell("TARGET STATS", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+			getTableCell(padString("STATUS", 9), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+			getTableCell("COMPLETED", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+			getTableCell("REMAINING", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+			getTableCell(padString("ERROR", 20), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		},
+		Rows:   make([][]*tview.TableCell, 0, len(list)),
+		Reload: w.filters.updated(),
 	}
 	for _, item := range list {
 		if row := w.buildRow(item); row != nil {
@@ -180,6 +170,13 @@ func (w *workItems) Update() Update {
 	update.Title = w.title(len(list), len(update.Rows))
 
 	return update
+}
+
+func padString(s string, width int) string {
+	if toPad := width - len(s); toPad > 0 {
+		s += strings.Repeat(" ", toPad)
+	}
+	return s
 }
 
 func (w *workItems) buildRow(item *worklist.WorkItem) []*tview.TableCell {
@@ -196,13 +193,13 @@ func (w *workItems) buildRow(item *worklist.WorkItem) []*tview.TableCell {
 		errString = err.Error()
 	}
 	return []*tview.TableCell{
-		tview.NewTableCell(source).SetReference(item),
-		tview.NewTableCell(item.SourceVideoStats().String()),
-		tview.NewTableCell(item.TargetVideoStats().String()),
-		tview.NewTableCell(status.String()).SetTextColor(colorStatus(item)),
-		tview.NewTableCell(item.CompletedFormatted()).SetAlign(tview.AlignRight),
-		tview.NewTableCell(item.RemainingFormatted()).SetAlign(tview.AlignRight),
-		tview.NewTableCell(errString),
+		getTableCell(source, tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetReference(item),
+		getTableCell(item.SourceVideoStats().String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(item.TargetVideoStats().String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(status.String(), colorStatus(status), tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(item.CompletedFormatted(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignRight),
+		getTableCell(item.RemainingFormatted(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignRight),
+		getTableCell(errString, tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
 	}
 }
 

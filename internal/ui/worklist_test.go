@@ -109,6 +109,7 @@ func Test_workItems_title(t *testing.T) {
 
 // Current:
 // Benchmark_workItems_Update-16               1633            699725 ns/op         1776819 B/op       8005 allocs/op
+// Benchmark_workItems_Update-16               2130            523429 ns/op          105566 B/op       1016 allocs/op
 func Benchmark_workItems_Update(b *testing.B) {
 	var list worklist.WorkList
 	for i := range 1000 {
@@ -117,6 +118,11 @@ func Benchmark_workItems_Update(b *testing.B) {
 	updater := workItems{list: &list}
 	b.ResetTimer()
 	for range b.N {
-		_ = updater.Update()
+		u := updater.Update()
+		for _, r := range u.Rows {
+			for _, c := range r {
+				putTableCell(c)
+			}
+		}
 	}
 }

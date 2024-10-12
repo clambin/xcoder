@@ -45,7 +45,7 @@ func (f fakeDataSource) Update() Update {
 	hdr := []*tview.TableCell{tview.NewTableCell("Status")}
 	rows := make([][]*tview.TableCell, len(f.rows))
 	for r := range f.rows {
-		rows[r] = []*tview.TableCell{tview.NewTableCell(f.rows[r])}
+		rows[r] = []*tview.TableCell{getTableCell(f.rows[r], tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)}
 	}
 	return Update{
 		Headers: hdr,
@@ -57,4 +57,31 @@ func (f fakeDataSource) Update() Update {
 
 func (f fakeDataSource) HandleInput(_ *tcell.EventKey) *tcell.EventKey {
 	panic("implement me")
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func TestCellAllocator(t *testing.T) {
+	c := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
+	assert.Equal(t, "foo", c.Text)
+	putTableCell(c)
+	c = getTableCell("bar", tcell.ColorRed, tcell.ColorBlue, tview.AlignRight)
+	assert.Equal(t, "bar", c.Text)
+	assert.Equal(t, tcell.ColorRed, c.Color)
+	assert.Equal(t, tcell.ColorBlue, c.BackgroundColor)
+	assert.Equal(t, tview.AlignRight, c.Align)
+
+}
+
+func BenchmarkCellAllocator(b *testing.B) {
+	for range b.N {
+		cell := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
+		if cell == nil {
+			b.Fatal("no cell allocated")
+		}
+		if cell.Text != "foo" {
+			b.Fatal("cell allocated does not match foo")
+		}
+		putTableCell(cell)
+	}
 }

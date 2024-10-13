@@ -45,9 +45,9 @@ var profiles = map[string]Profile{
 // Secondly, it determines the video parameters of the output video file.
 type Profile struct {
 	Codec   string
+	Rules   Rules
 	Quality Quality
 	Bitrate int
-	Rules   Rules
 }
 
 // GetProfile returns the profile associated with name.

@@ -149,18 +149,21 @@ type workItems struct {
 	fullName atomic.Bool
 }
 
+func (w *workItems) Header() []*tview.TableCell {
+	return []*tview.TableCell{
+		getTableCell("SOURCE", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false).SetExpansion(1),
+		getTableCell(padString("SOURCE STATS", 21), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		getTableCell(padString("TARGET STATS", 21), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		getTableCell(padString("STATUS", 9), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		getTableCell("COMPLETED", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		getTableCell("REMAINING", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		getTableCell(padString("ERROR", 30), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+	}
+}
+
 func (w *workItems) Update() Update {
 	list := w.list.List()
 	update := Update{
-		Headers: []*tview.TableCell{
-			getTableCell("SOURCE", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false).SetExpansion(1),
-			getTableCell(padString("SOURCE STATS", 21), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-			getTableCell(padString("TARGET STATS", 21), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-			getTableCell(padString("STATUS", 9), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-			getTableCell("COMPLETED", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-			getTableCell("REMAINING", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-			getTableCell(padString("ERROR", 30), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-		},
 		Rows:   make([][]*tview.TableCell, 0, len(list)),
 		Reload: w.filters.updated(),
 	}

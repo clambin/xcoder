@@ -10,12 +10,12 @@ import (
 )
 
 type VideoStats struct {
-	Duration      time.Duration
+	Width         any
 	VideoCodec    string
+	Duration      time.Duration
 	BitRate       int
 	BitsPerSample int
 	Height        int
-	Width         any
 }
 
 func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
@@ -31,6 +31,11 @@ func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 
 func parse(input string) (VideoStats, error) {
 	var stats struct {
+		Format struct {
+			Filename string `json:"filename"`
+			Duration string `json:"duration"`
+			BitRate  string `json:"bit_rate"`
+		} `json:"format"`
 		Streams []struct {
 			CodecName        string `json:"codec_name,omitempty"`
 			CodecType        string `json:"codec_type"`
@@ -38,11 +43,6 @@ func parse(input string) (VideoStats, error) {
 			Height           int    `json:"height,omitempty"`
 			Width            int    `json:"width,omitempty"`
 		} `json:"streams"`
-		Format struct {
-			Filename string `json:"filename"`
-			Duration string `json:"duration"`
-			BitRate  string `json:"bit_rate"`
-		} `json:"format"`
 	}
 
 	if err := json.Unmarshal([]byte(input), &stats); err != nil {

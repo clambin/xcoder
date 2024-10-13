@@ -127,13 +127,13 @@ func (ws WorkStatus) String() string {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type WorkItem struct {
-	Source string
-	status WorkStatus
-	Progress
 	err         error
+	Source      string
 	sourceStats ffmpeg.VideoStats
 	targetStats ffmpeg.VideoStats
-	lock        sync.RWMutex
+	Progress
+	status WorkStatus
+	lock   sync.RWMutex
 }
 
 func (w *WorkItem) Status() (WorkStatus, error) {

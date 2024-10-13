@@ -17,10 +17,10 @@ import (
 )
 
 type Request struct {
+	ProgressCB  func(Progress)
 	Source      string
 	Target      string
 	TargetStats VideoStats
-	ProgressCB  func(Progress)
 }
 
 var ErrMissingFilename = errors.New("missing filename")

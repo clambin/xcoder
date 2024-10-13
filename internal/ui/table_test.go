@@ -26,6 +26,8 @@ func TestTable_Update(t *testing.T) {
 // BenchmarkTable_Update-16            9244            109370 ns/op          272835 B/op       2003 allocs/op
 // With cellPool:
 // BenchmarkTable_Update-16           15936             75340 ns/op           33383 B/op       1003 allocs/op
+// With Header optimization:
+// BenchmarkTable_Update-16           16092             74616 ns/op           33157 B/op       1001 allocs/op
 func BenchmarkTable_Update(b *testing.B) {
 	dataSource := fakeDataSource{rows: make([]string, 1000)}
 	for i := range len(dataSource.rows) {
@@ -35,7 +37,6 @@ func BenchmarkTable_Update(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		table.Update()
-		//dataSource.rows = dataSource.rows[1:]
 	}
 }
 
@@ -45,17 +46,19 @@ type fakeDataSource struct {
 	rows []string
 }
 
+func (f fakeDataSource) Header() []*tview.TableCell {
+	return []*tview.TableCell{tview.NewTableCell("Status")}
+}
+
 func (f fakeDataSource) Update() Update {
-	hdr := []*tview.TableCell{tview.NewTableCell("Status")}
 	rows := make([][]*tview.TableCell, len(f.rows))
 	for r := range f.rows {
 		rows[r] = []*tview.TableCell{getTableCell(f.rows[r], tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)}
 	}
 	return Update{
-		Headers: hdr,
-		Rows:    rows,
-		Title:   "",
-		Reload:  false,
+		Rows:   rows,
+		Title:  "",
+		Reload: false,
 	}
 }
 

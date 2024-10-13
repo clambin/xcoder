@@ -7,15 +7,15 @@ import (
 )
 
 type DataSource interface {
+	Header() []*tview.TableCell
 	Update() Update
 	HandleInput(event *tcell.EventKey) *tcell.EventKey
 }
 
 type Update struct {
-	Headers []*tview.TableCell
-	Rows    [][]*tview.TableCell
-	Title   string
-	Reload  bool
+	Title  string
+	Rows   [][]*tview.TableCell
+	Reload bool
 }
 
 type Table struct {
@@ -38,11 +38,13 @@ func NewTable(source DataSource) *Table {
 }
 
 func (t *Table) Update() {
+	if t.Table.GetRowCount() == 0 {
+		for i, h := range t.DataSource.Header() {
+			t.Table.SetCell(0, i, h)
+		}
+	}
 	update := t.DataSource.Update()
 	t.Table.SetTitle(update.Title)
-	for i, h := range update.Headers {
-		t.Table.SetCell(0, i, h)
-	}
 	for i, row := range update.Rows {
 		for j, cell := range row {
 			putTableCell(t.Table.GetCell(i+1, j))

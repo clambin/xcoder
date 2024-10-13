@@ -1,8 +1,10 @@
 package ffmpeg
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"strconv"
 	"time"
 )
@@ -16,68 +18,70 @@ type VideoStats struct {
 	Width         any
 }
 
-func Parse(input string) (VideoStats, error) {
-	var stats map[string]any
+func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
+	var probe VideoStats
+
+	output, err := ffmpeg.Probe(path)
+	if err != nil {
+		return probe, fmt.Errorf("probe: %w", err)
+	}
+
+	return parse(output)
+}
+
+func parse(input string) (VideoStats, error) {
+	var stats struct {
+		Streams []struct {
+			CodecName        string `json:"codec_name,omitempty"`
+			CodecType        string `json:"codec_type"`
+			BitsPerRawSample string `json:"bits_per_raw_sample,omitempty"`
+			Height           int    `json:"height,omitempty"`
+			Width            int    `json:"width,omitempty"`
+		} `json:"streams"`
+		Format struct {
+			Filename string `json:"filename"`
+			Duration string `json:"duration"`
+			BitRate  string `json:"bit_rate"`
+		} `json:"format"`
+	}
 
 	if err := json.Unmarshal([]byte(input), &stats); err != nil {
 		return VideoStats{}, fmt.Errorf("json: %w", err)
 	}
 
-	var s VideoStats
-	var ok bool
-
-	format := stats["format"].(map[string]any)
-
-	// if s.Source, ok = format["filename"].(string); !ok {
-	//	return VideoStats{}, fmt.Errorf("json: missing filename")
-	//}
-
-	duration, ok := format["duration"].(string)
-	if !ok {
-		return VideoStats{}, fmt.Errorf("missing duration")
-	}
-	duration2, err := strconv.ParseFloat(duration, 64)
+	var videoStats VideoStats
+	duration, err := strconv.ParseFloat(stats.Format.Duration, 64)
 	if err != nil {
 		return VideoStats{}, fmt.Errorf("invalid duration: %w", err)
 	}
-	s.Duration = time.Duration(duration2*1000) * time.Millisecond
-
-	bitrate, ok := format["bit_rate"].(string)
-	if !ok {
-		return VideoStats{}, fmt.Errorf("missing bit_rate")
-	}
-	s.BitRate, err = strconv.Atoi(bitrate)
+	videoStats.Duration = time.Duration(duration*1000) * time.Millisecond
+	bitrate, err := strconv.Atoi(stats.Format.BitRate)
 	if err != nil {
-		return VideoStats{}, fmt.Errorf("json: invalid bit_rate: %w", err)
+		return VideoStats{}, fmt.Errorf("invalid bit_rate: %w", err)
 	}
+	videoStats.BitRate = bitrate
 
-	streams, ok := stats["streams"].([]any)
-	if !ok {
-		return VideoStats{}, fmt.Errorf("missing streams")
-	}
-
-	for _, stream := range streams {
-		stream2 := stream.(map[string]any)
-		if stream2["codec_type"].(string) != "video" {
-			continue
-		}
-		s.VideoCodec = stream2["codec_name"].(string)
-		bitsPerSample := stream2["bits_per_raw_sample"]
-		if bitsPerSample == nil {
-			s.BitsPerSample = 8
-		} else {
-			if s.BitsPerSample, err = strconv.Atoi(bitsPerSample.(string)); err != nil {
-				return VideoStats{}, fmt.Errorf("invalid bits_per_sample %q: %w", bitsPerSample.(string), err)
+	for _, stream := range stats.Streams {
+		if stream.CodecType == "video" {
+			videoStats.VideoCodec = stream.CodecName
+			videoStats.Height = stream.Height
+			videoStats.Width = stream.Width
+			switch stream.BitsPerRawSample {
+			case "", "8":
+				videoStats.BitsPerSample = 8
+			case "10":
+				videoStats.BitsPerSample = 10
+			default:
+				return VideoStats{}, fmt.Errorf("invalid bits_per_raw_sample %q", stream.BitsPerRawSample)
 			}
-
 		}
-		s.Height = int(stream2["height"].(float64))
-		s.Width = int(stream2["width"].(float64))
 	}
-	if s.VideoCodec == "" {
+
+	if videoStats.VideoCodec == "" {
 		return VideoStats{}, fmt.Errorf("no video stream found")
 	}
-	return s, nil
+
+	return videoStats, nil
 }
 
 func (s VideoStats) String() string {

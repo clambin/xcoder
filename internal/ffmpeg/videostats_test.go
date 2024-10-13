@@ -76,7 +76,7 @@ func TestVideoStats_Read(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := Parse(tt.input)
+			got, err := parse(tt.input)
 			assert.Equal(t, tt.want, got)
 			tt.wantErr(t, err)
 		})
@@ -95,4 +95,23 @@ func TestVideoStats_String(t *testing.T) {
 	assert.Equal(t, want, stats.String())
 	stats.VideoCodec = ""
 	assert.Empty(t, stats.String())
+}
+
+// Current:
+// BenchmarkParse-16         308307              3772 ns/op            1184 B/op         21 allocs/op
+func BenchmarkParse(b *testing.B) {
+	const input = `{
+		"streams": [
+	{ "codec_name": "hevc", "codec_type": "video", "bits_per_raw_sample": "10", "height": 1080, "width": 1920 },
+	{ "codec_type": "audio" },
+	{ "codec_type": "subtitle" }
+	],
+	"format": { "filename": "foo.hevc.mkv", "duration": "1800.000", "bit_rate": "5000000" }
+}`
+
+	for range b.N {
+		if _, err := parse(input); err != nil {
+			b.Fatal(err)
+		}
+	}
 }

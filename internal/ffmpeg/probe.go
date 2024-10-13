@@ -2,7 +2,6 @@ package ffmpeg
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
@@ -15,9 +14,6 @@ func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 		return probe, fmt.Errorf("probe: %w", err)
 	}
 
-	if err = json.Unmarshal([]byte(output), &probe); err != nil {
-		return probe, fmt.Errorf("decode: %w", err)
-	}
-
+	probe, err = Parse(output)
 	return probe, nil
 }

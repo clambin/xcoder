@@ -27,13 +27,7 @@ func TestRun(t *testing.T) {
 			name:    "video does not meet criteria",
 			profile: "hevc-max",
 			args: args{
-				stats: ffmpeg.VideoStats{
-					Format: ffmpeg.Format{BitRate: "1024", Duration: "3600"},
-					Streams: []ffmpeg.Stream{
-						{CodecType: "audio", CodecName: "aac"},
-						{CodecType: "video", CodecName: "h264", Height: 720, Width: 1280, BitsPerSample: 10},
-					},
-				},
+				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
 			},
 			want: worklist.Rejected,
 		},
@@ -49,13 +43,7 @@ func TestRun(t *testing.T) {
 			name:    "video meets criteria",
 			profile: "hevc-low",
 			args: args{
-				stats: ffmpeg.VideoStats{
-					Format: ffmpeg.Format{BitRate: "1024000000", Duration: "3600"},
-					Streams: []ffmpeg.Stream{
-						{CodecType: "audio", CodecName: "aac"},
-						{CodecType: "video", CodecName: "h264", Height: 720, Width: 1280, BitsPerSample: 10},
-					},
-				},
+				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1_024_000_000, Duration: time.Hour, BitsPerSample: 10},
 			},
 			want: worklist.Inspected,
 		},

@@ -64,7 +64,7 @@ func TestConverter_convert(t *testing.T) {
 
 			i := l.Add("foo.mkv")
 			i.SetStatus(worklist.Inspected, nil)
-			i.AddSourceStats(ffmpeg.VideoStats{Format: ffmpeg.Format{BitRate: "4000000"}, Streams: []ffmpeg.Stream{{CodecName: "h264", CodecType: "video"}}})
+			i.AddSourceStats(ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
 
 			assert.Eventually(t, func() bool {
 				status, err := i.Status()

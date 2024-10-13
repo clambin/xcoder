@@ -1,58 +1,98 @@
 package ffmpeg
 
 import (
-	"bytes"
 	"github.com/stretchr/testify/assert"
-	"log/slog"
 	"testing"
 	"time"
 )
 
-func TestVideoStats(t *testing.T) {
-	stats := VideoStats{
-		Format: Format{
-			BitRate:  "1024",
-			Duration: "3600",
+func TestVideoStats_Read(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    VideoStats
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "valid",
+			input: `{
+    "streams": [
+        { "codec_name": "hevc", "codec_type": "video", "bits_per_raw_sample": "10", "height": 1080, "width": 1920 },
+        { "codec_type": "audio" },
+        { "codec_type": "subtitle" }
+    ],
+    "format": { "filename": "foo.hevc.mkv", "duration": "1800.000", "bit_rate": "5000000" }
+}
+`,
+			want:    VideoStats{Duration: 30 * time.Minute, VideoCodec: "hevc", BitRate: 5_000_000, BitsPerSample: 10, Height: 1080, Width: 1920},
+			wantErr: assert.NoError,
 		},
-		Streams: []Stream{
-			{CodecType: "audio", CodecName: "aac"},
-			{CodecType: "video", CodecName: "hevc", Height: 720, Width: 1280, BitsPerRawSample: "10"},
+		{
+			name:    "bitsPerSample defaults to 8",
+			input:   `{"format": { "duration": "1800.000", "bit_rate": "5000000" }, "streams": [ { "codec_name": "hevc", "codec_type": "video", "height": 1080, "width": 1920 } ]}`,
+			want:    VideoStats{Duration: 30 * time.Minute, VideoCodec: "hevc", BitRate: 5_000_000, BitsPerSample: 8, Height: 1080, Width: 1920},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "empty",
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing duration",
+			input:   `{"format": {  }}`,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "invalid duration",
+			input:   `{"format": { "duration": "foobar" }}`,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing bitrate",
+			input:   `{"format": { "duration": "1800.00" }}`,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "invalid bitrate",
+			input:   `{"format": { "duration": "1800.000", "bit_rate": "foobar" }}`,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing streams",
+			input:   `{"format": { "duration": "1800.000", "bit_rate": "5000000" }}`,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing video stream",
+			input:   `{"format": { "duration": "1800.000", "bit_rate": "5000000" }, "streams": []}`,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "invalid bitsPerSample defaults to 8",
+			input:   `{"format": { "duration": "1800.000", "bit_rate": "5000000" }, "streams": [ { "codec_name": "hevc", "codec_type": "video", "bits_per_raw_sample": "foobar", "height": 1080, "width": 1920 } ]}`,
+			wantErr: assert.Error,
 		},
 	}
-
-	assert.Equal(t, 1024, stats.BitRate())
-	assert.Equal(t, 10, stats.BitsPerSample())
-	assert.Equal(t, time.Hour, stats.Duration())
-	assert.Equal(t, "hevc", stats.VideoCodec())
-	assert.Equal(t, 720, stats.Height())
-	assert.Equal(t, 1280, stats.Width())
-}
-
-func TestNewVideoStats(t *testing.T) {
-	stats := NewVideoStats("hevc", 1080, 3_000_000)
-	assert.Equal(t, "hevc/1080/3.00 mbps", stats.String())
-}
-
-func TestVideoStats_LogValue(t *testing.T) {
-	var buffer bytes.Buffer
-	l := slog.New(slog.NewTextHandler(&buffer, &slog.HandlerOptions{ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-		if a.Key == slog.TimeKey {
-			return slog.Attr{}
-		}
-		return a
-	}}))
-
-	stats := VideoStats{
-		Format: Format{
-			BitRate:  "1024000",
-			Duration: "3600",
-		},
-		Streams: []Stream{
-			{CodecType: "audio", CodecName: "aac"},
-			{CodecType: "video", CodecName: "hevc", Height: 720, BitsPerRawSample: "10"},
-		},
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := Parse(tt.input)
+			assert.Equal(t, tt.want, got)
+			tt.wantErr(t, err)
+		})
 	}
+}
 
-	l.Info("video", "stats", stats)
-	assert.Equal(t, "level=INFO msg=video stats.codec=hevc stats.bitrate=1000 stats.depth=10 stats.height=720 stats.duration=1h0m0s\n", buffer.String())
+func TestVideoStats_String(t *testing.T) {
+	stats := VideoStats{
+		Duration:      30 * time.Minute,
+		VideoCodec:    "hevc",
+		BitRate:       5_000_000,
+		BitsPerSample: 10,
+		Height:        1080,
+	}
+	const want = `hevc/1080/5.00 mbps`
+	assert.Equal(t, want, stats.String())
+	stats.VideoCodec = ""
+	assert.Empty(t, stats.String())
 }

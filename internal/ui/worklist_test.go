@@ -108,7 +108,7 @@ func Test_workItems_title(t *testing.T) {
 }
 
 // Current:
-// Benchmark_workItems_Update-16               1633            699725 ns/op         1776819 B/op       8005 allocs/op
+// Benchmark_workItems_Update-16               1764            668073 ns/op         1778714 B/op       8016 allocs/op
 func Benchmark_workItems_Update(b *testing.B) {
 	var list worklist.WorkList
 	for i := range 1000 {

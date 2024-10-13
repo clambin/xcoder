@@ -22,6 +22,8 @@ func TestTable_Update(t *testing.T) {
 	}
 }
 
+// Current:
+// BenchmarkTable_Update-16                    9350            108381 ns/op          272835 B/op       2003 allocs/op
 func BenchmarkTable_Update(b *testing.B) {
 	dataSource := fakeDataSource{rows: make([]string, 1000)}
 	for i := range len(dataSource.rows) {

@@ -47,7 +47,7 @@ func TestWorkList_Active(t *testing.T) {
 }
 
 func TestWorkItem_Stats(t *testing.T) {
-	stats := ffmpeg.NewVideoStats("h264", 1080, 5_000_000)
+	stats := ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 5_000_000}
 	var item WorkItem
 	item.AddSourceStats(stats)
 	assert.Equal(t, stats, item.SourceVideoStats())

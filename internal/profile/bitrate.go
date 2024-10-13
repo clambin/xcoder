@@ -49,11 +49,11 @@ var minimumBitrates = map[string]bitRates{
 const lowQualityReduction = 0.8
 
 func getMinimumBitRate(videoStats ffmpeg.VideoStats, quality Quality) (int, error) {
-	rates, ok := minimumBitrates[videoStats.VideoCodec()]
+	rates, ok := minimumBitrates[videoStats.VideoCodec]
 	if !ok {
-		return 0, fmt.Errorf("invalid codec: %s", videoStats.VideoCodec())
+		return 0, fmt.Errorf("invalid codec: %s", videoStats.VideoCodec)
 	}
-	rate := rates.getBitrate(videoStats.Height())
+	rate := rates.getBitrate(videoStats.Height)
 	if quality == LowQuality {
 		rate = int(float64(rate) * lowQualityReduction)
 	}
@@ -70,13 +70,13 @@ func getTargetBitRate(videoStats ffmpeg.VideoStats, targetCodec string, quality 
 	targetBitRates := minimumBitrates[targetCodec]
 
 	// check source bitrate is not too low for the video's height
-	if videoStats.BitRate() < sourceMinBitRate {
+	if videoStats.BitRate < sourceMinBitRate {
 		return 0, ErrSourceRejected{Reason: "bitrate too low"}
 	}
 
-	targetBitRate := targetBitRates.getBitrate(videoStats.Height())
+	targetBitRate := targetBitRates.getBitrate(videoStats.Height)
 	if quality == MaxQuality {
-		oversampling := float64(videoStats.BitRate()) / float64(sourceMinBitRate)
+		oversampling := float64(videoStats.BitRate) / float64(sourceMinBitRate)
 		targetBitRate = int(oversampling * float64(targetBitRate))
 	}
 	return targetBitRate, nil

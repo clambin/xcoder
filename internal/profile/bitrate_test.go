@@ -37,19 +37,19 @@ func Test_getTargetBitRate(t *testing.T) {
 	}{
 		{
 			name:    "invalid source codec",
-			stats:   ffmpeg.VideoStats{Streams: []ffmpeg.Stream{{CodecType: "video", CodecName: "invalid"}}},
+			stats:   ffmpeg.VideoStats{VideoCodec: "invalid"},
 			wantErr: assert.Error,
 		},
 		{
 			name:        "invalid target codec",
-			stats:       ffmpeg.VideoStats{Streams: []ffmpeg.Stream{{CodecType: "video", CodecName: "h264"}}},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264"},
 			targetCodec: "invalid",
 			wantErr:     assert.Error,
 		},
 		{
 			// low quality: 3M*0.8=2.4M minimum. target minimum is 1.5M
 			name:        "low quality",
-			stats:       ffmpeg.VideoStats{Format: ffmpeg.Format{BitRate: "4000000"}, Streams: []ffmpeg.Stream{{CodecType: "video", CodecName: "h264", Height: 720}}},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
 			quality:     LowQuality,
 			targetCodec: "hevc",
 			want:        1_500_000,
@@ -58,7 +58,7 @@ func Test_getTargetBitRate(t *testing.T) {
 		{
 			// target minimum is 1.5M
 			name:        "high quality",
-			stats:       ffmpeg.VideoStats{Format: ffmpeg.Format{BitRate: "6000000"}, Streams: []ffmpeg.Stream{{CodecType: "video", CodecName: "h264", Height: 720}}},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
 			quality:     HighQuality,
 			targetCodec: "hevc",
 			want:        1_500_000,
@@ -67,7 +67,7 @@ func Test_getTargetBitRate(t *testing.T) {
 		{
 			// minimum: 3M. 6M oversample factor: 2. target should be 1.5M*2 = 3M
 			name:        "max quality",
-			stats:       ffmpeg.VideoStats{Format: ffmpeg.Format{BitRate: "6000000"}, Streams: []ffmpeg.Stream{{CodecType: "video", CodecName: "h264", Height: 720}}},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 6_000_000, Height: 720},
 			quality:     MaxQuality,
 			targetCodec: "hevc",
 			want:        3_000_000,

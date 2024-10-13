@@ -1,10 +1,12 @@
 package ui
 
 import (
+	"github.com/clambin/go-common/set"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"strconv"
 	"testing"
 )
 
@@ -53,7 +55,7 @@ func Test_workListViewer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := newWorkListViewer(&list)
-			v.filters.toggle(tt.filters...)
+			v.DataSource.(*workItems).toggle(tt.filters...)
 			v.refresh()
 
 			assert.Equal(t, tt.wantCount, v.GetRowCount())
@@ -66,7 +68,7 @@ func Test_workListViewer(t *testing.T) {
 
 }
 
-func Test_workListViewer_title(t *testing.T) {
+func Test_workItems_title(t *testing.T) {
 	tests := []struct {
 		name          string
 		filters       []worklist.WorkStatus
@@ -98,9 +100,30 @@ func Test_workListViewer_title(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := newWorkListViewer(nil)
-			v.filters.toggle(tt.filters...)
-			assert.Equal(t, tt.expectedTitle, v.title(tt.itemCount, tt.rowCount))
+			ds := workItems{filters: filters{statuses: set.Set[worklist.WorkStatus]{}}}
+			ds.filters.toggle(tt.filters...)
+			assert.Equal(t, tt.expectedTitle, ds.title(tt.itemCount, tt.rowCount))
 		})
+	}
+}
+
+// Current:
+// Benchmark_workItems_Update-16               1764            668073 ns/op         1778714 B/op       8016 allocs/op
+// With cellPool:
+// Benchmark_workItems_Update-16               2130            523429 ns/op          105566 B/op       1016 allocs/op
+func Benchmark_workItems_Update(b *testing.B) {
+	var list worklist.WorkList
+	for i := range 1000 {
+		list.Add(strconv.Itoa(i))
+	}
+	updater := workItems{list: &list}
+	b.ResetTimer()
+	for range b.N {
+		u := updater.Update()
+		for _, r := range u.Rows {
+			for _, c := range r {
+				putTableCell(c)
+			}
+		}
 	}
 }

@@ -1,16 +1,69 @@
 package ffmpeg
 
 import (
-	"bytes"
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
 	"net"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestRequest_IsValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		request Request
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "valid request - 8 bits per sample",
+			request: Request{nil, "foo.mkv", "foo.hevc.mkv", VideoStats{0, "hevc", 0, 3_000_000, 8, 0}},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "valid request - 10 bits per sample",
+			request: Request{nil, "foo.mkv", "foo.hevc.mkv", VideoStats{0, "hevc", 0, 3_000_000, 10, 0}},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "missing source",
+			request: Request{nil, "", "foo.hevc.mkv", VideoStats{0, "hevc", 0, 3_000_000, 8, 0}},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing target",
+			request: Request{nil, "foo.mkv", "", VideoStats{0, "hevc", 0, 3_000_000, 8, 0}},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing codec",
+			request: Request{nil, "foo.mkv", "foo.hevc.mkv", VideoStats{0, "", 0, 3_000_000, 8, 0}},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "wrong codec",
+			request: Request{nil, "foo.mkv", "foo.hevc.mkv", VideoStats{0, "h264", 0, 3_000_000, 8, 0}},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "wrong bits per sample",
+			request: Request{nil, "foo.mkv", "foo.hevc.mkv", VideoStats{0, "hevc", 0, 3_000_000, 16, 0}},
+			wantErr: assert.Error,
+		},
+		{
+			name:    "missing bitrate",
+			request: Request{nil, "foo.mkv", "foo.hevc.mkv", VideoStats{0, "hevc", 0, 0, 8, 0}},
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tt.wantErr(t, tt.request.IsValid())
+		})
+	}
+}
 
 func Test_makeConvertCommand(t *testing.T) {
 	for _, tt := range makeConvertCommandTests {
@@ -18,13 +71,11 @@ func Test_makeConvertCommand(t *testing.T) {
 			// ffmpeg-go.Silent() uses a global variable. :-(
 			//t.Parallel()
 
-			p := Processor{Logger: slog.Default()}
-
 			type ctxKey string
 			key := ctxKey("test")
 			ctx := context.WithValue(context.Background(), key, "test")
 
-			s, err := p.makeConvertCommand(ctx, tt.request, tt.progressSocket)
+			s, err := makeConvertCommand(ctx, tt.request, tt.progressSocket)
 			tt.wantErr(t, err)
 			if err != nil {
 				return
@@ -93,7 +144,7 @@ func Test_progress(t *testing.T) {
 			t.Parallel()
 
 			progresses := make([]Progress, 0, len(tt.want))
-			for p, err := range progress(bytes.NewReader([]byte(tt.input))) {
+			for p, err := range progress(strings.NewReader(tt.input)) {
 				if err == nil {
 					progresses = append(progresses, p)
 				}
@@ -104,7 +155,7 @@ func Test_progress(t *testing.T) {
 }
 
 // Current:
-// Benchmark_progress-16                607           1965400 ns/op         1233087 B/op          4 allocs/op
+// Benchmark_progress-16                661           1798077 ns/op            4263 B/op          3 allocs/op
 func Benchmark_progress(b *testing.B) {
 	var input strings.Builder
 	for range 1000 {
@@ -117,7 +168,7 @@ func Benchmark_progress(b *testing.B) {
 	buf := input.String()
 	b.ResetTimer()
 	for range b.N {
-		for p, err := range progress(bytes.NewBufferString(buf)) {
+		for p, err := range progress(strings.NewReader(buf)) {
 			if err != nil {
 				b.Fatal(err)
 			}

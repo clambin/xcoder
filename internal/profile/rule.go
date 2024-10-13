@@ -20,7 +20,7 @@ func (r Rules) ShouldConvert(stats ffmpeg.VideoStats) error {
 // SkipCodec rejects any video with the specified video codec
 func SkipCodec(codec string) Rule {
 	return func(stats ffmpeg.VideoStats) error {
-		if stats.VideoCodec() != codec {
+		if stats.VideoCodec != codec {
 			return nil
 		}
 		return ErrSourceInTargetCodec
@@ -34,7 +34,7 @@ func MinimumBitrate(quality Quality) Rule {
 		if err != nil {
 			return ErrSourceRejected{Reason: err.Error()}
 		}
-		if sourceBitRate := stats.BitRate(); sourceBitRate < minBitRate {
+		if sourceBitRate := stats.BitRate; sourceBitRate < minBitRate {
 			return ErrSourceRejected{Reason: "bitrate too low"}
 		}
 		return nil
@@ -44,7 +44,7 @@ func MinimumBitrate(quality Quality) Rule {
 // MinimumHeight rejects any video with a height lower than the specified height
 func MinimumHeight(minHeight int) Rule {
 	return func(stats ffmpeg.VideoStats) error {
-		if stats.Height() < minHeight {
+		if stats.Height < minHeight {
 			return ErrSourceRejected{Reason: "height too low"}
 		}
 		return nil

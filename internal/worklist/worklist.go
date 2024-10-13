@@ -127,13 +127,13 @@ func (ws WorkStatus) String() string {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type WorkItem struct {
-	Source string
-	status WorkStatus
-	Progress
 	err         error
+	Source      string
 	sourceStats ffmpeg.VideoStats
 	targetStats ffmpeg.VideoStats
-	lock        sync.RWMutex
+	Progress
+	status WorkStatus
+	lock   sync.RWMutex
 }
 
 func (w *WorkItem) Status() (WorkStatus, error) {
@@ -159,7 +159,7 @@ func (w *WorkItem) AddSourceStats(stats ffmpeg.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.sourceStats = stats
-	w.Progress.Duration = stats.Duration()
+	w.Progress.Duration = stats.Duration
 }
 
 func (w *WorkItem) TargetVideoStats() ffmpeg.VideoStats {
@@ -182,25 +182,28 @@ func (w *WorkItem) RemainingFormatted() string {
 	}
 	var output string
 	if d := w.Progress.Remaining(); d >= 0 { // not sure why I added this check?
-		var days int
-		for d >= 24*time.Hour {
-			days++
-			d -= 24 * time.Hour
-		}
-		if days > 0 {
-			output = strconv.Itoa(days) + "d"
-		}
-		if hours := int(d.Hours()); hours > 0 {
-			output += strconv.Itoa(hours) + "h"
-			d -= time.Duration(hours) * time.Hour
-		}
-		if minutes := int(d.Minutes()); minutes > 0 {
-			output += strconv.Itoa(minutes) + "m"
-			d -= time.Duration(minutes) * time.Minute
-		}
-		if seconds := int(d.Seconds()); seconds > 0 {
-			output += strconv.Itoa(seconds) + "s"
-		}
+		output = formatDuration(d)
+	}
+	return output
+}
+
+func formatDuration(d time.Duration) string {
+	var output string
+	var days int
+	if days = int(d.Hours()) / 24; days > 0 {
+		output = strconv.Itoa(days) + "d"
+		d -= time.Duration(days) * 24 * time.Hour
+	}
+	if hours := int(d.Hours()); hours > 0 {
+		output += strconv.Itoa(hours) + "h"
+		d -= time.Duration(hours) * time.Hour
+	}
+	if minutes := int(d.Minutes()); minutes > 0 {
+		output += strconv.Itoa(minutes) + "m"
+		d -= time.Duration(minutes) * time.Minute
+	}
+	if seconds := int(d.Seconds()); seconds > 0 {
+		output += strconv.Itoa(seconds) + "s"
 	}
 	return output
 }

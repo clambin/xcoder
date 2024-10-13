@@ -45,9 +45,9 @@ var profiles = map[string]Profile{
 // Secondly, it determines the video parameters of the output video file.
 type Profile struct {
 	Codec   string
+	Rules   Rules
 	Quality Quality
 	Bitrate int
-	Rules   Rules
 }
 
 // GetProfile returns the profile associated with name.
@@ -68,7 +68,12 @@ func (p Profile) Evaluate(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats
 	var stats ffmpeg.VideoStats
 	rate, err := p.getTargetBitRate(sourceVideoStats)
 	if err == nil {
-		stats = ffmpeg.NewVideoStats(p.Codec, sourceVideoStats.Height(), rate)
+		stats = ffmpeg.VideoStats{
+			VideoCodec:    p.Codec,
+			BitRate:       rate,
+			BitsPerSample: sourceVideoStats.BitsPerSample,
+			Height:        sourceVideoStats.Height,
+		}
 	}
 	return stats, err
 }

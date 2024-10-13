@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-func makeTargetFilename(item *worklist.WorkItem, directory, codec, extension string) string {
+func buildTargetFilename(item *worklist.WorkItem, directory, codec, extension string) string {
 	if directory == "" {
 		directory = filepath.Dir(item.Source)
 	}
 	elements := make([]string, 0, 5)
 	elements = append(elements, getBasename(item.Source))
-	if height := item.SourceVideoStats().Height(); height > 0 {
+	if height := item.SourceVideoStats().Height; height > 0 {
 		elements = append(elements, strconv.Itoa(height))
 	}
 	elements = append(elements, codec, extension)

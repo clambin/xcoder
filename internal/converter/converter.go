@@ -88,7 +88,7 @@ func (c *Converter) convertItem(ctx context.Context, item *worklist.WorkItem) {
 
 func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error {
 	// Build target name
-	target := makeTargetFilename(item, "", c.Profile.Codec, "mkv")
+	target := buildTargetFilename(item, "", c.Profile.Codec, "mkv")
 
 	// Has the file already been converted?
 	targetIsNewer, err := c.fileChecker.TargetIsNewer(item.Source, target)
@@ -101,21 +101,19 @@ func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error 
 
 	// build the request
 	req := ffmpeg.Request{
-		Source:        item.Source,
-		Target:        target,
-		VideoCodec:    item.TargetVideoStats().VideoCodec(),
-		BitsPerSample: item.SourceVideoStats().BitsPerSample(),
-		BitRate:       item.TargetVideoStats().BitRate(),
+		Source:      item.Source,
+		Target:      target,
+		TargetStats: item.TargetVideoStats(),
 	}
 
 	cbLogger := c.Logger.With("source", item.Source)
-	c.Logger.Info("target determined", "source", item.Source, "bitrate", req.BitRate)
+	c.Logger.Info("target determined", "source", item.Source, "bitrate", req.TargetStats.BitRate)
 
 	var lastDurationReported time.Duration
 	const reportInterval = 1 * time.Minute
-	totalDuration := item.SourceVideoStats().Duration().Seconds()
+	totalDuration := item.SourceVideoStats().Duration
 	req.ProgressCB = func(progress ffmpeg.Progress) {
-		completed := progress.Converted.Seconds() / totalDuration
+		completed := progress.Converted.Seconds() / totalDuration.Seconds()
 		item.Progress.Update(progress)
 		if progress.Converted-lastDurationReported > reportInterval {
 			cbLogger.Info("conversion in progress", "progress", progress.Converted, "speed", progress.Speed, "completed", completed)

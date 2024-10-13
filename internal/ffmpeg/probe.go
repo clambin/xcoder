@@ -14,6 +14,5 @@ func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 		return probe, fmt.Errorf("probe: %w", err)
 	}
 
-	probe, err = Parse(output)
-	return probe, nil
+	return Parse(output)
 }

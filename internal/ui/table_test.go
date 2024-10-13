@@ -82,23 +82,38 @@ func TestCellAllocator(t *testing.T) {
 
 }
 
-func BenchmarkCellAllocator(b *testing.B) {
+func BenchmarkCellPool(b *testing.B) {
+	const cellCount = 100
 	b.Run("pool", func(b *testing.B) {
 		for range b.N {
-			cell := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
-			if cell == nil {
-				b.Fatal("no cell allocated")
+			cells := make([]*tview.TableCell, cellCount)
+			for i := range cells {
+				label := strconv.Itoa(i)
+				cells[i] = getTableCell(label, tcell.ColorWhite, tcell.ColorBlack, tview.AlignLeft)
+				if cells[i] == nil {
+					b.Fatal("no cell allocated")
+				}
+				if cells[i].Text != label {
+					b.Fatal("cell allocated does not match " + label)
+				}
 			}
-			if cell.Text != "foo" {
-				b.Fatal("cell allocated does not match foo")
+			for _, cell := range cells {
+				putTableCell(cell)
 			}
-			putTableCell(cell)
 		}
 	})
 	b.Run("direct", func(b *testing.B) {
 		for range b.N {
-			if cell := tview.NewTableCell("foo").SetTextColor(tcell.ColorWhite).SetBackgroundColor(tcell.ColorBlack).SetAlign(tview.AlignLeft); cell == nil {
-				b.Fatal("no cell allocated")
+			cells := make([]*tview.TableCell, cellCount)
+			for i := range cells {
+				label := strconv.Itoa(i)
+				cells[i] = tview.NewTableCell(label).SetTextColor(tcell.ColorWhite).SetBackgroundColor(tcell.ColorBlack).SetAlign(tview.AlignLeft)
+				if cells[i] == nil {
+					b.Fatal("no cell allocated")
+				}
+				if cells[i].Text != label {
+					b.Fatal("cell allocated does not match " + label)
+				}
 			}
 		}
 	})

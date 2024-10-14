@@ -46,8 +46,6 @@ var minimumBitrates = map[string]bitRates{
 	},
 }
 
-const lowQualityReduction = 0.8
-
 func getMinimumBitRate(videoStats ffmpeg.VideoStats) (int, error) {
 	rates, ok := minimumBitrates[videoStats.VideoCodec]
 	if !ok {

@@ -11,45 +11,47 @@ import (
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 )
 
-// progressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
+// makeProgressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
 // track of the progress of the conversion.
-func (p Processor) progressSocket(progressCallback func(Progress)) (string, error) {
+func (p Processor) makeProgressSocket() (net.Listener, string, error) {
 	tmpDir, err := os.MkdirTemp("", "ffmpeg-")
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 	sockFileName := path.Join(tmpDir, "ffmpeg.sock")
 	l, err := net.Listen("unix", sockFileName)
 	if err != nil {
-		return "", fmt.Errorf("progress socket: listen: %w", err)
+		return nil, "", fmt.Errorf("progress socket: listen: %w", err)
 	}
-	go func() {
-		defer func() {
-			if err := os.RemoveAll(tmpDir); err != nil {
-				p.Logger.Error("failed to clean up status socket", "err", err)
-			}
-		}()
+	return l, sockFileName, nil
+}
 
-		fd, err := l.Accept()
-		if err != nil {
-			p.Logger.Error("failed to serve status socket", "err", err)
-			return
+func (p Processor) serveProgressSocket(l net.Listener, path string, progressCallback func(Progress)) {
+	defer func() {
+		if err := os.RemoveAll(filepath.Dir(path)); err != nil {
+			p.Logger.Error("failed to clean up status socket", "err", err)
 		}
-
-		for prog, err := range progress(fd) {
-			if err == nil {
-				progressCallback(prog)
-			} else {
-				p.Logger.Error("failed to process status socket", "err", err)
-			}
-		}
-		_ = fd.Close()
 	}()
-	return sockFileName, nil
+
+	fd, err := l.Accept()
+	if err != nil {
+		p.Logger.Error("failed to serve status socket", "err", err)
+		return
+	}
+
+	for prog, err := range progress(fd) {
+		if err == nil {
+			progressCallback(prog)
+		} else {
+			p.Logger.Error("failed to process status socket", "err", err)
+		}
+	}
+	_ = fd.Close()
 }
 
 func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {

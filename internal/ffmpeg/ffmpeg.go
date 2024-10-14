@@ -6,6 +6,7 @@ import (
 	"fmt"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"log/slog"
+	"net"
 )
 
 type Request struct {
@@ -58,14 +59,18 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 		return err
 	}
 
-	var sock string
+	var progressSocketPath string
 	if request.ProgressCB != nil {
+		var progressSocketListener net.Listener
 		var err error
-		if sock, err = p.progressSocket(request.ProgressCB); err != nil {
+		progressSocketListener, progressSocketPath, err = p.makeProgressSocket()
+		if err != nil {
 			return fmt.Errorf("progress socket: %w", err)
 		}
+		go p.serveProgressSocket(progressSocketListener, progressSocketPath, request.ProgressCB)
+
 	}
-	stream, err := makeConvertCommand(ctx, request, sock)
+	stream, err := makeConvertCommand(ctx, request, progressSocketPath)
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}

@@ -37,13 +37,14 @@ func Test_makeConvertCommand(t *testing.T) {
 func TestProcessor_progressSocket(t *testing.T) {
 	var p Processor
 	done := make(chan struct{})
-	sock, err := p.progressSocket(func(p Progress) {
+	l, sock, err := p.makeProgressSocket()
+	require.NoError(t, err)
+	go p.serveProgressSocket(l, sock, func(p Progress) {
 		t.Helper()
 		assert.Equal(t, time.Second, p.Converted)
 		assert.Equal(t, 1.0, p.Speed)
 		done <- struct{}{}
 	})
-	require.NoError(t, err)
 
 	fd, err := net.Dial("unix", sock)
 	require.NoError(t, err)

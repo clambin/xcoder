@@ -13,7 +13,24 @@ func TestWorkList(t *testing.T) {
 
 	// default WorkList is empty and inactive
 	assert.Empty(t, l.List())
+	assert.Zero(t, l.Size())
 	assert.False(t, l.Active())
+	for _ = range l.All() {
+		t.Errorf("should not be reached")
+	}
+
+	l.Add("foo")
+	assert.Equal(t, 1, l.Size())
+	var count int
+	for _ = range l.All() {
+		count++
+	}
+	assert.Equal(t, l.Size(), count)
+
+}
+
+func TestWorkList_NextToConvert(t *testing.T) {
+	var l WorkList
 
 	// manually queued items are returned even if the WorkList is inactive
 	l.Queue(&WorkItem{Source: "foo"})

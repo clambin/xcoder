@@ -2,6 +2,7 @@ package worklist
 
 import (
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
+	"iter"
 	"slices"
 	"strconv"
 	"sync"
@@ -67,10 +68,30 @@ func (wl *WorkList) Queue(item *WorkItem) {
 	wl.queued = append(wl.queued, item)
 }
 
+// List returns all WorkItem records in the list. This clones the contained slice. For performance reasons,
+// this should only be used for testing. Use All(), which returns an iterator, instead.
 func (wl *WorkList) List() []*WorkItem {
 	wl.lock.RLock()
 	defer wl.lock.RUnlock()
 	return slices.Clone(wl.list)
+}
+
+func (wl *WorkList) Size() int {
+	wl.lock.RLock()
+	defer wl.lock.RUnlock()
+	return len(wl.list)
+}
+
+func (wl *WorkList) All() iter.Seq[*WorkItem] {
+	return func(yield func(*WorkItem) bool) {
+		wl.lock.RLock()
+		defer wl.lock.RUnlock()
+		for _, item := range wl.list {
+			if !yield(item) {
+				return
+			}
+		}
+	}
 }
 
 func (wl *WorkList) Active() bool {

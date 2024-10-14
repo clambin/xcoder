@@ -6,6 +6,7 @@ import (
 	"fmt"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -85,17 +86,18 @@ func parse(input string) (VideoStats, error) {
 }
 
 func (s VideoStats) String() string {
-	output := s.VideoCodec
-	if output == "" {
+	if s.VideoCodec == "" {
 		return ""
 	}
+	output := make([]string, 1, 3)
+	output[0] = s.VideoCodec
 	if height := s.Height; height > 0 {
-		output += "/" + strconv.Itoa(height)
+		output = append(output, strconv.Itoa(height))
 	}
 	if bitRate := s.BitRate; bitRate > 0 {
-		output += "/" + Bits(bitRate).Format(2)
+		output = append(output, Bits(bitRate).Format(2))
 	}
-	return output
+	return strings.Join(output, "/")
 }
 
 type Bits int

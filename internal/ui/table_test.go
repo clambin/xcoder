@@ -23,10 +23,6 @@ func TestTable_Update(t *testing.T) {
 }
 
 // Current:
-// BenchmarkTable_Update-16            9244            109370 ns/op          272835 B/op       2003 allocs/op
-// With cellPool:
-// BenchmarkTable_Update-16           15936             75340 ns/op           33383 B/op       1003 allocs/op
-// With Header optimization:
 // BenchmarkTable_Update-16           16092             74616 ns/op           33157 B/op       1001 allocs/op
 func BenchmarkTable_Update(b *testing.B) {
 	dataSource := fakeDataSource{rows: make([]string, 1000)}
@@ -85,6 +81,9 @@ func TestCellAllocator(t *testing.T) {
 
 }
 
+// Current:
+// BenchmarkCellPool/pool-16                 285660              4110 ns/op               0 B/op          0 allocs/op
+// BenchmarkCellPool/direct-16               128524              9448 ns/op           24000 B/op        100 allocs/op
 func BenchmarkCellPool(b *testing.B) {
 	const cellCount = 100
 	b.Run("pool", func(b *testing.B) {

@@ -80,7 +80,7 @@ var cellPool = sync.Pool{
 func getTableCell(label string, fgColor, bgColor tcell.Color, align int) *tview.TableCell {
 	cell := cellPool.Get().(*tview.TableCell)
 	cell.Style = tcell.StyleDefault.Foreground(fgColor).Background(bgColor)
-	cell.SetText(label).SetAlign(align)
+	cell.SetText(label).SetAlign(align).SetReference(nil)
 	return cell
 }
 

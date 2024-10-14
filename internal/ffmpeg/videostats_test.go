@@ -115,3 +115,22 @@ func BenchmarkParse(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkVideoStatsString-16             4474502               267.5 ns/op            80 B/op          5 allocs/op
+// Current:
+// BenchmarkVideoStatsString-16             4620211               258.9 ns/op            64 B/op          4 allocs/op
+func BenchmarkVideoStatsString(b *testing.B) {
+	videoStats := VideoStats{
+		Width:         1920,
+		VideoCodec:    "hevc",
+		Duration:      time.Hour,
+		BitRate:       4_000_000,
+		BitsPerSample: 8,
+		Height:        1080,
+	}
+	for range b.N {
+		if stats := videoStats.String(); stats == "" {
+			b.Fatal("empty stats")
+		}
+	}
+}

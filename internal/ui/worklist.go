@@ -162,17 +162,19 @@ func (w *workItems) Header() []*tview.TableCell {
 }
 
 func (w *workItems) Update() Update {
-	list := w.list.List()
+	size := w.list.Size()
 	update := Update{
-		Rows:   make([][]*tview.TableCell, 0, len(list)),
+		Rows:   make([][]*tview.TableCell, 0, size),
 		Reload: w.filters.updated(),
 	}
-	for _, item := range list {
+	for item := range w.list.All() {
 		if row := w.buildRow(item); row != nil {
 			update.Rows = append(update.Rows, row)
 		}
 	}
-	update.Title = w.title(len(list), len(update.Rows))
+	// maybe rows were added after get list.Size()?
+	size = max(size, len(update.Rows))
+	update.Title = w.title(size, len(update.Rows))
 
 	return update
 }

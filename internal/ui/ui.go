@@ -44,7 +44,7 @@ func New(list *worklist.WorkList, cfg configuration.Configuration) *UI {
 		LogViewer:      lv,
 	}
 
-	root.SetInputCapture(u.handleInput)
+	u.Root.SetInputCapture(u.handleInput)
 	return &u
 }
 

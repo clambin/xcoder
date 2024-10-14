@@ -1,36 +1,24 @@
 package ffmpeg
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type VideoStats struct {
-	Width         any
 	VideoCodec    string
 	Duration      time.Duration
 	BitRate       int
 	BitsPerSample int
 	Height        int
+	Width         int
 }
 
-func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
-	var probe VideoStats
-
-	output, err := ffmpeg.Probe(path)
-	if err != nil {
-		return probe, fmt.Errorf("probe: %w", err)
-	}
-
-	return parse(output)
-}
-
-func parse(input string) (VideoStats, error) {
+func parseVideoStats(input string) (VideoStats, error) {
 	var stats struct {
 		Format struct {
 			Filename string `json:"filename"`
@@ -98,6 +86,22 @@ func (s VideoStats) String() string {
 		output = append(output, Bits(bitRate).Format(2))
 	}
 	return strings.Join(output, "/")
+}
+
+var _ slog.LogValuer = VideoStats{}
+
+func (s VideoStats) LogValue() slog.Value {
+	values := make([]slog.Attr, 0, 4)
+	if s.VideoCodec != "" {
+		values = append(values, slog.String("codec", s.VideoCodec))
+	}
+	if s.Height > 0 || s.Width > 0 {
+		values = append(values, slog.Int("width", s.Width), slog.Int("height", s.Height))
+	}
+	if s.BitRate > 0 {
+		values = append(values, slog.String("bitrate", Bits(s.BitRate).Format(1)))
+	}
+	return slog.GroupValue(values...)
 }
 
 type Bits int

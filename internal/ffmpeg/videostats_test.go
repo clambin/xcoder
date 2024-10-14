@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestVideoStats_Read(t *testing.T) {
+func Test_parseVideoStats(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   string
@@ -76,7 +76,7 @@ func TestVideoStats_Read(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := parse(tt.input)
+			got, err := parseVideoStats(tt.input)
 			assert.Equal(t, tt.want, got)
 			tt.wantErr(t, err)
 		})
@@ -97,6 +97,52 @@ func TestVideoStats_String(t *testing.T) {
 	assert.Empty(t, stats.String())
 }
 
+func TestVideoStats_LogValue(t *testing.T) {
+	tests := []struct {
+		name       string
+		videoStats VideoStats
+		want       string
+	}{
+		{
+			name:       "blank",
+			videoStats: VideoStats{},
+			want:       "[]",
+		},
+		{
+			name:       "codec only",
+			videoStats: VideoStats{VideoCodec: "hevc"},
+			want:       "[codec=hevc]",
+		},
+		{
+			name:       "height only",
+			videoStats: VideoStats{Height: 720},
+			want:       "[width=0 height=720]",
+		},
+		{
+			name:       "width only",
+			videoStats: VideoStats{Width: 1920},
+			want:       "[width=1920 height=0]",
+		},
+		{
+			name:       "bitrate only",
+			videoStats: VideoStats{BitRate: 3_000_000},
+			want:       "[bitrate=3.0 mbps]",
+		},
+		{
+			name:       "complete",
+			videoStats: VideoStats{VideoCodec: "hevc", Width: 1920, Height: 1080, BitRate: 3_000_000},
+			want:       "[codec=hevc width=1920 height=1080 bitrate=3.0 mbps]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, tt.videoStats.LogValue().String())
+		})
+	}
+}
+
 // Current:
 // BenchmarkParse-16         308307              3772 ns/op            1184 B/op         21 allocs/op
 func BenchmarkParse(b *testing.B) {
@@ -110,7 +156,7 @@ func BenchmarkParse(b *testing.B) {
 }`
 
 	for range b.N {
-		if _, err := parse(input); err != nil {
+		if _, err := parseVideoStats(input); err != nil {
 			b.Fatal(err)
 		}
 	}

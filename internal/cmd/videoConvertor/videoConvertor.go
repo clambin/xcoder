@@ -2,6 +2,7 @@ package videoConvertor
 
 import (
 	"context"
+	"fmt"
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/converter"
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
@@ -19,8 +20,7 @@ import (
 func Run(ctx context.Context, _ io.Writer) error {
 	cfg, err := configuration.GetConfiguration()
 	if err != nil {
-		slog.Error("invalid configuration", "err", err)
-
+		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	var list worklist.WorkList

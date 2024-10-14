@@ -8,7 +8,7 @@ import (
 func TestGetConfiguration(t *testing.T) {
 	cfg, err := GetConfiguration()
 	assert.NoError(t, err)
-	assert.Equal(t, "hevc-max", cfg.ProfileName)
+	assert.Equal(t, "hevc-high", cfg.ProfileName)
 
 	*videoProfile = "invalid"
 	_, err = GetConfiguration()

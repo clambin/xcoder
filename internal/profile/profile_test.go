@@ -22,21 +22,21 @@ func TestProfile_Evaluate(t *testing.T) {
 		},
 		{
 			name:           "source already in target codec",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr:    assert.Error,
 		},
 		{
 			name:           "source in unsupported codec",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "invalid", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr:    assert.Error,
 		},
 		{
 			name:           "height too low",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "h264", Height: 300, BitRate: 8_000_000},
 			wantEvalErr:    assert.Error,
@@ -50,7 +50,7 @@ func TestProfile_Evaluate(t *testing.T) {
 		},
 		{
 			name:           "success",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 6_000_000},
 			wantEvalErr:    assert.NoError,

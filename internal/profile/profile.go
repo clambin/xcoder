@@ -9,37 +9,34 @@ type Quality int
 
 const (
 	LowQuality Quality = iota
+	MediumQuality
 	HighQuality
-	MaxQuality
 )
 
 var profiles = map[string]Profile{
 	"hevc-low": {
 		Codec:              "hevc",
 		ConstantRateFactor: 28,
-		Quality:            LowQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumBitrate(LowQuality),
 		},
 	},
-	"hevc-high": {
+	"hevc-medium": {
 		Codec:              "hevc",
 		ConstantRateFactor: 18,
-		Quality:            HighQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
-			MinimumBitrate(HighQuality),
+			MinimumBitrate(MediumQuality),
 		},
 	},
-	"hevc-max": {
+	"hevc-high": {
 		Codec:              "hevc",
 		ConstantRateFactor: 10,
-		Quality:            MaxQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumHeight(720),
-			MinimumBitrate(MaxQuality),
+			MinimumBitrate(HighQuality),
 		},
 	},
 }
@@ -49,7 +46,6 @@ var profiles = map[string]Profile{
 type Profile struct {
 	Codec              string
 	Rules              Rules
-	Quality            Quality
 	Bitrate            int
 	ConstantRateFactor int
 }

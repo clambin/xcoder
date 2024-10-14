@@ -30,9 +30,12 @@ func SkipCodec(codec string) Rule {
 // MinimumBitrate rejects any source video with a bitrate lower than the codec's recommended bitrate for the provided Quality
 func MinimumBitrate(quality Quality) Rule {
 	return func(stats ffmpeg.VideoStats) error {
-		minBitRate, err := getMinimumBitRate(stats, quality)
+		minBitRate, err := getMinimumBitRate(stats)
 		if err != nil {
 			return ErrSourceRejected{Reason: err.Error()}
+		}
+		if quality == LowQuality {
+			minBitRate = int(float64(minBitRate) * 0.8)
 		}
 		if sourceBitRate := stats.BitRate; sourceBitRate < minBitRate {
 			return ErrSourceRejected{Reason: "bitrate too low"}

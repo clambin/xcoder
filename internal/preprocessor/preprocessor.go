@@ -47,8 +47,7 @@ func preProcess(ctx context.Context, item *worklist.WorkItem, codec FFMPEG, vide
 	l.Debug("preprocessing done", "sourceStats", sourceStats)
 
 	// Validate that the video meets the criteria
-	targetStats, err := videoProfile.Evaluate(sourceStats)
-	if err != nil {
+	if err = videoProfile.Evaluate(sourceStats); err != nil {
 		l.Debug("should not convert file", "err", err)
 		status := worklist.Rejected
 		if errors.Is(err, profile.ErrSourceInTargetCodec) {
@@ -57,7 +56,7 @@ func preProcess(ctx context.Context, item *worklist.WorkItem, codec FFMPEG, vide
 		item.SetStatus(status, err)
 		return err
 	}
-	item.AddTargetStats(targetStats)
+	item.SetConstantRateFactor(videoProfile.ConstantRateFactor)
 
 	// Add the sourceStats
 	item.SetStatus(worklist.Inspected, nil)

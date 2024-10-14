@@ -101,13 +101,14 @@ func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error 
 
 	// build the request
 	req := ffmpeg.Request{
-		Source:      item.Source,
-		Target:      target,
-		TargetStats: item.TargetVideoStats(),
+		Source:             item.Source,
+		SourceStats:        item.SourceVideoStats(),
+		Target:             target,
+		TargetVideoCodec:   c.Profile.Codec,
+		ConstantRateFactor: c.Profile.ConstantRateFactor,
 	}
 
 	cbLogger := c.Logger.With("source", item.Source)
-	c.Logger.Info("target determined", "source", item.Source, "bitrate", req.TargetStats.BitRate)
 
 	var lastDurationReported time.Duration
 	const reportInterval = 1 * time.Minute

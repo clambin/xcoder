@@ -15,24 +15,27 @@ const (
 
 var profiles = map[string]Profile{
 	"hevc-low": {
-		Codec:   "hevc",
-		Quality: LowQuality,
+		Codec:              "hevc",
+		ConstantRateFactor: 28,
+		Quality:            LowQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumBitrate(LowQuality),
 		},
 	},
 	"hevc-high": {
-		Codec:   "hevc",
-		Quality: HighQuality,
+		Codec:              "hevc",
+		ConstantRateFactor: 18,
+		Quality:            HighQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumBitrate(HighQuality),
 		},
 	},
 	"hevc-max": {
-		Codec:   "hevc",
-		Quality: MaxQuality,
+		Codec:              "hevc",
+		ConstantRateFactor: 10,
+		Quality:            MaxQuality,
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumHeight(720),
@@ -44,10 +47,11 @@ var profiles = map[string]Profile{
 // A Profile serves two purposes. Firstly, it evaluates whether a source video file meets the requirements to be converted.
 // Secondly, it determines the video parameters of the output video file.
 type Profile struct {
-	Codec   string
-	Rules   Rules
-	Quality Quality
-	Bitrate int
+	Codec              string
+	Rules              Rules
+	Quality            Quality
+	Bitrate            int
+	ConstantRateFactor int
 }
 
 // GetProfile returns the profile associated with name.
@@ -58,26 +62,7 @@ func GetProfile(name string) (Profile, error) {
 	return Profile{}, fmt.Errorf("invalid profile name: %s", name)
 }
 
-// Evaluate verifies that the source's videoStats meet the profile's requirements and returns the target videoStats, in line with the profile's parameters.
-// If the source's videoStats do not meet the profile's requirements, error indicates the reason.
-// Otherwise, it returns the first error encountered.
-func (p Profile) Evaluate(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats, error) {
-	if err := p.Rules.ShouldConvert(sourceVideoStats); err != nil {
-		return ffmpeg.VideoStats{}, err
-	}
-	var stats ffmpeg.VideoStats
-	rate, err := p.getTargetBitRate(sourceVideoStats)
-	if err == nil {
-		stats = ffmpeg.VideoStats{
-			VideoCodec:    p.Codec,
-			BitRate:       rate,
-			BitsPerSample: sourceVideoStats.BitsPerSample,
-			Height:        sourceVideoStats.Height,
-		}
-	}
-	return stats, err
-}
-
-func (p Profile) getTargetBitRate(videoStats ffmpeg.VideoStats) (int, error) {
-	return getTargetBitRate(videoStats, p.Codec, p.Quality)
+// Evaluate verifies that the source's videoStats meet the profile's requirements. Otherwise it returns the first non-compliance.
+func (p Profile) Evaluate(sourceVideoStats ffmpeg.VideoStats) error {
+	return p.Rules.ShouldConvert(sourceVideoStats)
 }

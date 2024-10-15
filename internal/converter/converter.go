@@ -111,7 +111,7 @@ func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error 
 	cbLogger := c.Logger.With("source", item.Source)
 
 	var lastDurationReported time.Duration
-	const reportInterval = 1 * time.Minute
+	const reportInterval = time.Minute
 	totalDuration := item.SourceVideoStats().Duration
 	req.ProgressCB = func(progress ffmpeg.Progress) {
 		completed := progress.Converted.Seconds() / totalDuration.Seconds()

@@ -5,21 +5,13 @@ import (
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 )
 
-type Quality int
-
-const (
-	LowQuality Quality = iota
-	MediumQuality
-	HighQuality
-)
-
 var profiles = map[string]Profile{
 	"hevc-low": {
 		Codec:              "hevc",
 		ConstantRateFactor: 28,
 		Rules: Rules{
 			SkipCodec("hevc"),
-			MinimumBitrate(LowQuality),
+			MinimumBitrate(0.8),
 		},
 	},
 	"hevc-medium": {
@@ -27,7 +19,7 @@ var profiles = map[string]Profile{
 		ConstantRateFactor: 18,
 		Rules: Rules{
 			SkipCodec("hevc"),
-			MinimumBitrate(MediumQuality),
+			MinimumBitrate(1),
 		},
 	},
 	"hevc-high": {
@@ -36,7 +28,7 @@ var profiles = map[string]Profile{
 		Rules: Rules{
 			SkipCodec("hevc"),
 			MinimumHeight(720),
-			MinimumBitrate(HighQuality),
+			MinimumBitrate(1),
 		},
 	},
 }
@@ -46,7 +38,6 @@ var profiles = map[string]Profile{
 type Profile struct {
 	Codec              string
 	Rules              Rules
-	Bitrate            int
 	ConstantRateFactor int
 }
 

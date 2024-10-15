@@ -1,7 +1,7 @@
 package ffmpeg
 
 import (
-	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
 )
 
 // videoCodecs translates generic codec names into the OS-specific codec names
@@ -11,6 +11,6 @@ var videoCodecs = map[string]string{
 
 // inputArguments are added before the input chain.
 // Use MacOS videotoolbox to decode video streams.
-var inputArguments = ffmpeg.KwArgs{
+var inputArguments = cmd.Args{
 	"hwaccel": "videotoolbox",
 }

@@ -21,7 +21,7 @@ var makeConvertCommandTests = []struct {
 			ConstantRateFactor: 10,
 		},
 		progressSocket: "socket",
-		want:           "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+		want:           "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
 		wantErr:        assert.NoError,
 	},
 	{
@@ -34,7 +34,7 @@ var makeConvertCommandTests = []struct {
 			ConstantRateFactor: 10,
 		},
 		progressSocket: "socket",
-		want:           "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main10 foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+		want:           "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
 		wantErr:        assert.NoError,
 	},
 	{
@@ -46,7 +46,7 @@ var makeConvertCommandTests = []struct {
 			ConstantRateFactor: 10,
 		},
 		progressSocket: "socket",
-		want:           "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -progress unix://socket -y",
+		want:           "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
 		wantErr:        assert.NoError,
 	},
 	{
@@ -57,7 +57,7 @@ var makeConvertCommandTests = []struct {
 			TargetVideoCodec:   "hevc",
 			ConstantRateFactor: 10,
 		},
-		want:    "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main foo.hevc.mkv -nostats -loglevel error -y",
+		want:    "-i foo.mkv -c:a copy -c:s copy -c:v libx265 -crf 10 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
 		wantErr: assert.NoError,
 	},
 

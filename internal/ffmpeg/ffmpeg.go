@@ -69,10 +69,10 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 		go p.serveProgressSocket(progressSocketListener, progressSocketPath, request.ProgressCB)
 
 	}
-	stream, err := makeConvertCommand(ctx, request, progressSocketPath)
+	cmd, err := makeConvertCommand(ctx, request, progressSocketPath)
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
-	p.Logger.Info("converting", "cmd", stream.Compile().String())
-	return stream.Run()
+	p.Logger.Info("converting", "cmd", cmd.String())
+	return cmd.Run()
 }

@@ -5,7 +5,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"os/exec"
+
+	//ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io"
 	"iter"
 	"net"
@@ -54,7 +58,7 @@ func (p Processor) serveProgressSocket(l net.Listener, path string, progressCall
 	_ = fd.Close()
 }
 
-func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {
+func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*exec.Cmd, error) {
 	codecName, ok := videoCodecs[request.TargetVideoCodec]
 	if !ok {
 		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetVideoCodec)
@@ -64,26 +68,22 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		profile = "main10"
 	}
 
-	globalArgs := []string{
-		"-nostats",
-		"-loglevel", "error",
-	}
-	if progressSocket != "" {
-		globalArgs = append(globalArgs, "-progress", "unix://"+progressSocket)
-	}
-	outputArguments := ffmpeg.KwArgs{
-		"c:v":       codecName,
-		"profile:v": profile,
-		"crf":       strconv.Itoa(request.ConstantRateFactor),
-		"c:a":       "copy",
-		"c:s":       "copy",
-		"f":         "matroska",
-	}
+	command := cmd.
+		Input(request.Source, inputArguments).
+		Output(request.Target, cmd.Args{
+			"c:v":       codecName,
+			"profile:v": profile,
+			"crf":       strconv.Itoa(request.ConstantRateFactor),
+			"c:a":       "copy",
+			"c:s":       "copy",
+			"f":         "matroska",
+		}).
+		NoStats().
+		LogLevel("error").
+		OverWriteTarget(true). // TODO: get value from request / configuration
+		ProgressSocket(progressSocket)
 
-	cmd := ffmpeg.Input(request.Source, inputArguments).Output(request.Target, outputArguments).GlobalArgs(globalArgs...)
-	cmd.Context = ctx
-	cmd.OverWriteOutput() //.Silent(true) uses global variable, so not thread-safe.  See init()
-	return cmd, nil
+	return command.Build(ctx), nil
 }
 
 func init() {

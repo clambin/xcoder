@@ -55,12 +55,12 @@ func (p Processor) serveProgressSocket(l net.Listener, path string, progressCall
 }
 
 func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*ffmpeg.Stream, error) {
-	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
+	codecName, ok := videoCodecs[request.TargetVideoCodec]
 	if !ok {
-		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetStats.VideoCodec)
+		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetVideoCodec)
 	}
 	profile := "main"
-	if request.TargetStats.BitsPerSample == 10 {
+	if request.SourceStats.BitsPerSample == 10 {
 		profile = "main10"
 	}
 
@@ -72,10 +72,9 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		globalArgs = append(globalArgs, "-progress", "unix://"+progressSocket)
 	}
 	outputArguments := ffmpeg.KwArgs{
-		//"map":       "0:0",
 		"c:v":       codecName,
 		"profile:v": profile,
-		"b:v":       request.TargetStats.BitRate,
+		"crf":       strconv.Itoa(request.ConstantRateFactor),
 		"c:a":       "copy",
 		"c:s":       "copy",
 		"f":         "matroska",
@@ -83,7 +82,7 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 
 	cmd := ffmpeg.Input(request.Source, inputArguments).Output(request.Target, outputArguments).GlobalArgs(globalArgs...)
 	cmd.Context = ctx
-	cmd.OverWriteOutput() //.Silent(true)
+	cmd.OverWriteOutput() //.Silent(true) uses global variable, so not thread-safe.  See init()
 	return cmd, nil
 }
 

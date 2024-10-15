@@ -2,14 +2,13 @@ package configuration
 
 import (
 	"flag"
-	"fmt"
 	"github.com/clambin/videoConvertor/internal/profile"
 )
 
 var (
 	debug        = flag.Bool("debug", false, "switch on debug logging")
 	input        = flag.String("input", "/media", "input directory")
-	videoProfile = flag.String("profile", "hevc-max", "conversion profile")
+	videoProfile = flag.String("profile", "hevc-high", "conversion profile")
 	active       = flag.Bool("active", false, "start convertor in active mode")
 	remove       = flag.Bool("remove", false, "remove source files after successful conversion")
 	overwrite    = flag.Bool("overwrite", false, "overwrite existing files")
@@ -39,7 +38,7 @@ func GetConfiguration() (Configuration, error) {
 
 	var err error
 	if configuration.Profile, err = profile.GetProfile(configuration.ProfileName); err != nil {
-		return Configuration{}, fmt.Errorf("invalid profile %q: %w", configuration.ProfileName, err)
+		return Configuration{}, err
 	}
 
 	return configuration, nil

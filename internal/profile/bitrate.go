@@ -5,30 +5,6 @@ import (
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 )
 
-type bitRate struct {
-	height  int
-	bitrate int
-}
-
-type bitRates []bitRate
-
-func (b bitRates) getBitrate(height int) int {
-	for i, r := range b {
-		if r.height < height {
-			continue
-		}
-		if r.height == height {
-			return r.bitrate
-		}
-		if i == 0 {
-			return r.bitrate
-		}
-		factor := float64(height-b[i-1].height) / float64(b[i].height-b[i-1].height)
-		return b[i-1].bitrate + int(factor*(float64(b[i].bitrate-b[i-1].bitrate)))
-	}
-	return b[len(b)-1].bitrate
-}
-
 // https://www.yololiv.com/blog/h265-vs-h264-whats-the-difference-which-is-better/
 
 var minimumBitrates = map[string]bitRates{
@@ -46,38 +22,39 @@ var minimumBitrates = map[string]bitRates{
 	},
 }
 
-const lowQualityReduction = 0.8
-
-func getMinimumBitRate(videoStats ffmpeg.VideoStats, quality Quality) (int, error) {
+// getMinimumBitRate returns the recommended minimum bitrate given a video's codec and height.
+func getMinimumBitRate(videoStats ffmpeg.VideoStats) (int, error) {
 	rates, ok := minimumBitrates[videoStats.VideoCodec]
 	if !ok {
 		return 0, fmt.Errorf("invalid codec: %s", videoStats.VideoCodec)
 	}
-	rate := rates.getBitrate(videoStats.Height)
-	if quality == LowQuality {
-		rate = int(float64(rate) * lowQualityReduction)
-	}
-	return rate, nil
+	return rates.getBitrate(videoStats.Height), nil
 }
 
-func getTargetBitRate(videoStats ffmpeg.VideoStats, targetCodec string, quality Quality) (int, error) {
-	// validate codecs
-	sourceMinBitRate, err := getMinimumBitRate(videoStats, quality)
-	if err != nil {
-		return 0, err
-	}
-	// only called from profile, so we know the targetCodec is correct
-	targetBitRates := minimumBitrates[targetCodec]
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// check source bitrate is not too low for the video's height
-	if videoStats.BitRate < sourceMinBitRate {
-		return 0, ErrSourceRejected{Reason: "bitrate too low"}
-	}
+type bitRate struct {
+	height  int
+	bitrate int
+}
 
-	targetBitRate := targetBitRates.getBitrate(videoStats.Height)
-	if quality == MaxQuality {
-		oversampling := float64(videoStats.BitRate) / float64(sourceMinBitRate)
-		targetBitRate = int(oversampling * float64(targetBitRate))
+type bitRates []bitRate
+
+// getBitrate returns the minimum recommended bitrate given a video's height. If the height doesn't match any entries
+// in minimumBitrate table, the bitrate is extrapolated between the lower and higher entries.
+func (b bitRates) getBitrate(height int) int {
+	for i, r := range b {
+		if r.height < height {
+			continue
+		}
+		if r.height == height {
+			return r.bitrate
+		}
+		if i == 0 {
+			return r.bitrate
+		}
+		factor := float64(height-b[i-1].height) / float64(b[i].height-b[i-1].height)
+		return b[i-1].bitrate + int(factor*(float64(b[i].bitrate-b[i-1].bitrate)))
 	}
-	return targetBitRate, nil
+	return b[len(b)-1].bitrate
 }

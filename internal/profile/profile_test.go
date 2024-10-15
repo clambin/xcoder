@@ -14,7 +14,6 @@ func TestProfile_Evaluate(t *testing.T) {
 		wantProfileErr assert.ErrorAssertionFunc
 		sourceStats    ffmpeg.VideoStats
 		wantEvalErr    assert.ErrorAssertionFunc
-		targetStats    ffmpeg.VideoStats
 	}{
 		{
 			name:           "invalid profile",
@@ -23,39 +22,38 @@ func TestProfile_Evaluate(t *testing.T) {
 		},
 		{
 			name:           "source already in target codec",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr:    assert.Error,
 		},
 		{
 			name:           "source in unsupported codec",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "invalid", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr:    assert.Error,
 		},
 		{
 			name:           "height too low",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "h264", Height: 300, BitRate: 8_000_000},
 			wantEvalErr:    assert.Error,
 		},
 		{
 			name:           "bitrate too low",
-			profileName:    "hevc-max",
+			profileName:    "hevc-low",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 1_000_000},
 			wantEvalErr:    assert.Error,
 		},
 		{
 			name:           "success",
-			profileName:    "hevc-max",
+			profileName:    "hevc-high",
 			wantProfileErr: assert.NoError,
 			sourceStats:    ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 6_000_000},
 			wantEvalErr:    assert.NoError,
-			targetStats:    ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 3_000_000},
 		},
 	}
 
@@ -68,9 +66,7 @@ func TestProfile_Evaluate(t *testing.T) {
 			if err != nil {
 				return
 			}
-			stats, err := p.Evaluate(tt.sourceStats)
-			tt.wantEvalErr(t, err)
-			assert.Equal(t, tt.targetStats, stats)
+			tt.wantEvalErr(t, p.Evaluate(tt.sourceStats))
 		})
 	}
 }

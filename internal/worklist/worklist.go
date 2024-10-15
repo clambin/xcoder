@@ -151,10 +151,10 @@ type WorkItem struct {
 	err         error
 	Source      string
 	sourceStats ffmpeg.VideoStats
-	targetStats ffmpeg.VideoStats
 	Progress
-	status WorkStatus
-	lock   sync.RWMutex
+	status             WorkStatus
+	lock               sync.RWMutex
+	constantRateFactor int
 }
 
 func (w *WorkItem) Status() (WorkStatus, error) {
@@ -183,16 +183,10 @@ func (w *WorkItem) AddSourceStats(stats ffmpeg.VideoStats) {
 	w.Progress.Duration = stats.Duration
 }
 
-func (w *WorkItem) TargetVideoStats() ffmpeg.VideoStats {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	return w.targetStats
-}
-
-func (w *WorkItem) AddTargetStats(stats ffmpeg.VideoStats) {
+func (w *WorkItem) SetConstantRateFactor(constantRateFactor int) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	w.targetStats = stats
+	w.constantRateFactor = constantRateFactor
 }
 
 func (w *WorkItem) RemainingFormatted() string {

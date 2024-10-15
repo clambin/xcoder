@@ -68,8 +68,6 @@ func TestWorkItem_Stats(t *testing.T) {
 	var item WorkItem
 	item.AddSourceStats(stats)
 	assert.Equal(t, stats, item.SourceVideoStats())
-	item.AddTargetStats(stats)
-	assert.Equal(t, stats, item.TargetVideoStats())
 }
 
 func TestWorkItem_RemainingFormatted(t *testing.T) {

@@ -62,6 +62,12 @@ func Test_makeTargetFilename(t *testing.T) {
 			stats:  stats1080,
 			want:   "/directory/foo.bar.1080.hevc.mkv",
 		},
+		{
+			name:   "movie with year",
+			source: "/tmp/foo bar (2024).mp4",
+			stats:  stats1080,
+			want:   "/directory/foo bar (2024).1080.hevc.mkv",
+		},
 	}
 
 	for _, tt := range tests {

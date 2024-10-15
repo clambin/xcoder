@@ -36,29 +36,28 @@ func getBasename(source string) string {
 	return parseGeneric(source)
 }
 
-var regexpSeries = regexp.MustCompile(`^(.+)\.([Ss][0-9]+([Ee][0-9]+)+).*\.(.+?)$`)
-var regexpAltSeries = regexp.MustCompile(`^(.+) ([Ss][0-9]+([Ee][0-9]+)+).*\.(.+?)$`)
+var regexpSeries = []*regexp.Regexp{
+	regexp.MustCompile(`^(.+)\.([Ss][0-9]+([Ee][0-9]+)+).*\.(.+?)$`),
+	regexp.MustCompile(`^(.+) ([Ss][0-9]+([Ee][0-9]+)+).*\.(.+?)$`),
+}
 
 func parseEpisode(filename string) (string, bool) {
-	if match := regexpSeries.FindStringSubmatch(filename); len(match) >= 3 {
-		return match[1] + "." + strings.ToLower(match[2]), true
-	}
-	if match := regexpAltSeries.FindStringSubmatch(filename); len(match) >= 3 {
-		return match[1] + "." + strings.ToLower(match[2]), true
+	for _, re := range regexpSeries {
+		if match := re.FindStringSubmatch(filename); len(match) >= 3 {
+			return match[1] + "." + strings.ToLower(match[2]), true
+		}
 	}
 	return "", false
 }
 
 var regexpMovie = []*regexp.Regexp{
-	regexp.MustCompile(`(.+?\.\d{4}).*\.(.+?)$`),
-	regexp.MustCompile(`(.+? \d{4}) .+\.(.+?)$`),
-	regexp.MustCompile(`(.+? \(?\d{4}\)?).+?\.(.+?)$`),
+	regexp.MustCompile(`^(.* \(\d{4}\))`),    // matches "movie name (yyyy).*"
+	regexp.MustCompile(`^(.*[ .]\d{4})[^p]`), // matches "movie name yyyy.*" and "movie.name.yyyy.*"
 }
 
 func parseMovie(filename string) (string, bool) {
 	for _, re := range regexpMovie {
-		match := re.FindStringSubmatch(filename)
-		if len(match) != 0 {
+		if match := re.FindStringSubmatch(filename); len(match) != 0 {
 			return match[1], true
 		}
 	}

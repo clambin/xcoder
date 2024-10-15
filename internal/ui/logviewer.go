@@ -39,12 +39,13 @@ func (v *LogViewer) handleInput(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyRune:
 		switch event.Rune() {
 		case 'w':
-			v.ToggleWrap()
-			return nil
-		default:
-			return event
+			if event.Modifiers() == tcell.ModNone {
+				v.ToggleWrap()
+				return nil
+			}
 		}
 	default:
 		return event
 	}
+	return event
 }

@@ -223,6 +223,9 @@ func (w *workItems) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	if event.Key() != tcell.KeyRune {
 		return event
 	}
+	if event.Modifiers() != tcell.ModNone {
+		return event
+	}
 	switch event.Rune() {
 	case 's':
 		w.filters.toggle(worklist.Skipped)

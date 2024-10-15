@@ -41,6 +41,8 @@ func TestUI(t *testing.T) {
 	assert.Nil(t, ui.workListViewer.handleInput(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone)))
 	ui.refresh()
 	assert.Equal(t, 2, ui.workListViewer.Table.GetRowCount())
+	assert.NotNil(t, ui.workListViewer.handleInput(tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModCtrl)))
+	assert.Equal(t, 2, ui.workListViewer.Table.GetRowCount())
 
 	// verify switching between different pages
 	front, _ := ui.GetFrontPage()

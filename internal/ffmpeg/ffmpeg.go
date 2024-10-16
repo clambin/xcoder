@@ -63,17 +63,17 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 	if request.ProgressCB != nil {
 		var progressSocketListener net.Listener
 		var err error
-		progressSocketListener, progressSocketPath, err = p.makeProgressSocket()
+		progressSocketListener, progressSocketPath, err = makeProgressSocket()
 		if err != nil {
 			return fmt.Errorf("progress socket: %w", err)
 		}
-		go p.serveProgressSocket(progressSocketListener, progressSocketPath, request.ProgressCB)
+		go serveProgressSocket(progressSocketListener, progressSocketPath, request.ProgressCB, p.Logger)
 
 	}
-	cmd, err := makeConvertCommand(ctx, request, progressSocketPath)
+	command, err := makeConvertCommand(ctx, request, progressSocketPath)
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
-	p.Logger.Info("converting", "cmd", cmd.String())
-	return cmd.Run()
+	p.Logger.Info("converting", "cmd", command.String())
+	return command.Run()
 }

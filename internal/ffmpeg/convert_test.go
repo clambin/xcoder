@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"log/slog"
 	"net"
 	"strings"
 	"testing"
@@ -35,16 +36,17 @@ func Test_makeConvertCommand(t *testing.T) {
 }
 
 func TestProcessor_progressSocket(t *testing.T) {
-	var p Processor
 	done := make(chan struct{})
-	l, sock, err := p.makeProgressSocket()
+	l, sock, err := makeProgressSocket()
 	require.NoError(t, err)
-	go p.serveProgressSocket(l, sock, func(p Progress) {
+
+	handler := func(p Progress) {
 		t.Helper()
 		assert.Equal(t, time.Second, p.Converted)
 		assert.Equal(t, 1.0, p.Speed)
 		done <- struct{}{}
-	})
+	}
+	go serveProgressSocket(l, sock, handler, slog.Default())
 
 	fd, err := net.Dial("unix", sock)
 	require.NoError(t, err)

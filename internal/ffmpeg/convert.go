@@ -8,6 +8,7 @@ import (
 	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
 	"io"
 	"iter"
+	"log/slog"
 	"net"
 	"os"
 	"os/exec"
@@ -17,44 +18,7 @@ import (
 	"time"
 )
 
-// makeProgressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
-// track of the progress of the conversion.
-func (p Processor) makeProgressSocket() (net.Listener, string, error) {
-	tmpDir, err := os.MkdirTemp("", "ffmpeg-")
-	if err != nil {
-		return nil, "", err
-	}
-	sockFileName := path.Join(tmpDir, "ffmpeg.sock")
-	l, err := net.Listen("unix", sockFileName)
-	if err != nil {
-		return nil, "", fmt.Errorf("progress socket: listen: %w", err)
-	}
-	return l, sockFileName, nil
-}
-
-func (p Processor) serveProgressSocket(l net.Listener, path string, progressCallback func(Progress)) {
-	defer func() {
-		if err := os.RemoveAll(filepath.Dir(path)); err != nil {
-			p.Logger.Error("failed to clean up status socket", "err", err)
-		}
-	}()
-
-	fd, err := l.Accept()
-	if err != nil {
-		p.Logger.Error("failed to serve status socket", "err", err)
-		return
-	}
-
-	for prog, err := range progress(fd) {
-		if err == nil {
-			progressCallback(prog)
-		} else {
-			p.Logger.Error("failed to process status socket", "err", err)
-		}
-	}
-	_ = fd.Close()
-}
-
+// makeConvertCommand creates a exec.Command to run ffmeg with the required configuration.
 func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*exec.Cmd, error) {
 	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
 	if !ok {
@@ -83,11 +47,51 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 	return command.Build(ctx), nil
 }
 
+// makeProgressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
+// track of the progress of the conversion.
+func makeProgressSocket() (net.Listener, string, error) {
+	tmpDir, err := os.MkdirTemp("", "ffmpeg-")
+	if err != nil {
+		return nil, "", err
+	}
+	sockFileName := path.Join(tmpDir, "ffmpeg.sock")
+	l, err := net.Listen("unix", sockFileName)
+	if err != nil {
+		return nil, "", fmt.Errorf("progress socket: listen: %w", err)
+	}
+	return l, sockFileName, nil
+}
+
+// serveProgressSocket reads the ffmpeg progress and calls the process callback function.
+func serveProgressSocket(l net.Listener, path string, progressCallback func(Progress), logger *slog.Logger) {
+	defer func() {
+		if err := os.RemoveAll(filepath.Dir(path)); err != nil {
+			logger.Error("failed to clean up status socket", "err", err)
+		}
+	}()
+
+	fd, err := l.Accept()
+	if err != nil {
+		logger.Error("failed to serve status socket", "err", err)
+		return
+	}
+
+	for prog, err := range progress(fd) {
+		if err == nil {
+			progressCallback(prog)
+		} else {
+			logger.Error("failed to process status socket", "err", err)
+		}
+	}
+	_ = fd.Close()
+}
+
 type Progress struct {
 	Converted time.Duration
 	Speed     float64
 }
 
+// progress reads the ffmpeg progress information to create a complete Progress record and yield it to the caller.
 func progress(r io.Reader) iter.Seq2[Progress, error] {
 	var (
 		convertedMarker = []byte("out_time_ms=")

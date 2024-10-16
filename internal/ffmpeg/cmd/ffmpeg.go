@@ -101,9 +101,8 @@ func (a Args) compile() []string {
 	arguments := make([]string, 0, 2*len(a))
 	for _, k := range keys {
 		arguments = append(arguments, "-"+k)
-		if v, ok := a[k]; ok && v != "" {
+		if v := a[k]; v != "" {
 			arguments = append(arguments, v)
-		} else {
 		}
 	}
 	return arguments

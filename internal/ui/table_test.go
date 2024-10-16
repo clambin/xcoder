@@ -83,7 +83,7 @@ func TestCellAllocator(t *testing.T) {
 
 // Current:
 // BenchmarkCellPool/pool-16                 285660              4110 ns/op               0 B/op          0 allocs/op
-// BenchmarkCellPool/direct-16               128524              9448 ns/op           24000 B/op        100 allocs/op
+// BenchmarkCellPool/direct-16               155006              7744 ns/op           24000 B/op        100 allocs/op
 func BenchmarkCellPool(b *testing.B) {
 	const cellCount = 100
 	b.Run("pool", func(b *testing.B) {

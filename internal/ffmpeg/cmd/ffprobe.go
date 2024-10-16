@@ -20,7 +20,7 @@ func Probe(path string) (string, error) {
 	cmd.Stdout = &stdOut
 	cmd.Stderr = &stdErr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("[%s] %w", string(stdErr.Bytes()), err)
+		return "", fmt.Errorf("[%s] %w", stdErr.String(), err)
 	}
-	return string(stdOut.Bytes()), nil
+	return stdOut.String(), nil
 }

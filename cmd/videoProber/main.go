@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"log/slog"
+	"math"
 	"os"
+	"time"
 )
 
 var asJSON = flag.Bool("json", false, "dump stats as json")
@@ -17,7 +19,7 @@ func main() {
 	p := ffmpeg.Processor{Logger: slog.Default()}
 
 	for _, arg := range flag.Args() {
-		probe, err := p.Scan(context.Background(), arg)
+		stats, err := p.Scan(context.Background(), arg)
 		if err != nil {
 			panic(err)
 		}
@@ -25,14 +27,15 @@ func main() {
 		if *asJSON {
 			enc := json.NewEncoder(os.Stdout)
 			enc.SetIndent("", "  ")
-			_ = enc.Encode(probe)
+			_ = enc.Encode(stats)
 		} else {
-			fmt.Printf("%s: codec:%s bitrate:%s height:%d width:%d\n",
+			fmt.Printf("%s: codec:%s bitrate:%s height:%d width:%d duration: %6s\n",
 				arg,
-				probe.VideoCodec,
-				ffmpeg.Bits(probe.BitRate).Format(2),
-				probe.Height,
-				probe.Width,
+				stats.VideoCodec,
+				ffmpeg.Bits(stats.BitRate).Format(1),
+				stats.Height,
+				stats.Width,
+				(time.Duration(math.Round(stats.Duration.Seconds())) * time.Second).String(),
 			)
 		}
 	}

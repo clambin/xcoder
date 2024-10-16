@@ -56,12 +56,12 @@ func (p Processor) serveProgressSocket(l net.Listener, path string, progressCall
 }
 
 func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*exec.Cmd, error) {
-	codecName, ok := videoCodecs[request.TargetVideoCodec]
+	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
 	if !ok {
-		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetVideoCodec)
+		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetStats.VideoCodec)
 	}
 	profile := "main"
-	if request.SourceStats.BitsPerSample == 10 {
+	if request.TargetStats.BitsPerSample == 10 {
 		profile = "main10"
 	}
 
@@ -70,7 +70,7 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		Output(request.Target, cmd.Args{
 			"c:v":       codecName,
 			"profile:v": profile,
-			"crf":       strconv.Itoa(request.ConstantRateFactor),
+			"b:v":       strconv.Itoa(request.TargetStats.BitRate),
 			"c:a":       "copy",
 			"c:s":       "copy",
 			"f":         "matroska",

@@ -13,52 +13,42 @@ func TestRequest_IsValid(t *testing.T) {
 	}{
 		{
 			name:    "valid request - 8 bits per sample",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 8}, TargetVideoCodec: "hevc", ConstantRateFactor: 10},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: VideoStats{"hevc", 0, 3_000_000, 8, 0, 0}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "valid request - 10 bits per sample",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 10}, TargetVideoCodec: "hevc", ConstantRateFactor: 10},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: VideoStats{"hevc", 0, 3_000_000, 10, 0, 0}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "missing source",
-			request: Request{Source: "", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 8}, TargetVideoCodec: "hevc", ConstantRateFactor: 10},
+			request: Request{Target: "foo.hevc.mkv", TargetStats: VideoStats{"hevc", 0, 3_000_000, 8, 0, 0}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "missing target",
-			request: Request{Source: "foo.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 8}, TargetVideoCodec: "hevc", ConstantRateFactor: 10},
+			request: Request{Source: "foo.mkv", TargetStats: VideoStats{"hevc", 0, 3_000_000, 8, 0, 0}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "missing codec",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 8}, ConstantRateFactor: 10},
-			wantErr: assert.Error,
-		},
-		{
-			name:    "missing height",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{BitRate: 3_000_000, BitsPerSample: 8}, ConstantRateFactor: 10},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: VideoStats{"", 0, 3_000_000, 8, 0, 0}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "wrong codec",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 8}, TargetVideoCodec: "h264", ConstantRateFactor: 10},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: VideoStats{"h264", 0, 3_000_000, 8, 0, 0}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "wrong bits per sample",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 12}, TargetVideoCodec: "hevc", ConstantRateFactor: 10},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: VideoStats{"hevc", 0, 3_000_000, 16, 0, 0}},
 			wantErr: assert.Error,
 		},
 		{
-			name:    "crf too low",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000}, TargetVideoCodec: "hevc", ConstantRateFactor: 0},
-			wantErr: assert.Error,
-		},
-		{
-			name:    "crf too high",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", SourceStats: VideoStats{Height: 720, BitRate: 3_000_000, BitsPerSample: 12}, TargetVideoCodec: "hevc", ConstantRateFactor: 52},
+			name:    "missing bitrate",
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: VideoStats{"hevc", 0, 0, 8, 0, 0}},
 			wantErr: assert.Error,
 		},
 	}

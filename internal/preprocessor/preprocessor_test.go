@@ -25,7 +25,7 @@ func TestRun(t *testing.T) {
 	}{
 		{
 			name:    "video does not meet criteria",
-			profile: "hevc-high",
+			profile: "hevc-max",
 			args: args{
 				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
 			},
@@ -33,7 +33,7 @@ func TestRun(t *testing.T) {
 		},
 		{
 			name:    "video probe failed",
-			profile: "hevc-high",
+			profile: "hevc-max",
 			args: args{
 				err: errors.New("failed"),
 			},

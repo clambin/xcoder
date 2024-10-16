@@ -154,7 +154,7 @@ func (w *workItems) Header() []*tview.TableCell {
 		getTableCell("SOURCE", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false).SetExpansion(1),
 		getTableCell(padString("SOURCE STATS", 21), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
 		getTableCell(padString("TARGET STATS", 21), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
-		getTableCell(padString("STATUS", 9), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
+		getTableCell(padString("STATUS", 10), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
 		getTableCell("COMPLETED", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
 		getTableCell("REMAINING", tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),
 		getTableCell(padString("ERROR", 30), tview.Styles.SecondaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetSelectable(false),

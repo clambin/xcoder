@@ -18,25 +18,25 @@ var profiles = map[string]Profile{
 		Codec:   "hevc",
 		Quality: LowQuality,
 		Rules: Rules{
-			SkipCodec("hevc"),
-			MinimumBitrate(LowQuality),
+			SkipTargetCodec(),
+			MinimumBitrate(),
 		},
 	},
 	"hevc-high": {
 		Codec:   "hevc",
 		Quality: HighQuality,
 		Rules: Rules{
-			SkipCodec("hevc"),
-			MinimumBitrate(HighQuality),
+			SkipTargetCodec(),
+			MinimumBitrate(),
 		},
 	},
 	"hevc-max": {
 		Codec:   "hevc",
 		Quality: MaxQuality,
 		Rules: Rules{
-			SkipCodec("hevc"),
+			SkipTargetCodec(),
 			MinimumHeight(720),
-			MinimumBitrate(MaxQuality),
+			MinimumBitrate(),
 		},
 	},
 }
@@ -47,7 +47,6 @@ type Profile struct {
 	Codec   string
 	Rules   Rules
 	Quality Quality
-	Bitrate int
 }
 
 // GetProfile returns the profile associated with name.
@@ -62,7 +61,7 @@ func GetProfile(name string) (Profile, error) {
 // If the source's videoStats do not meet the profile's requirements, error indicates the reason.
 // Otherwise, it returns the first error encountered.
 func (p Profile) Evaluate(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats, error) {
-	if err := p.Rules.ShouldConvert(sourceVideoStats); err != nil {
+	if err := p.Rules.ShouldConvert(p, sourceVideoStats); err != nil {
 		return ffmpeg.VideoStats{}, err
 	}
 	var stats ffmpeg.VideoStats
@@ -84,22 +83,32 @@ func (p Profile) getTargetBitRate(videoStats ffmpeg.VideoStats) (int, error) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Rule func(stats ffmpeg.VideoStats) error
+type Rule func(profile Profile, stats ffmpeg.VideoStats) error
 
 type Rules []Rule
 
-func (r Rules) ShouldConvert(stats ffmpeg.VideoStats) error {
+func (r Rules) ShouldConvert(profile Profile, stats ffmpeg.VideoStats) error {
 	for _, rule := range r {
-		if err := rule(stats); err != nil {
+		if err := rule(profile, stats); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// SkipTargetCodec rejects any video with the specified video codec
+func SkipTargetCodec() Rule {
+	return func(profile Profile, stats ffmpeg.VideoStats) error {
+		if stats.VideoCodec != profile.Codec {
+			return nil
+		}
+		return ErrSourceInTargetCodec
+	}
+}
+
 // SkipCodec rejects any video with the specified video codec
 func SkipCodec(codec string) Rule {
-	return func(stats ffmpeg.VideoStats) error {
+	return func(_ Profile, stats ffmpeg.VideoStats) error {
 		if stats.VideoCodec != codec {
 			return nil
 		}
@@ -108,9 +117,9 @@ func SkipCodec(codec string) Rule {
 }
 
 // MinimumBitrate rejects any source video with a bitrate lower than the codec's recommended bitrate for the provided Quality
-func MinimumBitrate(quality Quality) Rule {
-	return func(stats ffmpeg.VideoStats) error {
-		minBitRate, err := getMinimumBitRate(stats, quality)
+func MinimumBitrate() Rule {
+	return func(profile Profile, stats ffmpeg.VideoStats) error {
+		minBitRate, err := getMinimumBitRate(stats, profile.Quality)
 		if err != nil {
 			return ErrSourceRejected{Reason: err.Error()}
 		}
@@ -123,7 +132,7 @@ func MinimumBitrate(quality Quality) Rule {
 
 // MinimumHeight rejects any video with a height lower than the specified height
 func MinimumHeight(minHeight int) Rule {
-	return func(stats ffmpeg.VideoStats) error {
+	return func(_ Profile, stats ffmpeg.VideoStats) error {
 		if stats.Height < minHeight {
 			return ErrSourceRejected{Reason: "height too low"}
 		}

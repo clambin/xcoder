@@ -6,14 +6,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
-	ffmpeg "github.com/u2takey/ffmpeg-go"
-	"os/exec"
-
-	//ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io"
 	"iter"
 	"net"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -80,15 +77,10 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		}).
 		NoStats().
 		LogLevel("error").
-		OverWriteTarget(true). // TODO: get value from request / configuration
+		OverWriteTarget().
 		ProgressSocket(progressSocket)
 
 	return command.Build(ctx), nil
-}
-
-func init() {
-	// ffmpeg-go's Silent() uses a global variable, so isn't thread-safe. So instead, we set the global variable here.
-	ffmpeg.LogCompiledCommand = false
 }
 
 type Progress struct {

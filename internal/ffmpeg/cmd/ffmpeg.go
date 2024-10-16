@@ -4,7 +4,6 @@ import (
 	"context"
 	"os/exec"
 	"slices"
-	"strings"
 )
 
 type FFMPEG struct {
@@ -56,13 +55,9 @@ func (f *FFMPEG) NoStats() *FFMPEG {
 	return f
 }
 
-func (f *FFMPEG) OverWriteTarget(overwrite bool) *FFMPEG {
+func (f *FFMPEG) OverWriteTarget() *FFMPEG {
 	f.maybeInit()
-	if overwrite {
-		f.globalPostArgs["y"] = ""
-	} else {
-
-	}
+	f.globalPostArgs["y"] = ""
 	return f
 }
 
@@ -85,26 +80,31 @@ func (f *FFMPEG) AddGlobalArguments(args Args) *FFMPEG {
 }
 
 func (f *FFMPEG) Build(ctx context.Context) *exec.Cmd {
-	return exec.CommandContext(ctx, "ffmeg",
-		f.sourceArgs.compile(),
-		"-i", f.source,
-		f.targetArgs.compile(),
-		f.target,
-		f.globalPostArgs.compile(),
-	)
+	args := f.sourceArgs.compile()
+	args = append(args, "-i", f.source)
+	args = append(args, f.targetArgs.compile()...)
+	args = append(args, f.target)
+	args = append(args, f.globalPostArgs.compile()...)
+
+	return exec.CommandContext(ctx, "ffmpeg", args...)
 }
 
 type Args map[string]string
 
-func (a Args) compile() string {
-	arguments := make([]string, 0, len(a))
-	for k, v := range a {
-		if v != "" {
-			arguments = append(arguments, "-"+k+" "+v)
+func (a Args) compile() []string {
+	keys := make([]string, 0, len(a))
+	for k := range a {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	arguments := make([]string, 0, 2*len(a))
+	for _, k := range keys {
+		arguments = append(arguments, "-"+k)
+		if v, ok := a[k]; ok && v != "" {
+			arguments = append(arguments, v)
 		} else {
-			arguments = append(arguments, "-"+k)
 		}
 	}
-	slices.Sort(arguments)
-	return strings.Join(arguments, " ")
+	return arguments
 }

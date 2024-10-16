@@ -3,7 +3,7 @@ package ffmpeg
 import (
 	"context"
 	"fmt"
-	ffmpeg "github.com/u2takey/ffmpeg-go"
+	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
 	"log/slog"
 	"net"
 )
@@ -21,9 +21,9 @@ func (r Request) IsValid() error {
 	if r.Source == "" || r.Target == "" {
 		return ErrMissingFilename
 	}
-	if r.SourceStats.Height == 0 {
-		return ErrMissingHeight
-	}
+	//if r.SourceStats.Height == 0 {
+	//	return ErrMissingHeight
+	//}
 	if r.SourceStats.BitsPerSample != 8 && r.SourceStats.BitsPerSample != 10 {
 		return ErrInvalidBitsPerSample
 	}
@@ -45,7 +45,7 @@ type Processor struct {
 func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 	var probe VideoStats
 
-	output, err := ffmpeg.Probe(path)
+	output, err := cmd.Probe(path)
 	if err != nil {
 		return probe, fmt.Errorf("probe: %w", err)
 	}

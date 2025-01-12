@@ -3,7 +3,7 @@ on:
   push:
   pull_request_target:
 permissions:
-  content: read
+  contents: read
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@main

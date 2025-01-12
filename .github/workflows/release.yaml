@@ -4,7 +4,7 @@ on:
     tags:
       - 'v*'
 permissions:
-  content: write
+  contents: write
 jobs:
   test:
     uses: clambin/workflows/.github/workflows/test.yaml@main

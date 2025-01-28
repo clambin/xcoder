@@ -99,9 +99,7 @@ func (f fakeFsChecker) TargetIsNewer(_, _ string) (bool, error) {
 }
 
 func TestFsFileChecker_TargetIsNewer(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = os.RemoveAll(tmpDir) })
+	tmpDir := t.TempDir()
 
 	filenameA := filepath.Join(tmpDir, "a")
 	require.NoError(t, os.WriteFile(filenameA, []byte("A"), 0644))

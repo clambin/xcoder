@@ -1,13 +1,14 @@
 package ui
 
 import (
-	"github.com/clambin/go-common/set"
+	"strconv"
+	"testing"
+
+	"codeberg.org/clambin/go-common/set"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"strconv"
-	"testing"
 )
 
 func Test_workListViewer(t *testing.T) {

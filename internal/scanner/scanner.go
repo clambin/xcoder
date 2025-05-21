@@ -2,13 +2,14 @@ package scanner
 
 import (
 	"context"
-	"github.com/clambin/go-common/set"
-	"github.com/clambin/videoConvertor/internal/worklist"
 	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"codeberg.org/clambin/go-common/set"
+	"github.com/clambin/videoConvertor/internal/worklist"
 )
 
 var videoExtensions = set.New(".mkv", ".mp4", ".avi", ".mov")

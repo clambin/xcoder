@@ -1,16 +1,17 @@
 package ui
 
 import (
-	"github.com/clambin/go-common/set"
-	"github.com/clambin/videoConvertor/internal/worklist"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"codeberg.org/clambin/go-common/set"
+	"github.com/clambin/videoConvertor/internal/worklist"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 var workListShortCuts = shortcutsPage{

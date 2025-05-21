@@ -1,11 +1,11 @@
 module github.com/clambin/videoConvertor
 
-go 1.23
+go 1.24
 
-toolchain go1.23.4
+toolchain go1.24.3
 
 require (
-	github.com/clambin/go-common/set v0.4.3
+	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/gdamore/tcell/v2 v2.8.1
 	github.com/psanford/memfs v0.0.0-20241019191636-4ef911798f9b
 	github.com/rivo/tview v0.0.0-20241227133733-17b7edb88c57

@@ -2,12 +2,13 @@ package scanner
 
 import (
 	"context"
+	"log/slog"
+	"testing"
+
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/psanford/memfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
-	"testing"
 )
 
 func TestScanFS(t *testing.T) {

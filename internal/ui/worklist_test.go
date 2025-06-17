@@ -117,7 +117,8 @@ func Benchmark_workItems_Update(b *testing.B) {
 	}
 	updater := workItems{list: &list}
 	b.ResetTimer()
-	for range b.N {
+	b.ReportAllocs()
+	for b.Loop() {
 		u := updater.Update()
 		for _, r := range u.Rows {
 			for _, c := range r {

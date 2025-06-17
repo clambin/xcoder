@@ -1,10 +1,11 @@
 package converter
 
 import (
+	"testing"
+
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_makeTargetFilename(t *testing.T) {
@@ -72,7 +73,6 @@ func Test_makeTargetFilename(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			item := worklist.WorkItem{Source: tt.source}
 			item.AddSourceStats(tt.stats)
 			target := buildTargetFilename(&item, "/directory", "hevc", "mkv")

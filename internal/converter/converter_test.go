@@ -3,17 +3,18 @@ package converter
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
 )
 
 func TestConverter_convert(t *testing.T) {
@@ -58,9 +59,7 @@ func TestConverter_convert(t *testing.T) {
 			c := New(&ff, &l, cfg, slog.Default())
 			c.fileChecker = fakeFsChecker{ok: tt.fileCheckerResults.ok, err: tt.fileCheckerResults.err}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			done := make(chan struct{})
-			go func() { c.Run(ctx); done <- struct{}{} }()
+			go func() { c.Run(t.Context()) }()
 
 			i := l.Add("foo.mkv")
 			i.SetStatus(worklist.Inspected, nil)
@@ -70,9 +69,6 @@ func TestConverter_convert(t *testing.T) {
 				status, err := i.Status()
 				return status == tt.want && ((tt.wantErr && err != nil) || (!tt.wantErr && err == nil))
 			}, time.Second, time.Millisecond)
-
-			cancel()
-			<-done
 		})
 	}
 }
@@ -154,7 +150,6 @@ func TestFsFileChecker_TargetIsNewer(t *testing.T) {
 	var c fsFileChecker
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			ok, err := c.TargetIsNewer(tt.source, tt.target)
 			tt.wantOK(t, ok)
 			tt.wantErr(t, err)

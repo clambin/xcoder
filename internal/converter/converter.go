@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
-	"log/slog"
-	"os"
-	"time"
 )
 
 var (

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
 	"io"
 	"iter"
 	"log/slog"
@@ -16,6 +15,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/clambin/videoConvertor/internal/ffmpeg/command"
 )
 
 // makeConvertCommand creates a exec.Command to run ffmeg with the required configuration.
@@ -29,9 +30,9 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		profile = "main10"
 	}
 
-	command := cmd.
+	cmd := command.
 		Input(request.Source, inputArguments).
-		Output(request.Target, cmd.Args{
+		Output(request.Target, command.Args{
 			"c:v":       codecName,
 			"profile:v": profile,
 			"b:v":       strconv.Itoa(request.TargetStats.BitRate),
@@ -44,7 +45,7 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		OverWriteTarget().
 		ProgressSocket(progressSocket)
 
-	return command.Build(ctx), nil
+	return cmd.Build(ctx), nil
 }
 
 // makeProgressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep

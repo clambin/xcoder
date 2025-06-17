@@ -1,9 +1,10 @@
 package ffmpeg
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_parseVideoStats(t *testing.T) {
@@ -155,7 +156,8 @@ func BenchmarkParse(b *testing.B) {
 	"format": { "filename": "foo.hevc.mkv", "duration": "1800.000", "bit_rate": "5000000" }
 }`
 
-	for range b.N {
+	b.ReportAllocs()
+	for b.Loop() {
 		if _, err := parseVideoStats(input); err != nil {
 			b.Fatal(err)
 		}
@@ -174,7 +176,8 @@ func BenchmarkVideoStatsString(b *testing.B) {
 		BitsPerSample: 8,
 		Height:        1080,
 	}
-	for range b.N {
+	b.ReportAllocs()
+	for b.Loop() {
 		if stats := videoStats.String(); stats == "" {
 			b.Fatal("empty stats")
 		}

@@ -1,11 +1,12 @@
 package ui
 
 import (
+	"strconv"
+	"testing"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
-	"strconv"
-	"testing"
 )
 
 func TestTable_Update(t *testing.T) {
@@ -31,7 +32,8 @@ func BenchmarkTable_Update(b *testing.B) {
 	}
 	table := NewTable(&dataSource)
 	b.ResetTimer()
-	for range b.N {
+	b.ReportAllocs()
+	for b.Loop() {
 		table.Update()
 	}
 }
@@ -67,12 +69,14 @@ func (f fakeDataSource) HandleInput(_ *tcell.EventKey) *tcell.EventKey {
 func TestCellAllocator(t *testing.T) {
 	c := getTableCell("foo", tcell.ColorWhite, tcell.ColorBlack, tview.AlignRight)
 	assert.Equal(t, "foo", c.Text)
+	// TODO: Decompose is deprecated
 	fg, bg, _ := c.Style.Decompose()
 	assert.Equal(t, tcell.ColorWhite, fg)
 	assert.Equal(t, tcell.ColorBlack, bg)
 	assert.Equal(t, tview.AlignRight, c.Align)
 	putTableCell(c)
 	c = getTableCell("bar", tcell.ColorRed, tcell.ColorBlue, tview.AlignRight)
+	// TODO: Decompose is deprecated
 	fg, bg, _ = c.Style.Decompose()
 	assert.Equal(t, "bar", c.Text)
 	assert.Equal(t, tcell.ColorRed, fg)
@@ -87,7 +91,8 @@ func TestCellAllocator(t *testing.T) {
 func BenchmarkCellPool(b *testing.B) {
 	const cellCount = 100
 	b.Run("pool", func(b *testing.B) {
-		for range b.N {
+		b.ReportAllocs()
+		for b.Loop() {
 			cells := make([]*tview.TableCell, cellCount)
 			for i := range cells {
 				label := strconv.Itoa(i)
@@ -105,7 +110,8 @@ func BenchmarkCellPool(b *testing.B) {
 		}
 	})
 	b.Run("direct", func(b *testing.B) {
-		for range b.N {
+		b.ReportAllocs()
+		for b.Loop() {
 			cells := make([]*tview.TableCell, cellCount)
 			for i := range cells {
 				label := strconv.Itoa(i)

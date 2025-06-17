@@ -1,11 +1,12 @@
 package converter
 
 import (
-	"github.com/clambin/videoConvertor/internal/worklist"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/clambin/videoConvertor/internal/worklist"
 )
 
 func buildTargetFilename(item *worklist.WorkItem, directory, codec, extension string) string {

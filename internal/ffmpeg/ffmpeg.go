@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/clambin/videoConvertor/internal/ffmpeg/cmd"
 	"log/slog"
 	"net"
+
+	"github.com/clambin/videoConvertor/internal/ffmpeg/command"
 )
 
 type Request struct {
@@ -46,7 +47,7 @@ type Processor struct {
 func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 	var probe VideoStats
 
-	output, err := cmd.Probe(path)
+	output, err := command.Probe(path)
 	if err != nil {
 		return probe, fmt.Errorf("probe: %w", err)
 	}
@@ -70,10 +71,10 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 		go serveProgressSocket(progressSocketListener, progressSocketPath, request.ProgressCB, p.Logger)
 
 	}
-	command, err := makeConvertCommand(ctx, request, progressSocketPath)
+	cmd, err := makeConvertCommand(ctx, request, progressSocketPath)
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
-	p.Logger.Info("converting", "cmd", command.String())
-	return command.Run()
+	p.Logger.Info("converting", "cmd", cmd.String())
+	return cmd.Run()
 }

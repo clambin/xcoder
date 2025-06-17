@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
-	"log/slog"
-	"time"
 )
 
 type FFMPEG interface {

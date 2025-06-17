@@ -2,13 +2,14 @@ package ffmpeg
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"log/slog"
 	"net"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_makeConvertCommand(t *testing.T) {
@@ -19,7 +20,7 @@ func Test_makeConvertCommand(t *testing.T) {
 
 			type ctxKey string
 			key := ctxKey("test")
-			ctx := context.WithValue(context.Background(), key, "test")
+			ctx := context.WithValue(t.Context(), key, "test")
 
 			s, err := makeConvertCommand(ctx, tt.request, tt.progressSocket)
 			tt.wantErr(t, err)
@@ -29,7 +30,7 @@ func Test_makeConvertCommand(t *testing.T) {
 
 			clArgs := strings.Join(s.Args[1:], " ")
 			assert.Equal(t, tt.want, clArgs)
-			// check that the cmd will be run with our context
+			// check that the command will be run with our context
 			//assert.Equal(t, "test", s.Context.Value(key))
 		})
 	}

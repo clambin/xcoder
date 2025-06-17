@@ -1,8 +1,9 @@
 package ffmpeg
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequest_IsValid(t *testing.T) {
@@ -54,7 +55,6 @@ func TestRequest_IsValid(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			tt.wantErr(t, tt.request.IsValid())
 		})
 	}

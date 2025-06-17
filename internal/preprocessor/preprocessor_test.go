@@ -3,13 +3,14 @@ package preprocessor
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"testing"
+	"time"
+
 	"github.com/clambin/videoConvertor/internal/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/clambin/videoConvertor/internal/worklist"
 	"github.com/stretchr/testify/assert"
-	"log/slog"
-	"testing"
-	"time"
 )
 
 func TestRun(t *testing.T) {
@@ -51,18 +52,15 @@ func TestRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			ff := fakeFFMPEG{
 				stats: tt.args.stats,
 				err:   tt.args.err,
 			}
 			p, _ := profile.GetProfile(tt.profile)
 
-			ctx, cancel := context.WithCancel(context.Background())
-			done := make(chan struct{})
 			ch := make(chan *worklist.WorkItem)
-			go func() { Run(ctx, ch, &ff, p, slog.Default()); done <- struct{}{} }()
+			l := slog.New(slog.DiscardHandler)
+			go func() { Run(t.Context(), ch, &ff, p, l) }()
 
 			item := worklist.WorkItem{Source: "foo.mkv"}
 			ch <- &item
@@ -70,9 +68,6 @@ func TestRun(t *testing.T) {
 				status, _ := item.Status()
 				return status == tt.want
 			}, time.Second, 10*time.Millisecond)
-
-			cancel()
-			<-done
 		})
 	}
 }

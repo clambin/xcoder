@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"context"
 	"log/slog"
 	"testing"
 
@@ -12,10 +11,7 @@ import (
 )
 
 func TestScanFS(t *testing.T) {
-
-	ctx := context.Background()
 	fs := memfs.New()
-
 	require.NoError(t, fs.MkdirAll("foo", 0755))
 	require.NoError(t, fs.WriteFile("foo/video.MKV", []byte(""), 0644))
 	require.NoError(t, fs.WriteFile("foo/info.txt", []byte(""), 0644))
@@ -24,7 +20,7 @@ func TestScanFS(t *testing.T) {
 	var list worklist.WorkList
 	ch := make(chan *worklist.WorkItem)
 	errCh := make(chan error)
-	go func() { errCh <- ScanFS(ctx, fs, "/", &list, ch, slog.Default()) }()
+	go func() { errCh <- ScanFS(t.Context(), fs, "/", &list, ch, slog.Default()) }()
 	item := <-ch
 	assert.Equal(t, "/foo/video.MKV", item.Source)
 	assert.NoError(t, <-errCh)

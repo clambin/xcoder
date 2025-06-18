@@ -12,7 +12,7 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/convertor"
+	"github.com/clambin/videoConvertor/internal/converter"
 	"github.com/clambin/videoConvertor/internal/pipeline"
 	"github.com/clambin/videoConvertor/internal/ui"
 	"github.com/rivo/tview"
@@ -44,7 +44,7 @@ func Run(ctx context.Context, _ io.Writer) error {
 
 	u := ui.New(&list, cfg)
 	l := cfg.Logger(u.LogViewer, nil)
-	ff := convertor.Processor{Logger: l.With("component", "ffmpeg")}
+	ff := converter.Processor{Logger: l.With("component", "ffmpeg")}
 	a := tview.NewApplication().SetRoot(u.Root, true)
 	itemCh := make(chan *pipeline.WorkItem)
 

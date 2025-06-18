@@ -1,7 +1,7 @@
 package profile
 
 import (
-	"github.com/clambin/videoConvertor/internal/convertor"
+	"github.com/clambin/videoConvertor/internal/converter"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -29,7 +29,7 @@ func Test_bitRates_getBitrate(t *testing.T) {
 func Test_getTargetBitRate(t *testing.T) {
 	tests := []struct {
 		name        string
-		stats       convertor.VideoStats
+		stats       converter.VideoStats
 		targetCodec string
 		quality     Quality
 		want        int
@@ -37,19 +37,19 @@ func Test_getTargetBitRate(t *testing.T) {
 	}{
 		{
 			name:    "invalid source codec",
-			stats:   convertor.VideoStats{VideoCodec: "invalid"},
+			stats:   converter.VideoStats{VideoCodec: "invalid"},
 			wantErr: assert.Error,
 		},
 		{
 			name:        "invalid target codec",
-			stats:       convertor.VideoStats{VideoCodec: "h264"},
+			stats:       converter.VideoStats{VideoCodec: "h264"},
 			targetCodec: "invalid",
 			wantErr:     assert.Error,
 		},
 		{
 			// low quality: 3M*0.8=2.4M minimum. target minimum is 1.5M
 			name:        "low quality",
-			stats:       convertor.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
+			stats:       converter.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
 			quality:     LowQuality,
 			targetCodec: "hevc",
 			want:        1_500_000,
@@ -58,7 +58,7 @@ func Test_getTargetBitRate(t *testing.T) {
 		{
 			// target minimum is 1.5M
 			name:        "high quality",
-			stats:       convertor.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
+			stats:       converter.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
 			quality:     HighQuality,
 			targetCodec: "hevc",
 			want:        1_500_000,
@@ -67,7 +67,7 @@ func Test_getTargetBitRate(t *testing.T) {
 		{
 			// minimum: 3M. 6M oversample factor: 2. target should be 1.5M*2 = 3M
 			name:        "max quality",
-			stats:       convertor.VideoStats{VideoCodec: "h264", BitRate: 6_000_000, Height: 720},
+			stats:       converter.VideoStats{VideoCodec: "h264", BitRate: 6_000_000, Height: 720},
 			quality:     MaxQuality,
 			targetCodec: "hevc",
 			want:        3_000_000,

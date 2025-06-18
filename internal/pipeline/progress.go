@@ -4,16 +4,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/convertor"
+	"github.com/clambin/videoConvertor/internal/converter"
 )
 
 type Progress struct {
 	lock     sync.RWMutex
 	Duration time.Duration
-	progress convertor.Progress
+	progress converter.Progress
 }
 
-func (p *Progress) Update(progress convertor.Progress) {
+func (p *Progress) Update(progress converter.Progress) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	p.progress.Converted = progress.Converted

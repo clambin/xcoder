@@ -1,4 +1,4 @@
-package convertor
+package converter
 
 import (
 	"github.com/clambin/videoConvertor/ffmpeg"

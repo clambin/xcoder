@@ -3,17 +3,17 @@ package pipeline
 import (
 	"testing"
 
-	"github.com/clambin/videoConvertor/internal/convertor"
+	"github.com/clambin/videoConvertor/internal/converter"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_makeTargetFilename(t *testing.T) {
-	stats1080 := convertor.VideoStats{Height: 1080}
+	stats1080 := converter.VideoStats{Height: 1080}
 
 	tests := []struct {
 		name   string
 		source string
-		stats  convertor.VideoStats
+		stats  converter.VideoStats
 		want   string
 	}{
 		{

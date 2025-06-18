@@ -2,149 +2,101 @@ package pipeline
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/convertor"
-	"github.com/clambin/videoConvertor/internal/profile"
-)
-
-var (
-	ErrAlreadyConverted = errors.New("video already converted")
+	"github.com/clambin/videoConvertor/internal/converter"
 )
 
 const (
-	convertInterval = time.Second
+	convertInterval = 100 * time.Millisecond
 )
 
 func Convert(ctx context.Context, codec Codec, queue *Queue, cfg configuration.Configuration, logger *slog.Logger) {
 	convertWithFileChecker(ctx, codec, queue, fsFileChecker{}, cfg, logger)
 }
 
-func convertWithFileChecker(ctx context.Context, codec Codec, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
-	c := New(codec, queue, cfg, logger)
-	c.fileChecker = f
-	c.Run(ctx)
-}
-
-type Converter struct {
-	Codec          Codec
-	fileChecker    fileChecker
-	List           *Queue
-	Logger         *slog.Logger
-	Profile        profile.Profile
-	RemoveSource   bool
-	OverwriteNewer bool
-}
-
 type Codec interface {
-	Convert(ctx context.Context, request convertor.Request) error
+	Convert(ctx context.Context, request converter.Request) error
 }
 
 type fileChecker interface {
 	TargetIsNewer(a, b string) (bool, error)
 }
 
-func New(ffmpeg Codec, queue *Queue, cfg configuration.Configuration, l *slog.Logger) *Converter {
-	return &Converter{
-		Codec:          ffmpeg,
-		fileChecker:    fsFileChecker{},
-		List:           queue,
-		Profile:        cfg.Profile,
-		RemoveSource:   cfg.Remove,
-		OverwriteNewer: cfg.Overwrite,
-		Logger:         l,
-	}
-}
-
-func (c *Converter) Run(ctx context.Context) {
+func convertWithFileChecker(ctx context.Context, codec Codec, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
 	ticker := time.NewTicker(convertInterval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		default:
-		}
-		if item := c.List.NextToConvert(); item != nil {
-			c.convertItem(ctx, item)
-			continue
-		}
-		select {
-		case <-ctx.Done():
-			return
 		case <-ticker.C:
 		}
+		if item := queue.NextToConvert(); item != nil {
+			convertItem(ctx, item, codec, f, cfg, logger)
+		}
 	}
 }
 
-func (c *Converter) convertItem(ctx context.Context, item *WorkItem) {
-	err := c.convert(ctx, item)
-	if err == nil {
-		c.Logger.Info("converted successfully", "source", item.Source)
-		item.SetStatus(Converted, nil)
-	} else if errors.Is(err, ErrAlreadyConverted) {
-		c.Logger.Info("already converted", "source", item.Source)
-		item.SetStatus(Skipped, err)
-	} else {
-		c.Logger.Warn("conversion failed", "err", err, "source", item.Source)
-		item.SetStatus(Failed, err)
-	}
-}
-
-func (c *Converter) convert(ctx context.Context, item *WorkItem) error {
+func convertItem(ctx context.Context, item *WorkItem, codec Codec, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
 	// Build target name
-	target := buildTargetFilename(item, "", c.Profile.Codec, "mkv")
+	target := buildTargetFilename(item, "", cfg.Profile.Codec, "mkv")
+	logger = logger.With("target", target)
 
 	// Has the file already been converted?
-	targetIsNewer, err := c.fileChecker.TargetIsNewer(item.Source, target)
+	targetIsNewer, err := f.TargetIsNewer(item.Source, target)
 	if err != nil {
-		return err
+		logger.Error("failed to check if target is newer", "err", err)
+		item.SetStatus(Failed, err)
 	}
-	if targetIsNewer && !c.OverwriteNewer {
-		return ErrAlreadyConverted
+	if targetIsNewer && !cfg.Overwrite {
+		logger.Info("already converted")
+		item.SetStatus(Skipped, err)
+		return
 	}
 
 	// build the request
-	req := convertor.Request{
+	req := converter.Request{
 		Source:      item.Source,
 		Target:      target,
 		TargetStats: item.TargetVideoStats(),
 	}
 
-	cbLogger := c.Logger.With("source", item.Source)
-	c.Logger.Info("target determined", "source", item.Source, "bitrate", req.TargetStats.BitRate)
+	logger.Info("target determined", "bitrate", req.TargetStats.BitRate)
 
 	var lastDurationReported time.Duration
 	const reportInterval = 1 * time.Minute
 	totalDuration := item.SourceVideoStats().Duration
-	req.ProgressCB = func(progress convertor.Progress) {
+	req.ProgressCB = func(progress converter.Progress) {
 		completed := progress.Converted.Seconds() / totalDuration.Seconds()
 		item.Progress.Update(progress)
 		if progress.Converted-lastDurationReported > reportInterval {
-			cbLogger.Info("conversion in progress", "progress", progress.Converted, "speed", progress.Speed, "completed", completed)
+			logger.Info("conversion in progress", "progress", progress.Converted, "speed", progress.Speed, "completed", completed)
 			lastDurationReported = progress.Converted
 		}
 	}
 
 	// convert the file
-	cbLogger.Debug("converting")
-	if err = c.Codec.Convert(ctx, req); err != nil {
+	logger.Debug("converting")
+	if err = codec.Convert(ctx, req); err != nil {
 		_ = os.Remove(target)
-		return fmt.Errorf("failed to convert video: %w", err)
+		logger.Warn("conversion failed", "err", err)
+		item.SetStatus(Failed, err)
+		return
 	}
 
 	// clean up if needed
-	if c.RemoveSource {
+	if cfg.Remove {
 		if err = os.Remove(item.Source); err != nil {
-			c.Logger.Warn("failed to remove source file", "err", err, "source", item.Source)
+			logger.Warn("failed to remove source file", "err", err)
+			item.SetStatus(Failed, err)
 		}
 	}
-	return nil
+	logger.Info("converted successfully")
+	item.SetStatus(Converted, nil)
 }
 
 type fsFileChecker struct{}

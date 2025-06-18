@@ -2,7 +2,7 @@ package profile
 
 import (
 	"fmt"
-	"github.com/clambin/videoConvertor/internal/ffmpeg"
+	"github.com/clambin/videoConvertor/internal/convertor"
 )
 
 // https://www.yololiv.com/blog/h265-vs-h264-whats-the-difference-which-is-better/
@@ -24,7 +24,7 @@ var minimumBitrates = map[string]bitRates{
 
 const lowQualityReduction = 0.8
 
-func getMinimumBitRate(videoStats ffmpeg.VideoStats, quality Quality) (int, error) {
+func getMinimumBitRate(videoStats convertor.VideoStats, quality Quality) (int, error) {
 	rates, ok := minimumBitrates[videoStats.VideoCodec]
 	if !ok {
 		return 0, fmt.Errorf("invalid codec: %s", videoStats.VideoCodec)
@@ -36,7 +36,7 @@ func getMinimumBitRate(videoStats ffmpeg.VideoStats, quality Quality) (int, erro
 	return rate, nil
 }
 
-func getTargetBitRate(videoStats ffmpeg.VideoStats, targetCodec string, quality Quality) (int, error) {
+func getTargetBitRate(videoStats convertor.VideoStats, targetCodec string, quality Quality) (int, error) {
 	// validate codecs
 	sourceMinBitRate, err := getMinimumBitRate(videoStats, quality)
 	if err != nil {

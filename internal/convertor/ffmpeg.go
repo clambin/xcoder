@@ -1,4 +1,4 @@
-package ffmpeg
+package convertor
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/clambin/videoConvertor/internal/ffmpeg/command"
+	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
 type Request struct {
@@ -47,7 +47,7 @@ type Processor struct {
 func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
 	var probe VideoStats
 
-	output, err := command.Probe(path)
+	output, err := ffmpeg.Probe(path)
 	if err != nil {
 		return probe, fmt.Errorf("probe: %w", err)
 	}

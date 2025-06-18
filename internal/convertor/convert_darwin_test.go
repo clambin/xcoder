@@ -1,4 +1,4 @@
-package ffmpeg
+package convertor
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ var makeConvertCommandTests = []struct {
 			TargetStats: VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 8},
 		},
 		progressSocket: "socket",
-		want:           "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
+		want:           "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
 		wantErr:        assert.NoError,
 	},
 	{
@@ -30,7 +30,7 @@ var makeConvertCommandTests = []struct {
 			TargetStats: VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 10},
 		},
 		progressSocket: "socket",
-		want:           "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
+		want:           "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
 		wantErr:        assert.NoError,
 	},
 	{
@@ -41,7 +41,7 @@ var makeConvertCommandTests = []struct {
 			TargetStats: VideoStats{VideoCodec: "hevc", BitRate: 4_000_000},
 		},
 		progressSocket: "socket",
-		want:           "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
+		want:           "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
 		wantErr:        assert.NoError,
 	},
 	{
@@ -51,7 +51,7 @@ var makeConvertCommandTests = []struct {
 			Target:      "foo.hevc.mkv",
 			TargetStats: VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 8},
 		},
-		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
+		want:    "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
 		wantErr: assert.NoError,
 	},
 	{

@@ -1,4 +1,4 @@
-package ffmpeg
+package convertor
 
 import (
 	"context"

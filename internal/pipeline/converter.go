@@ -1,4 +1,4 @@
-package converter
+package pipeline
 
 import (
 	"context"
@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/ffmpeg"
+	"github.com/clambin/videoConvertor/internal/convertor"
 	"github.com/clambin/videoConvertor/internal/profile"
-	"github.com/clambin/videoConvertor/internal/worklist"
 )
 
 var (
@@ -22,32 +21,42 @@ const (
 	convertInterval = time.Second
 )
 
+func Convert(ctx context.Context, codec Codec, queue *Queue, cfg configuration.Configuration, logger *slog.Logger) {
+	convertWithFileChecker(ctx, codec, queue, fsFileChecker{}, cfg, logger)
+}
+
+func convertWithFileChecker(ctx context.Context, codec Codec, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
+	c := New(codec, queue, cfg, logger)
+	c.fileChecker = f
+	c.Run(ctx)
+}
+
 type Converter struct {
-	FFMPEG
-	fileChecker
-	List           *worklist.WorkList
+	Codec          Codec
+	fileChecker    fileChecker
+	List           *Queue
 	Logger         *slog.Logger
 	Profile        profile.Profile
 	RemoveSource   bool
 	OverwriteNewer bool
 }
 
-type FFMPEG interface {
-	Convert(ctx context.Context, request ffmpeg.Request) error
+type Codec interface {
+	Convert(ctx context.Context, request convertor.Request) error
 }
 
 type fileChecker interface {
 	TargetIsNewer(a, b string) (bool, error)
 }
 
-func New(ffmpeg FFMPEG, w *worklist.WorkList, cfg configuration.Configuration, l *slog.Logger) *Converter {
+func New(ffmpeg Codec, queue *Queue, cfg configuration.Configuration, l *slog.Logger) *Converter {
 	return &Converter{
-		FFMPEG:         ffmpeg,
+		Codec:          ffmpeg,
 		fileChecker:    fsFileChecker{},
-		List:           w,
+		List:           queue,
 		Profile:        cfg.Profile,
-		RemoveSource:   cfg.RemoveSource,
-		OverwriteNewer: cfg.OverwriteNewerTarget,
+		RemoveSource:   cfg.Remove,
+		OverwriteNewer: cfg.Overwrite,
 		Logger:         l,
 	}
 }
@@ -73,21 +82,21 @@ func (c *Converter) Run(ctx context.Context) {
 	}
 }
 
-func (c *Converter) convertItem(ctx context.Context, item *worklist.WorkItem) {
+func (c *Converter) convertItem(ctx context.Context, item *WorkItem) {
 	err := c.convert(ctx, item)
 	if err == nil {
 		c.Logger.Info("converted successfully", "source", item.Source)
-		item.SetStatus(worklist.Converted, nil)
+		item.SetStatus(Converted, nil)
 	} else if errors.Is(err, ErrAlreadyConverted) {
 		c.Logger.Info("already converted", "source", item.Source)
-		item.SetStatus(worklist.Skipped, err)
+		item.SetStatus(Skipped, err)
 	} else {
 		c.Logger.Warn("conversion failed", "err", err, "source", item.Source)
-		item.SetStatus(worklist.Failed, err)
+		item.SetStatus(Failed, err)
 	}
 }
 
-func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error {
+func (c *Converter) convert(ctx context.Context, item *WorkItem) error {
 	// Build target name
 	target := buildTargetFilename(item, "", c.Profile.Codec, "mkv")
 
@@ -101,7 +110,7 @@ func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error 
 	}
 
 	// build the request
-	req := ffmpeg.Request{
+	req := convertor.Request{
 		Source:      item.Source,
 		Target:      target,
 		TargetStats: item.TargetVideoStats(),
@@ -113,7 +122,7 @@ func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error 
 	var lastDurationReported time.Duration
 	const reportInterval = 1 * time.Minute
 	totalDuration := item.SourceVideoStats().Duration
-	req.ProgressCB = func(progress ffmpeg.Progress) {
+	req.ProgressCB = func(progress convertor.Progress) {
 		completed := progress.Converted.Seconds() / totalDuration.Seconds()
 		item.Progress.Update(progress)
 		if progress.Converted-lastDurationReported > reportInterval {
@@ -124,7 +133,7 @@ func (c *Converter) convert(ctx context.Context, item *worklist.WorkItem) error 
 
 	// convert the file
 	cbLogger.Debug("converting")
-	if err = c.FFMPEG.Convert(ctx, req); err != nil {
+	if err = c.Codec.Convert(ctx, req); err != nil {
 		_ = os.Remove(target)
 		return fmt.Errorf("failed to convert video: %w", err)
 	}

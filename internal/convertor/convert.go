@@ -1,4 +1,4 @@
-package ffmpeg
+package convertor
 
 import (
 	"bufio"
@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/ffmpeg/command"
+	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
 // makeConvertCommand creates a exec.Command to run ffmeg with the required configuration.
@@ -30,9 +30,8 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		profile = "main10"
 	}
 
-	cmd := command.
-		Input(request.Source, inputArguments).
-		Output(request.Target, command.Args{
+	cmd := ffmpeg.Input(request.Source, inputArguments).
+		Output(request.Target, ffmpeg.Args{
 			"c:v":       codecName,
 			"profile:v": profile,
 			"b:v":       strconv.Itoa(request.TargetStats.BitRate),

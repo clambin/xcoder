@@ -7,12 +7,12 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/converter"
+	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/clambin/videoConvertor/internal/profile"
 )
 
 type Decoder interface {
-	Scan(ctx context.Context, path string) (converter.VideoStats, error)
+	Scan(ctx context.Context, path string) (processor.VideoStats, error)
 }
 
 const scanInterval = time.Second

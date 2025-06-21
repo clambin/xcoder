@@ -14,7 +14,7 @@ type Configuration struct {
 	Input       string          `flagger.usage:"input directory"`
 	ProfileName string          `flagger.name:"profile" flagger.usage:"conversion profile"`
 	Profile     profile.Profile `flagger.skip:"true"`
-	Active      bool            `flagger.usage:"start converter in active mode"`
+	Active      bool            `flagger.usage:"start processor in active mode"`
 	Remove      bool            `flagger.usage:"remove source files after successful conversion"`
 	Overwrite   bool            `flagger.usage:"overwrite existing files"`
 }

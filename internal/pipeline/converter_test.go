@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/converter"
+	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,7 +57,7 @@ func TestConverter_convert(t *testing.T) {
 
 			i := q.Add("foo.mkv")
 			i.SetStatus(Inspected, nil)
-			i.AddSourceStats(converter.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
+			i.AddSourceStats(processor.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
 
 			assert.Eventually(t, func() bool {
 				status, err := i.Status()
@@ -73,7 +73,7 @@ type fakeCodec struct {
 	err error
 }
 
-func (f *fakeCodec) Convert(_ context.Context, _ converter.Request) error {
+func (f *fakeCodec) Convert(_ context.Context, _ processor.Request) error {
 	return f.err
 }
 

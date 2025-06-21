@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/converter"
+	"github.com/clambin/videoConvertor/internal/processor"
 )
 
 type Queue struct {
@@ -26,11 +26,11 @@ func (q *Queue) Add(filename string) *WorkItem {
 }
 
 func (q *Queue) NextToConvert() *WorkItem {
-	// convert any items the user manually asked to convert?
+	// convert any items the user manually asked to convert
 	if item := q.dequeue(); item != nil {
 		return item
 	}
-	// is the worklist active?
+	// is the queue active?
 	if !q.Active() {
 		return nil
 	}
@@ -151,8 +151,8 @@ func (ws WorkStatus) String() string {
 type WorkItem struct {
 	err         error
 	Source      string
-	sourceStats converter.VideoStats
-	targetStats converter.VideoStats
+	sourceStats processor.VideoStats
+	targetStats processor.VideoStats
 	Progress    Progress
 	status      WorkStatus
 	lock        sync.RWMutex
@@ -171,26 +171,26 @@ func (w *WorkItem) SetStatus(status WorkStatus, err error) {
 	w.err = err
 }
 
-func (w *WorkItem) SourceVideoStats() converter.VideoStats {
+func (w *WorkItem) SourceVideoStats() processor.VideoStats {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
 	return w.sourceStats
 }
 
-func (w *WorkItem) AddSourceStats(stats converter.VideoStats) {
+func (w *WorkItem) AddSourceStats(stats processor.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.sourceStats = stats
 	w.Progress.Duration = stats.Duration
 }
 
-func (w *WorkItem) TargetVideoStats() converter.VideoStats {
+func (w *WorkItem) TargetVideoStats() processor.VideoStats {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
 	return w.targetStats
 }
 
-func (w *WorkItem) AddTargetStats(stats converter.VideoStats) {
+func (w *WorkItem) AddTargetStats(stats processor.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.targetStats = stats

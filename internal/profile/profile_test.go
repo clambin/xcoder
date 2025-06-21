@@ -1,7 +1,7 @@
 package profile
 
 import (
-	"github.com/clambin/videoConvertor/internal/converter"
+	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -19,46 +19,46 @@ func TestGetProfile(t *testing.T) {
 func TestProfile_Evaluate(t *testing.T) {
 	tests := []struct {
 		name        string
-		sourceStats converter.VideoStats
+		sourceStats processor.VideoStats
 		wantEvalErr assert.ErrorAssertionFunc
-		targetStats converter.VideoStats
+		targetStats processor.VideoStats
 	}{
 		{
 			name:        "source already in target codec",
-			sourceStats: converter.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 8_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr: assert.Error,
 		},
 		{
 			name:        "source in unsupported codec",
-			sourceStats: converter.VideoStats{VideoCodec: "invalid", Height: 1080, BitRate: 8_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "invalid", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr: assert.Error,
 		},
 		{
 			name:        "source in skipped codec",
-			sourceStats: converter.VideoStats{VideoCodec: "foobar", Height: 1080, BitRate: 8_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "foobar", Height: 1080, BitRate: 8_000_000},
 			wantEvalErr: assert.Error,
 		},
 		{
 			name:        "height too low",
-			sourceStats: converter.VideoStats{VideoCodec: "h264", Height: 300, BitRate: 8_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "h264", Height: 300, BitRate: 8_000_000},
 			wantEvalErr: assert.Error,
 		},
 		{
 			name:        "bitrate too low",
-			sourceStats: converter.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 1_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 1_000_000},
 			wantEvalErr: assert.Error,
 		},
 		{
 			name:        "minimum bitrate",
-			sourceStats: converter.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 6_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 6_000_000},
 			wantEvalErr: assert.NoError,
-			targetStats: converter.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 3_000_000},
+			targetStats: processor.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 3_000_000},
 		},
 		{
 			name:        "higher bitrate",
-			sourceStats: converter.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 12_000_000},
+			sourceStats: processor.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 12_000_000},
 			wantEvalErr: assert.NoError,
-			targetStats: converter.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 6_000_000},
+			targetStats: processor.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 6_000_000},
 		},
 	}
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/converter"
+	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,7 +66,7 @@ func TestQueue_Active(t *testing.T) {
 }
 
 func TestQueue_Stats(t *testing.T) {
-	stats := converter.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 5_000_000}
+	stats := processor.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 5_000_000}
 	var item WorkItem
 	item.AddSourceStats(stats)
 	assert.Equal(t, stats, item.SourceVideoStats())
@@ -100,7 +100,7 @@ func TestWorkItem_RemainingFormatted(t *testing.T) {
 			var item WorkItem
 			item.SetStatus(tt.status, nil)
 			item.Progress.Duration = 2 * tt.input
-			item.Progress.Update(converter.Progress{Converted: tt.input, Speed: 1})
+			item.Progress.Update(processor.Progress{Converted: tt.input, Speed: 1})
 			assert.Equal(t, tt.expected, item.RemainingFormatted())
 		})
 	}
@@ -125,7 +125,7 @@ func TestWorkItem_CompletedFormatted(t *testing.T) {
 			var item WorkItem
 			item.SetStatus(tt.status, nil)
 			item.Progress.Duration = time.Hour
-			item.Progress.Update(converter.Progress{Converted: tt.input, Speed: 1})
+			item.Progress.Update(processor.Progress{Converted: tt.input, Speed: 1})
 			assert.Equal(t, tt.want, item.CompletedFormatted())
 		})
 	}

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/converter"
+	"github.com/clambin/videoConvertor/internal/processor"
 )
 
 const (
@@ -19,7 +19,7 @@ func Convert(ctx context.Context, codec Codec, queue *Queue, cfg configuration.C
 }
 
 type Codec interface {
-	Convert(ctx context.Context, request converter.Request) error
+	Convert(ctx context.Context, request processor.Request) error
 }
 
 type fileChecker interface {
@@ -59,7 +59,7 @@ func convertItem(ctx context.Context, item *WorkItem, codec Codec, f fileChecker
 	}
 
 	// build the request
-	req := converter.Request{
+	req := processor.Request{
 		Source:      item.Source,
 		Target:      target,
 		TargetStats: item.TargetVideoStats(),
@@ -70,7 +70,7 @@ func convertItem(ctx context.Context, item *WorkItem, codec Codec, f fileChecker
 	var lastDurationReported time.Duration
 	const reportInterval = 1 * time.Minute
 	totalDuration := item.SourceVideoStats().Duration
-	req.ProgressCB = func(progress converter.Progress) {
+	req.ProgressCB = func(progress processor.Progress) {
 		completed := progress.Converted.Seconds() / totalDuration.Seconds()
 		item.Progress.Update(progress)
 		if progress.Converted-lastDurationReported > reportInterval {

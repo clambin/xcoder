@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"maps"
 	"os/exec"
 	"slices"
 )
@@ -76,10 +77,7 @@ func (f *FFMPEG) Build(ctx context.Context) *exec.Cmd {
 type Args map[string]string
 
 func (a Args) compile() []string {
-	keys := make([]string, 0, len(a))
-	for k := range a {
-		keys = append(keys, k)
-	}
+	keys := slices.Collect(maps.Keys(a))
 	slices.Sort(keys)
 
 	arguments := make([]string, 0, 2*len(a))
@@ -94,7 +92,7 @@ func (a Args) compile() []string {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func Probe(path string) (string, error) {
+func Probe(path string) (VideoStats, error) {
 	args := []string{
 		"-show_format",
 		"-show_streams",
@@ -108,7 +106,7 @@ func Probe(path string) (string, error) {
 	cmd.Stdout = &stdOut
 	cmd.Stderr = &stdErr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("[%s] %w", stdErr.String(), err)
+		return VideoStats{}, fmt.Errorf("[%s] %w", stdErr.String(), err)
 	}
-	return stdOut.String(), nil
+	return parseVideoStats(stdOut.String())
 }

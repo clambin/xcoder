@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/processor"
+	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/profile"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInspect(t *testing.T) {
 	type args struct {
-		stats processor.VideoStats
+		stats ffmpeg.VideoStats
 		err   error
 	}
 	tests := []struct {
@@ -27,7 +27,7 @@ func TestInspect(t *testing.T) {
 			name:    "video does not meet criteria",
 			profile: "hevc-max",
 			args: args{
-				stats: processor.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
+				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
 			},
 			want: Rejected,
 		},
@@ -43,7 +43,7 @@ func TestInspect(t *testing.T) {
 			name:    "video meets criteria",
 			profile: "hevc-low",
 			args: args{
-				stats: processor.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1_024_000_000, Duration: time.Hour, BitsPerSample: 10},
+				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1_024_000_000, Duration: time.Hour, BitsPerSample: 10},
 			},
 			want: Inspected,
 		},
@@ -74,10 +74,10 @@ func TestInspect(t *testing.T) {
 var _ Decoder = &fakeDecoder{}
 
 type fakeDecoder struct {
-	stats processor.VideoStats
+	stats ffmpeg.VideoStats
 	err   error
 }
 
-func (f fakeDecoder) Scan(_ context.Context, _ string) (processor.VideoStats, error) {
+func (f fakeDecoder) Scan(_ context.Context, _ string) (ffmpeg.VideoStats, error) {
 	return f.stats, f.err
 }

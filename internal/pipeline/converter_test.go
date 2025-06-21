@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/clambin/videoConvertor/internal/profile"
@@ -57,7 +58,7 @@ func TestConverter_convert(t *testing.T) {
 
 			i := q.Add("foo.mkv")
 			i.SetStatus(Inspected, nil)
-			i.AddSourceStats(processor.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
+			i.AddSourceStats(ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
 
 			assert.Eventually(t, func() bool {
 				status, err := i.Status()

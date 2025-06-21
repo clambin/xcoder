@@ -12,21 +12,13 @@ import (
 	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
-// Processor implements video scanning (ffprobe) and converting (ffmpeg).  Implemented as a struct so that it can be
-// mocked at the calling side.
+// Processor implements video scanning (ffprobe) and converting (ffmpeg)
 type Processor struct {
 	Logger *slog.Logger
 }
 
-func (p Processor) Scan(_ context.Context, path string) (VideoStats, error) {
-	var probe VideoStats
-
-	output, err := ffmpeg.Probe(path)
-	if err != nil {
-		return probe, fmt.Errorf("probe: %w", err)
-	}
-
-	return parseVideoStats(output)
+func (p Processor) Scan(_ context.Context, path string) (ffmpeg.VideoStats, error) {
+	return ffmpeg.Probe(path)
 }
 
 func (p Processor) Convert(ctx context.Context, request Request) error {
@@ -57,7 +49,7 @@ type Request struct {
 	ProgressCB  func(Progress)
 	Source      string
 	Target      string
-	TargetStats VideoStats
+	TargetStats ffmpeg.VideoStats
 }
 
 var ErrMissingFilename = errors.New("missing filename")

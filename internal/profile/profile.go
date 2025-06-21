@@ -2,7 +2,8 @@ package profile
 
 import (
 	"fmt"
-	"github.com/clambin/videoConvertor/internal/processor"
+
+	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
 type Quality int
@@ -60,14 +61,14 @@ func GetProfile(name string) (Profile, error) {
 // Evaluate verifies that the source's videoStats meet the profile's requirements and returns the target videoStats, in line with the profile's parameters.
 // If the source's videoStats do not meet the profile's requirements, error indicates the reason.
 // Otherwise, it returns the first error encountered.
-func (p Profile) Evaluate(sourceVideoStats processor.VideoStats) (processor.VideoStats, error) {
+func (p Profile) Evaluate(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats, error) {
 	if err := p.Rules.ShouldConvert(p, sourceVideoStats); err != nil {
-		return processor.VideoStats{}, err
+		return ffmpeg.VideoStats{}, err
 	}
-	var stats processor.VideoStats
+	var stats ffmpeg.VideoStats
 	rate, err := p.getTargetBitRate(sourceVideoStats)
 	if err == nil {
-		stats = processor.VideoStats{
+		stats = ffmpeg.VideoStats{
 			VideoCodec:    p.Codec,
 			BitRate:       rate,
 			BitsPerSample: sourceVideoStats.BitsPerSample,
@@ -77,17 +78,17 @@ func (p Profile) Evaluate(sourceVideoStats processor.VideoStats) (processor.Vide
 	return stats, err
 }
 
-func (p Profile) getTargetBitRate(videoStats processor.VideoStats) (int, error) {
+func (p Profile) getTargetBitRate(videoStats ffmpeg.VideoStats) (int, error) {
 	return getTargetBitRate(videoStats, p.Codec, p.Quality)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Rule func(profile Profile, stats processor.VideoStats) error
+type Rule func(profile Profile, stats ffmpeg.VideoStats) error
 
 type Rules []Rule
 
-func (r Rules) ShouldConvert(profile Profile, stats processor.VideoStats) error {
+func (r Rules) ShouldConvert(profile Profile, stats ffmpeg.VideoStats) error {
 	for _, rule := range r {
 		if err := rule(profile, stats); err != nil {
 			return err
@@ -98,7 +99,7 @@ func (r Rules) ShouldConvert(profile Profile, stats processor.VideoStats) error 
 
 // SkipTargetCodec rejects any video with the specified video codec
 func SkipTargetCodec() Rule {
-	return func(profile Profile, stats processor.VideoStats) error {
+	return func(profile Profile, stats ffmpeg.VideoStats) error {
 		if stats.VideoCodec != profile.Codec {
 			return nil
 		}
@@ -108,7 +109,7 @@ func SkipTargetCodec() Rule {
 
 // SkipCodec rejects any video with the specified video codec
 func SkipCodec(codec string) Rule {
-	return func(_ Profile, stats processor.VideoStats) error {
+	return func(_ Profile, stats ffmpeg.VideoStats) error {
 		if stats.VideoCodec != codec {
 			return nil
 		}
@@ -118,7 +119,7 @@ func SkipCodec(codec string) Rule {
 
 // MinimumBitrate rejects any source video with a bitrate lower than the codec's recommended bitrate for the provided Quality
 func MinimumBitrate() Rule {
-	return func(profile Profile, stats processor.VideoStats) error {
+	return func(profile Profile, stats ffmpeg.VideoStats) error {
 		minBitRate, err := getMinimumBitRate(stats, profile.Quality)
 		if err != nil {
 			return ErrSourceRejected{Reason: err.Error()}
@@ -132,7 +133,7 @@ func MinimumBitrate() Rule {
 
 // MinimumHeight rejects any video with a height lower than the specified height
 func MinimumHeight(minHeight int) Rule {
-	return func(_ Profile, stats processor.VideoStats) error {
+	return func(_ Profile, stats ffmpeg.VideoStats) error {
 		if stats.Height < minHeight {
 			return ErrSourceRejected{Reason: "height too low"}
 		}

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/processor"
+	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
 type Queue struct {
@@ -151,8 +151,8 @@ func (ws WorkStatus) String() string {
 type WorkItem struct {
 	err         error
 	Source      string
-	sourceStats processor.VideoStats
-	targetStats processor.VideoStats
+	sourceStats ffmpeg.VideoStats
+	targetStats ffmpeg.VideoStats
 	Progress    Progress
 	status      WorkStatus
 	lock        sync.RWMutex
@@ -171,26 +171,26 @@ func (w *WorkItem) SetStatus(status WorkStatus, err error) {
 	w.err = err
 }
 
-func (w *WorkItem) SourceVideoStats() processor.VideoStats {
+func (w *WorkItem) SourceVideoStats() ffmpeg.VideoStats {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
 	return w.sourceStats
 }
 
-func (w *WorkItem) AddSourceStats(stats processor.VideoStats) {
+func (w *WorkItem) AddSourceStats(stats ffmpeg.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.sourceStats = stats
 	w.Progress.Duration = stats.Duration
 }
 
-func (w *WorkItem) TargetVideoStats() processor.VideoStats {
+func (w *WorkItem) TargetVideoStats() ffmpeg.VideoStats {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
 	return w.targetStats
 }
 
-func (w *WorkItem) AddTargetStats(stats processor.VideoStats) {
+func (w *WorkItem) AddTargetStats(stats ffmpeg.VideoStats) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	w.targetStats = stats

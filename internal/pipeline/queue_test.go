@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -66,7 +67,7 @@ func TestQueue_Active(t *testing.T) {
 }
 
 func TestQueue_Stats(t *testing.T) {
-	stats := processor.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 5_000_000}
+	stats := ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 5_000_000}
 	var item WorkItem
 	item.AddSourceStats(stats)
 	assert.Equal(t, stats, item.SourceVideoStats())

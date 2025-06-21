@@ -1,9 +1,10 @@
 package profile
 
 import (
-	"github.com/clambin/videoConvertor/internal/processor"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_bitRates_getBitrate(t *testing.T) {
@@ -29,7 +30,7 @@ func Test_bitRates_getBitrate(t *testing.T) {
 func Test_getTargetBitRate(t *testing.T) {
 	tests := []struct {
 		name        string
-		stats       processor.VideoStats
+		stats       ffmpeg.VideoStats
 		targetCodec string
 		quality     Quality
 		want        int
@@ -37,19 +38,19 @@ func Test_getTargetBitRate(t *testing.T) {
 	}{
 		{
 			name:    "invalid source codec",
-			stats:   processor.VideoStats{VideoCodec: "invalid"},
+			stats:   ffmpeg.VideoStats{VideoCodec: "invalid"},
 			wantErr: assert.Error,
 		},
 		{
 			name:        "invalid target codec",
-			stats:       processor.VideoStats{VideoCodec: "h264"},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264"},
 			targetCodec: "invalid",
 			wantErr:     assert.Error,
 		},
 		{
 			// low quality: 3M*0.8=2.4M minimum. target minimum is 1.5M
 			name:        "low quality",
-			stats:       processor.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
 			quality:     LowQuality,
 			targetCodec: "hevc",
 			want:        1_500_000,
@@ -58,7 +59,7 @@ func Test_getTargetBitRate(t *testing.T) {
 		{
 			// target minimum is 1.5M
 			name:        "high quality",
-			stats:       processor.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000, Height: 720},
 			quality:     HighQuality,
 			targetCodec: "hevc",
 			want:        1_500_000,
@@ -67,7 +68,7 @@ func Test_getTargetBitRate(t *testing.T) {
 		{
 			// minimum: 3M. 6M oversample factor: 2. target should be 1.5M*2 = 3M
 			name:        "max quality",
-			stats:       processor.VideoStats{VideoCodec: "h264", BitRate: 6_000_000, Height: 720},
+			stats:       ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 6_000_000, Height: 720},
 			quality:     MaxQuality,
 			targetCodec: "hevc",
 			want:        3_000_000,

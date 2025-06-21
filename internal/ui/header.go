@@ -24,9 +24,9 @@ func newHeader(list *pipeline.Queue, configuration configuration.Configuration) 
 		statusPane:    newStatusPane(list),
 		shortcutsView: newShortcutsView(),
 	}
-	h.AddItem(h.configPane.TextView, 0, 0, 1, 1, 0, 0, false)
-	h.AddItem(h.statusPane.TextView, 0, 1, 1, 1, 0, 0, false)
-	h.AddItem(h.shortcutsView.Pages, 0, 2, 1, 2, 0, 0, false)
+	h.AddItem(h.configPane, 0, 0, 1, 1, 0, 0, false)
+	h.AddItem(h.statusPane, 0, 1, 1, 1, 0, 0, false)
+	h.AddItem(h.shortcutsView, 0, 2, 1, 2, 0, 0, false)
 	return &h
 }
 

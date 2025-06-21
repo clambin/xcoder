@@ -17,42 +17,42 @@ func TestRequest_IsValid(t *testing.T) {
 	}{
 		{
 			name:    "valid request - 8 bits per sample",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"hevc", 0, 3_000_000, 8, 0, 0}},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 3_000_000, BitsPerSample: 8}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "valid request - 10 bits per sample",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"hevc", 0, 3_000_000, 10, 0, 0}},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 3_000_000, BitsPerSample: 10}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "missing source",
-			request: Request{Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"hevc", 0, 3_000_000, 8, 0, 0}},
+			request: Request{Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 3_000_000, BitsPerSample: 8}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "missing target",
-			request: Request{Source: "foo.mkv", TargetStats: ffmpeg.VideoStats{"hevc", 0, 3_000_000, 8, 0, 0}},
+			request: Request{Source: "foo.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 3_000_000, BitsPerSample: 8}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "missing codec",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"", 0, 3_000_000, 8, 0, 0}},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{BitRate: 3_000_000, BitsPerSample: 8}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "wrong codec",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"h264", 0, 3_000_000, 8, 0, 0}},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 3_000_000, BitsPerSample: 8}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "wrong bits per sample",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"hevc", 0, 3_000_000, 16, 0, 0}},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 3_000_000, BitsPerSample: 16}},
 			wantErr: assert.Error,
 		},
 		{
 			name:    "missing bitrate",
-			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{"hevc", 0, 0, 8, 0, 0}},
+			request: Request{Source: "foo.mkv", Target: "foo.hevc.mkv", TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitsPerSample: 8}},
 			wantErr: assert.Error,
 		},
 	}

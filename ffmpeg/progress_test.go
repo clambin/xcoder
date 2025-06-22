@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestProcessor_progressSocket(t *testing.T) {
+func TestFFMPEG_ProgressSocket(t *testing.T) {
 	done := make(chan struct{})
 	listener, sock, err := makeProgressSocket()
 	require.NoError(t, err)
@@ -22,7 +22,7 @@ func TestProcessor_progressSocket(t *testing.T) {
 		assert.Equal(t, 1.0, p.Speed)
 		done <- struct{}{}
 	}
-	go serveProgressSocket(listener, sock, handler, slog.New(slog.DiscardHandler))
+	go serveProgressSocket(t.Context(), listener, sock, handler, slog.New(slog.DiscardHandler))
 
 	fd, err := net.Dial("unix", sock)
 	require.NoError(t, err)
@@ -68,10 +68,8 @@ func Test_progress(t *testing.T) {
 			t.Parallel()
 
 			progresses := make([]Progress, 0, len(tt.want))
-			for p, err := range progress(strings.NewReader(tt.input)) {
-				if err == nil {
-					progresses = append(progresses, p)
-				}
+			for p := range progress(strings.NewReader(tt.input), slog.New(slog.DiscardHandler)) {
+				progresses = append(progresses, p)
 			}
 			assert.Equal(t, tt.want, progresses)
 		})
@@ -83,6 +81,7 @@ func Test_progress(t *testing.T) {
 //
 // New (arm64):
 // Benchmark_progress-10    	     830	   1421598 ns/op	    4302 B/op	       8 allocs/op
+// Benchmark_progress-10    	     571	   2112925 ns/op	    4398 B/op	       7 allocs/op
 func Benchmark_progress(b *testing.B) {
 	var input strings.Builder
 	for range 1000 {
@@ -93,13 +92,11 @@ func Benchmark_progress(b *testing.B) {
 	}
 	input.WriteString("progress=end\n")
 	buf := input.String()
+	l := slog.New(slog.DiscardHandler)
 	b.ResetTimer()
 	b.ReportAllocs()
 	for b.Loop() {
-		for p, err := range progress(strings.NewReader(buf)) {
-			if err != nil {
-				b.Fatal(err)
-			}
+		for p := range progress(strings.NewReader(buf), l) {
 			if p.Speed != 1.1 {
 				b.Fatal("invalid speed")
 			}

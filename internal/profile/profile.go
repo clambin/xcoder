@@ -102,7 +102,7 @@ type ErrSourceRejected struct {
 }
 
 func (e *ErrSourceRejected) Error() string {
-	return "source rejected: " + e.Reason
+	return e.Reason
 }
 
 func (e *ErrSourceRejected) Is(e2 error) bool {
@@ -116,7 +116,7 @@ type ErrSourceBitrateTooLow struct {
 }
 
 func (e *ErrSourceBitrateTooLow) Error() string {
-	return "source bitrate too low: " + e.Reason
+	return e.Reason
 }
 
 func (e *ErrSourceBitrateTooLow) Is(e2 error) bool {

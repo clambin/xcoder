@@ -17,6 +17,7 @@ type FFMPEG struct {
 	globalPostArgs Args
 	input          string
 	output         string
+	logger         *slog.Logger
 }
 
 func Input(path string, args Args) *FFMPEG {
@@ -25,6 +26,7 @@ func Input(path string, args Args) *FFMPEG {
 		inputArgs:      args,
 		outputArgs:     make(Args),
 		globalPostArgs: make(Args),
+		logger:         slog.Default(),
 	}
 }
 
@@ -49,12 +51,17 @@ func (f *FFMPEG) OverWriteTarget() *FFMPEG {
 	return f
 }
 
-func (f *FFMPEG) ProgressSocket(cb func(Progress), logger *slog.Logger) *FFMPEG {
+func (f *FFMPEG) WithLogger(logger *slog.Logger) *FFMPEG {
+	f.logger = logger
+	return f
+}
+
+func (f *FFMPEG) ProgressSocket(ctx context.Context, cb func(Progress)) *FFMPEG {
 	listener, path, err := makeProgressSocket()
 	if err != nil {
 		panic("failed to make progress socket: " + err.Error())
 	}
-	go serveProgressSocket(listener, path, cb, logger)
+	go serveProgressSocket(ctx, listener, path, cb, f.logger)
 	f.globalPostArgs["progress"] = "unix://" + path
 	return f
 }

@@ -84,7 +84,7 @@ func makeConvertCommand(ctx context.Context, request Request, cb func(progress f
 		LogLevel("error").
 		OverWriteTarget()
 	if cb != nil {
-		cmd = cmd.ProgressSocket(cb, logger)
+		cmd = cmd.WithLogger(logger).ProgressSocket(ctx, cb)
 	}
 	return cmd.Build(ctx), nil
 }

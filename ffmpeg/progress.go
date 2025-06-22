@@ -3,9 +3,9 @@ package ffmpeg
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
-	"iter"
 	"log/slog"
 	"net"
 	"os"
@@ -31,7 +31,7 @@ func makeProgressSocket() (net.Listener, string, error) {
 }
 
 // serveProgressSocket reads the ffmpeg progress and calls the process callback function.
-func serveProgressSocket(l net.Listener, path string, progressCallback func(Progress), logger *slog.Logger) {
+func serveProgressSocket(ctx context.Context, l net.Listener, path string, progressCallback func(Progress), logger *slog.Logger) {
 	defer func() {
 		if err := os.RemoveAll(filepath.Dir(path)); err != nil {
 			logger.Error("failed to clean up status socket", "err", err)
@@ -44,14 +44,22 @@ func serveProgressSocket(l net.Listener, path string, progressCallback func(Prog
 		return
 	}
 
-	for prog, err := range progress(fd) {
-		if err == nil {
+	defer func() { _ = fd.Close() }()
+
+	ch := progress(fd, logger)
+	for {
+		select {
+		case prog, ok := <-ch:
+			if !ok {
+				logger.Debug("progress socket closed")
+				return
+			}
 			progressCallback(prog)
-		} else {
-			logger.Error("failed to process status socket", "err", err)
+		case <-ctx.Done():
+			logger.Debug("context cancelled", "err", ctx.Err())
+			return
 		}
 	}
-	_ = fd.Close()
 }
 
 type Progress struct {
@@ -59,14 +67,16 @@ type Progress struct {
 	Speed     float64
 }
 
-// progress reads the ffmpeg progress information and yields it as Progress records.
-func progress(r io.Reader) iter.Seq2[Progress, error] {
+// progress reads the ffmpeg progress information and returns Progress records on a channel
+func progress(r io.Reader, logger *slog.Logger) chan Progress {
 	var (
 		convertedMarker = []byte("out_time_ms=")
 		speedMarker     = []byte("speed=")
 		endMarker       = []byte("progress=end")
 	)
-	return func(yield func(Progress, error) bool) {
+	ch := make(chan Progress)
+	go func() {
+		defer close(ch)
 		s := bufio.NewScanner(r)
 		var haveProgress, haveSpeed bool
 		var prog Progress
@@ -83,9 +93,7 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 				haveSpeed = true
 			}
 			if haveProgress && haveSpeed {
-				if !yield(prog, nil) {
-					return
-				}
+				ch <- prog
 				haveProgress = false
 				haveSpeed = false
 			}
@@ -94,7 +102,8 @@ func progress(r io.Reader) iter.Seq2[Progress, error] {
 			}
 		}
 		if err := s.Err(); err != nil {
-			yield(Progress{}, err)
+			logger.Error("failed to read progress socket", "err", err)
 		}
-	}
+	}()
+	return ch
 }

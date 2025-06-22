@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/clambin/videoConvertor/ffmpeg"
@@ -77,7 +78,7 @@ func convertItem(ctx context.Context, item *WorkItem, codec Converter, f fileChe
 			logger.Info("conversion in progress",
 				"progress", progress.Converted,
 				"speed", progress.Speed,
-				"completed", progress.Converted.Seconds()/totalDuration.Seconds(),
+				"completed", strconv.FormatFloat(100*progress.Converted.Seconds()/totalDuration.Seconds(), 'f', 2, 64)+"%",
 			)
 			lastDurationReported = progress.Converted
 		}

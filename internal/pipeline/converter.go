@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/processor"
 )
@@ -14,11 +15,11 @@ const (
 	convertInterval = 100 * time.Millisecond
 )
 
-func Convert(ctx context.Context, codec Codec, queue *Queue, cfg configuration.Configuration, logger *slog.Logger) {
-	convertWithFileChecker(ctx, codec, queue, fsFileChecker{}, cfg, logger)
+func Convert(ctx context.Context, converter Converter, queue *Queue, cfg configuration.Configuration, logger *slog.Logger) {
+	convertWithFileChecker(ctx, converter, queue, fsFileChecker{}, cfg, logger)
 }
 
-type Codec interface {
+type Converter interface {
 	Convert(ctx context.Context, request processor.Request) error
 }
 
@@ -26,7 +27,7 @@ type fileChecker interface {
 	TargetIsNewer(a, b string) (bool, error)
 }
 
-func convertWithFileChecker(ctx context.Context, codec Codec, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
+func convertWithFileChecker(ctx context.Context, codec Converter, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
 	ticker := time.NewTicker(convertInterval)
 	defer ticker.Stop()
 	for {
@@ -41,9 +42,9 @@ func convertWithFileChecker(ctx context.Context, codec Codec, queue *Queue, f fi
 	}
 }
 
-func convertItem(ctx context.Context, item *WorkItem, codec Codec, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
+func convertItem(ctx context.Context, item *WorkItem, codec Converter, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
 	// Build target name
-	target := buildTargetFilename(item, "", cfg.Profile.Codec, "mkv")
+	target := buildTargetFilename(item, "", cfg.Profile.TargetCodec, "mkv")
 	logger = logger.With("target", target)
 
 	// Has the file already been converted?
@@ -70,11 +71,14 @@ func convertItem(ctx context.Context, item *WorkItem, codec Codec, f fileChecker
 	var lastDurationReported time.Duration
 	const reportInterval = 1 * time.Minute
 	totalDuration := item.SourceVideoStats().Duration
-	req.ProgressCB = func(progress processor.Progress) {
-		completed := progress.Converted.Seconds() / totalDuration.Seconds()
+	req.ProgressCB = func(progress ffmpeg.Progress) {
 		item.Progress.Update(progress)
 		if progress.Converted-lastDurationReported > reportInterval {
-			logger.Info("conversion in progress", "progress", progress.Converted, "speed", progress.Speed, "completed", completed)
+			logger.Info("conversion in progress",
+				"progress", progress.Converted,
+				"speed", progress.Speed,
+				"completed", progress.Converted.Seconds()/totalDuration.Seconds(),
+			)
 			lastDurationReported = progress.Converted
 		}
 	}

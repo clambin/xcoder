@@ -68,7 +68,7 @@ func TestConverter_convert(t *testing.T) {
 	}
 }
 
-var _ Codec = &fakeCodec{}
+var _ Converter = &fakeCodec{}
 
 type fakeCodec struct {
 	err error

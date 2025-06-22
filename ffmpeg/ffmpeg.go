@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"maps"
 	"os/exec"
 	"slices"
@@ -48,12 +49,13 @@ func (f *FFMPEG) OverWriteTarget() *FFMPEG {
 	return f
 }
 
-func (f *FFMPEG) ProgressSocket(path string) *FFMPEG {
-	if path != "" {
-		f.globalPostArgs["progress"] = "unix://" + path
-	} else {
-		delete(f.globalPostArgs, "progress")
+func (f *FFMPEG) ProgressSocket(cb func(Progress), logger *slog.Logger) *FFMPEG {
+	listener, path, err := makeProgressSocket()
+	if err != nil {
+		panic("failed to make progress socket: " + err.Error())
 	}
+	go serveProgressSocket(listener, path, cb, logger)
+	f.globalPostArgs["progress"] = "unix://" + path
 	return f
 }
 

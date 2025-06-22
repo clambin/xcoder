@@ -6,11 +6,10 @@ import (
 )
 
 var makeConvertCommandTests = []struct {
-	name           string
-	request        Request
-	progressSocket string
-	want           string
-	wantErr        assert.ErrorAssertionFunc
+	name    string
+	request Request
+	want    string
+	wantErr assert.ErrorAssertionFunc
 }{
 	{
 		name: "hevc 8 bit",
@@ -19,9 +18,8 @@ var makeConvertCommandTests = []struct {
 			Target:      "foo.hevc.mkv",
 			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 8},
 		},
-		progressSocket: "socket",
-		want:           "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
-		wantErr:        assert.NoError,
+		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
+		wantErr: assert.NoError,
 	},
 	{
 		name: "hevc 10 bit",
@@ -30,9 +28,8 @@ var makeConvertCommandTests = []struct {
 			Target:      "foo.hevc.mkv",
 			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 10},
 		},
-		progressSocket: "socket",
-		want:           "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
-		wantErr:        assert.NoError,
+		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -y",
+		wantErr: assert.NoError,
 	},
 	{
 		name: "default is 8 bit",
@@ -40,17 +37,6 @@ var makeConvertCommandTests = []struct {
 			Source:      "foo.mkv",
 			Target:      "foo.hevc.mkv",
 			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000},
-		},
-		progressSocket: "socket",
-		want:           "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -progress unix://socket -y",
-		wantErr:        assert.NoError,
-	},
-	{
-		name: "no progress socket",
-		request: Request{
-			Source:      "foo.mkv",
-			Target:      "foo.hevc.mkv",
-			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 8},
 		},
 		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
 		wantErr: assert.NoError,

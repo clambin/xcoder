@@ -11,7 +11,7 @@ func TestGetConfiguration(t *testing.T) {
 	f := flag.NewFlagSet("", flag.ContinueOnError)
 	cfg, err := getConfigurationWithFlagSet(f)
 	assert.NoError(t, err)
-	assert.Equal(t, "hevc-max", cfg.ProfileName)
+	assert.Equal(t, "hevc-high", cfg.ProfileName)
 
 	f = flag.NewFlagSet("", flag.ContinueOnError)
 	_, err = getConfigurationWithFlagSet(f, "-profile", "invalid")

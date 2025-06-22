@@ -47,11 +47,11 @@ func inspectItem(ctx context.Context, item *WorkItem, codec Decoder, videoProfil
 	l.Debug("inspection done", "sourceStats", sourceStats)
 
 	// Validate that the video meets the criteria
-	targetStats, err := videoProfile.Evaluate(sourceStats)
+	targetStats, err := videoProfile.Inspect(sourceStats)
 	if err != nil {
 		l.Debug("should not convert file", "err", err)
 		status := Rejected
-		if errors.Is(err, profile.ErrSourceInTargetCodec) {
+		if errors.Is(err, &profile.ErrSourceRejected{}) {
 			status = Skipped
 		}
 		item.SetStatus(status, err)

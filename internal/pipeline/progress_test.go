@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/processor"
+	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ func TestProgress(t *testing.T) {
 	tests := []struct {
 		name          string
 		duration      time.Duration
-		progress      processor.Progress
+		progress      ffmpeg.Progress
 		prevSpeed     float64
 		wantCompleted float64
 		wantRemaining time.Duration
@@ -26,28 +26,28 @@ func TestProgress(t *testing.T) {
 		{
 			name:          "half done",
 			duration:      time.Hour,
-			progress:      processor.Progress{Speed: 1, Converted: 30 * time.Minute},
+			progress:      ffmpeg.Progress{Speed: 1, Converted: 30 * time.Minute},
 			wantCompleted: .5,
 			wantRemaining: 30 * time.Minute,
 		},
 		{
 			name:          "speed matters",
 			duration:      time.Hour,
-			progress:      processor.Progress{Speed: 2, Converted: 30 * time.Minute},
+			progress:      ffmpeg.Progress{Speed: 2, Converted: 30 * time.Minute},
 			wantCompleted: .5,
 			wantRemaining: 15 * time.Minute,
 		},
 		{
 			name:          "completed",
 			duration:      time.Hour,
-			progress:      processor.Progress{Speed: 2, Converted: time.Hour},
+			progress:      ffmpeg.Progress{Speed: 2, Converted: time.Hour},
 			wantCompleted: 1,
 			wantRemaining: 0,
 		},
 		{
 			name:          "zero speed",
 			duration:      time.Hour,
-			progress:      processor.Progress{Converted: 30 * time.Minute},
+			progress:      ffmpeg.Progress{Converted: 30 * time.Minute},
 			prevSpeed:     2,
 			wantCompleted: .5,
 			wantRemaining: 15 * time.Minute,

@@ -1,4 +1,4 @@
-package processor
+package ffmpeg
 
 import (
 	"bufio"
@@ -59,7 +59,7 @@ type Progress struct {
 	Speed     float64
 }
 
-// progress reads the ffmpeg progress information to create a complete Progress record and yields it to the caller.
+// progress reads the ffmpeg progress information and yields it as Progress records.
 func progress(r io.Reader) iter.Seq2[Progress, error] {
 	var (
 		convertedMarker = []byte("out_time_ms=")

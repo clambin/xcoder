@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"os/exec"
 	"strconv"
 
@@ -25,19 +24,7 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 	if err := request.IsValid(); err != nil {
 		return err
 	}
-
-	var progressSocketPath string
-	if request.ProgressCB != nil {
-		var progressSocketListener net.Listener
-		var err error
-		progressSocketListener, progressSocketPath, err = makeProgressSocket()
-		if err != nil {
-			return fmt.Errorf("progress socket: %w", err)
-		}
-		go serveProgressSocket(progressSocketListener, progressSocketPath, request.ProgressCB, p.Logger)
-
-	}
-	cmd, err := makeConvertCommand(ctx, request, progressSocketPath)
+	cmd, err := makeConvertCommand(ctx, request, request.ProgressCB, p.Logger.With("component", "ffmpeg"))
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
@@ -46,7 +33,7 @@ func (p Processor) Convert(ctx context.Context, request Request) error {
 }
 
 type Request struct {
-	ProgressCB  func(Progress)
+	ProgressCB  func(ffmpeg.Progress)
 	Source      string
 	Target      string
 	TargetStats ffmpeg.VideoStats
@@ -74,7 +61,7 @@ func (r Request) IsValid() error {
 }
 
 // makeConvertCommand creates an exec.Command to run ffmeg with the required configuration.
-func makeConvertCommand(ctx context.Context, request Request, progressSocket string) (*exec.Cmd, error) {
+func makeConvertCommand(ctx context.Context, request Request, cb func(progress ffmpeg.Progress), logger *slog.Logger) (*exec.Cmd, error) {
 	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
 	if !ok {
 		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetStats.VideoCodec)
@@ -95,8 +82,9 @@ func makeConvertCommand(ctx context.Context, request Request, progressSocket str
 		}).
 		NoStats().
 		LogLevel("error").
-		OverWriteTarget().
-		ProgressSocket(progressSocket)
-
+		OverWriteTarget()
+	if cb != nil {
+		cmd = cmd.ProgressSocket(cb, logger)
+	}
 	return cmd.Build(ctx), nil
 }

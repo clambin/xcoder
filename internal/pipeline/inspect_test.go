@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: use the tests from TestProfile_Inspect
 func TestInspect(t *testing.T) {
 	type args struct {
 		stats ffmpeg.VideoStats
@@ -24,8 +25,16 @@ func TestInspect(t *testing.T) {
 		want    any
 	}{
 		{
-			name:    "video does not meet criteria",
-			profile: "hevc-max",
+			name:    "video skipped",
+			profile: "hevc-high",
+			args: args{
+				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
+			},
+			want: Skipped,
+		},
+		{
+			name:    "video rejected",
+			profile: "hevc-low",
 			args: args{
 				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
 			},
@@ -33,7 +42,7 @@ func TestInspect(t *testing.T) {
 		},
 		{
 			name:    "video probe failed",
-			profile: "hevc-max",
+			profile: "hevc-high",
 			args: args{
 				err: errors.New("failed"),
 			},

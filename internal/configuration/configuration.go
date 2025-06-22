@@ -26,7 +26,7 @@ func GetConfiguration() (Configuration, error) {
 func getConfigurationWithFlagSet(f *flag.FlagSet, args ...string) (Configuration, error) {
 	cfg := Configuration{
 		Input:       "/media",
-		ProfileName: "hevc-max",
+		ProfileName: "hevc-high",
 	}
 	flagger.SetFlags(f, &cfg)
 	if err := f.Parse(args); err != nil {

@@ -1,86 +1,105 @@
 package profile
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestGetProfile(t *testing.T) {
-	for name := range profiles {
-		_, err := GetProfile(name)
-		assert.NoError(t, err)
-	}
-
-	_, err := GetProfile("invalid")
-	assert.Error(t, err)
-}
-
-func TestProfile_Evaluate(t *testing.T) {
+func TestProfile_Inspect(t *testing.T) {
 	tests := []struct {
-		name        string
-		sourceStats ffmpeg.VideoStats
-		wantEvalErr assert.ErrorAssertionFunc
-		targetStats ffmpeg.VideoStats
+		name            string
+		profile         Profile
+		source          ffmpeg.VideoStats
+		wantErr         error
+		wantTargetStats ffmpeg.VideoStats
 	}{
 		{
-			name:        "source already in target codec",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 8_000_000},
-			wantEvalErr: assert.Error,
+			name:    "wrong codec",
+			profile: Profile{TargetCodec: "hevc", Rules: []Rule{SkipTargetCodec()}},
+			source:  ffmpeg.VideoStats{VideoCodec: "hevc"},
+			wantErr: &ErrSourceRejected{Reason: "source video already in target codec"},
 		},
 		{
-			name:        "source in unsupported codec",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "invalid", Height: 1080, BitRate: 8_000_000},
-			wantEvalErr: assert.Error,
+			name:    "height too low",
+			profile: Profile{TargetCodec: "hevc", Rules: []Rule{SkipVideoHeight(1080)}},
+			source:  ffmpeg.VideoStats{VideoCodec: "hevc", Height: 800},
+			wantErr: &ErrSourceRejected{Reason: "source video height is less than 1080"},
 		},
 		{
-			name:        "source in skipped codec",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "foobar", Height: 1080, BitRate: 8_000_000},
-			wantEvalErr: assert.Error,
+			name:    "invalid source codec",
+			profile: Profile{},
+			source:  ffmpeg.VideoStats{VideoCodec: "invalid"},
+			wantErr: &ErrSourceRejected{Reason: "unsupported video codec: invalid"},
 		},
 		{
-			name:        "height too low",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 300, BitRate: 8_000_000},
-			wantEvalErr: assert.Error,
+			name:    "invalid target codec",
+			profile: Profile{TargetCodec: "invalid"},
+			source:  ffmpeg.VideoStats{VideoCodec: "h264"},
+			wantErr: errors.New("unsupported video codec: invalid"),
 		},
 		{
-			name:        "bitrate too low",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 1_000_000},
-			wantEvalErr: assert.Error,
+			name:    "source bitrate too low",
+			profile: Profile{TargetCodec: "hevc", Rules: []Rule{SkipTargetCodec(), SkipVideoHeight(1080)}},
+			source:  ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 4_000_000},
+			wantErr: &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least 6000000 bps"},
 		},
 		{
-			name:        "minimum bitrate",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 6_000_000},
-			wantEvalErr: assert.NoError,
-			targetStats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 3_000_000},
+			name:    "target bitrate too low",
+			profile: Profile{TargetCodec: "h264", Rules: []Rule{SkipTargetCodec(), SkipVideoHeight(1080)}},
+			source:  ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 4_000_000},
+			wantErr: &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least 6000000 bps"},
 		},
 		{
-			name:        "higher bitrate",
-			sourceStats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 12_000_000},
-			wantEvalErr: assert.NoError,
-			targetStats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 6_000_000},
+			name:            "valid source, capped",
+			profile:         Profile{TargetCodec: "hevc", CapBitrate: true, Rules: []Rule{SkipTargetCodec(), SkipVideoHeight(1080)}},
+			source:          ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 8_000_000},
+			wantTargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 3_000_000},
 		},
-	}
-
-	profile := Profile{
-		Codec: "hevc",
-		Rules: Rules{
-			SkipCodec("foobar"),
-			SkipTargetCodec(),
-			MinimumHeight(1080),
-			MinimumBitrate(),
+		{
+			name:            "valid source, not capped",
+			profile:         Profile{TargetCodec: "hevc", Rules: []Rule{SkipTargetCodec(), SkipVideoHeight(1080)}},
+			source:          ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 8_000_000},
+			wantTargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 4_000_000},
 		},
-		Quality: MaxQuality,
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			targetVideoStats, err := tt.profile.Inspect(tt.source)
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				if errors.Is(tt.wantErr, &ErrSourceRejected{}) || errors.Is(tt.wantErr, &ErrSourceBitrateTooLow{}) {
+					assert.ErrorIs(t, err, tt.wantErr)
+				}
+				assert.Equal(t, tt.wantErr.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.wantTargetStats, targetVideoStats)
+		})
+	}
+}
 
-			stats, err := profile.Evaluate(tt.sourceStats)
-			tt.wantEvalErr(t, err)
-			assert.Equal(t, tt.targetStats, stats)
+func Test_bitRates_getBitrate(t *testing.T) {
+	b := bitRates{{height: 100, bitrate: 1000}, {height: 200, bitrate: 2000}, {height: 300, bitrate: 3000}}
+	tests := []struct {
+		name   string
+		height int
+		want   int
+	}{
+		{"too low", 50, 1000},
+		{"match low", 200, 2000},
+		{"interpolate", 250, 2500},
+		{"match high", 300, 3000},
+		{"too high", 400, 3000},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, b.getBitrate(tt.height))
 		})
 	}
 }

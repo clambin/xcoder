@@ -13,8 +13,8 @@ import (
 
 func Test_workListViewer(t *testing.T) {
 	var list pipeline.Queue
-	list.Add("A").SetStatus(pipeline.Skipped, profile.ErrSourceInTargetCodec)
-	list.Add("B").SetStatus(pipeline.Rejected, profile.ErrSourceRejected{Reason: "bitrate too low"})
+	list.Add("A").SetStatus(pipeline.Skipped, &profile.ErrSourceRejected{Reason: "source in target codec"})
+	list.Add("B").SetStatus(pipeline.Rejected, &profile.ErrSourceRejected{Reason: "bitrate too low"})
 	list.Add("C").SetStatus(pipeline.Inspected, nil)
 	list.Add("D").SetStatus(pipeline.Converted, nil)
 

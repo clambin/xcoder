@@ -1,4 +1,4 @@
-package processor
+package ffmpeg
 
 import (
 	"log/slog"

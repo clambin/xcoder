@@ -1,25 +1,22 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/clambin/videoConvertor/internal/ffmpeg"
-	"log/slog"
 	"math"
 	"os"
 	"time"
+
+	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
 var asJSON = flag.Bool("json", false, "dump stats as json")
 
 func main() {
 	flag.Parse()
-	p := ffmpeg.Processor{Logger: slog.Default()}
-
 	for _, arg := range flag.Args() {
-		stats, err := p.Scan(context.Background(), arg)
+		stats, err := ffmpeg.Probe(arg)
 		if err != nil {
 			panic(err)
 		}

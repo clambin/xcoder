@@ -58,7 +58,7 @@ func TestRequest_IsValid(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.wantErr(t, tt.request.IsValid())
+			tt.wantErr(t, tt.request.isValid())
 		})
 	}
 }
@@ -73,7 +73,7 @@ func Test_makeConvertCommand(t *testing.T) {
 			key := ctxKey("test")
 			ctx := context.WithValue(t.Context(), key, "test")
 
-			s, err := makeTranscodeCommand(ctx, tt.request, nil, nil)
+			s, err := tt.request.buildTranscodeCommand(ctx, nil, nil)
 			tt.wantErr(t, err)
 			if err != nil {
 				return

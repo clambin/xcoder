@@ -15,9 +15,9 @@ type FFMPEG struct {
 	inputArgs      Args
 	outputArgs     Args
 	globalPostArgs Args
+	logger         *slog.Logger
 	input          string
 	output         string
-	logger         *slog.Logger
 }
 
 func Input(path string, args Args) *FFMPEG {

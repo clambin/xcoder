@@ -21,10 +21,7 @@ func (p Transcoder) Scan(_ context.Context, path string) (ffmpeg.VideoStats, err
 }
 
 func (p Transcoder) Transcode(ctx context.Context, request Request) error {
-	if err := request.IsValid(); err != nil {
-		return err
-	}
-	cmd, err := makeTranscodeCommand(ctx, request, request.ProgressCB, p.Logger.With("component", "ffmpeg"))
+	cmd, err := request.buildTranscodeCommand(ctx, request.ProgressCB, p.Logger.With("component", "ffmpeg"))
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
@@ -40,15 +37,15 @@ type Request struct {
 }
 
 var ErrMissingFilename = errors.New("missing filename")
-var ErrInvalidCodec = errors.New("only hevc supported")
+var ErrInvalidCodec = errors.New("unsupported target video codec")
 var ErrInvalidBitsPerSample = errors.New("bits per sample must be 8 or 10")
 var ErrInvalidBitRate = errors.New("invalid bitrate")
 
-func (r Request) IsValid() error {
+func (r Request) isValid() error {
 	if r.Source == "" || r.Target == "" {
 		return ErrMissingFilename
 	}
-	if r.TargetStats.VideoCodec != "hevc" {
+	if _, ok := videoCodecs[r.TargetStats.VideoCodec]; !ok {
 		return ErrInvalidCodec
 	}
 	if r.TargetStats.BitsPerSample != 8 && r.TargetStats.BitsPerSample != 10 {
@@ -60,26 +57,21 @@ func (r Request) IsValid() error {
 	return nil
 }
 
-// makeTranscodeCommand creates an exec.Command to run ffmeg with the required configuration.
-func makeTranscodeCommand(ctx context.Context, request Request, cb func(progress ffmpeg.Progress), logger *slog.Logger) (*exec.Cmd, error) {
-	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
-	if !ok {
-		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetStats.VideoCodec)
+// buildTranscodeCommand creates an exec.Command to run ffmeg for the request
+func (r Request) buildTranscodeCommand(ctx context.Context, cb func(ffmpeg.Progress), logger *slog.Logger) (*exec.Cmd, error) {
+	if err := r.isValid(); err != nil {
+		return nil, err
 	}
-	profile := "main"
-	if request.TargetStats.BitsPerSample == 10 {
-		profile = "main10"
+	videoOutputArgs, err := makeVideoOutputArgs(r.TargetStats)
+	if err != nil {
+		return nil, err
 	}
+	videoOutputArgs["c:a"] = "copy"
+	videoOutputArgs["c:s"] = "copy"
+	videoOutputArgs["f"] = "matroska"
 
-	cmd := ffmpeg.Input(request.Source, inputArguments).
-		Output(request.Target, ffmpeg.Args{
-			"c:v":       codecName,
-			"profile:v": profile,
-			"b:v":       strconv.Itoa(request.TargetStats.BitRate),
-			"c:a":       "copy",
-			"c:s":       "copy",
-			"f":         "matroska",
-		}).
+	cmd := ffmpeg.Input(r.Source, inputArguments).
+		Output(r.Target, videoOutputArgs).
 		NoStats().
 		LogLevel("error").
 		OverWriteTarget()
@@ -87,4 +79,22 @@ func makeTranscodeCommand(ctx context.Context, request Request, cb func(progress
 		cmd = cmd.WithLogger(logger).ProgressSocket(ctx, cb)
 	}
 	return cmd.Build(ctx), nil
+}
+
+// this may need to move to _darwin/_linux
+func makeVideoOutputArgs(stats ffmpeg.VideoStats) (ffmpeg.Args, error) {
+	codecName, ok := videoCodecs[stats.VideoCodec]
+	if !ok {
+		return nil, fmt.Errorf("unsupported video codec: %s", stats.VideoCodec)
+	}
+	profile := "main"
+	if stats.BitsPerSample == 10 {
+		profile = "main10"
+	}
+
+	return ffmpeg.Args{
+		"c:v":       codecName,
+		"profile:v": profile,
+		"b:v":       strconv.Itoa(stats.BitRate),
+	}, nil
 }

@@ -32,16 +32,6 @@ var makeConvertCommandTests = []struct {
 		wantErr: assert.NoError,
 	},
 	{
-		name: "default is 8 bit",
-		request: Request{
-			Source:      "foo.mkv",
-			Target:      "foo.hevc.mkv",
-			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000},
-		},
-		want:    "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
-		wantErr: assert.NoError,
-	},
-	{
 		name: "only support for hevc",
 		request: Request{
 			Source:      "foo.mkv",

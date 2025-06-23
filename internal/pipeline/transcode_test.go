@@ -11,13 +11,13 @@ import (
 
 	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/processor"
 	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/videoConvertor/internal/transcoder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestConverter_convert(t *testing.T) {
+func TestTranscode(t *testing.T) {
 	type fileCheckerResults struct {
 		ok  bool
 		err error
@@ -47,14 +47,14 @@ func TestConverter_convert(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			ff := fakeCodec{err: tt.ffmpegErr}
+			ff := fakeTranscoder{err: tt.ffmpegErr}
 			var q Queue
 			q.SetActive(true)
 			var cfg configuration.Configuration
 			cfg.Profile, _ = profile.GetProfile(tt.profile)
 			l := slog.New(slog.DiscardHandler)
 
-			go convertWithFileChecker(t.Context(), &ff, &q, fakeFsChecker{ok: tt.fileCheckerResults.ok, err: tt.fileCheckerResults.err}, cfg, l)
+			go transcodeWithFileChecker(t.Context(), &ff, &q, fakeFsChecker{ok: tt.fileCheckerResults.ok, err: tt.fileCheckerResults.err}, cfg, l)
 
 			i := q.Add("foo.mkv")
 			i.SetStatus(Inspected, nil)
@@ -66,27 +66,6 @@ func TestConverter_convert(t *testing.T) {
 			}, time.Second, convertInterval)
 		})
 	}
-}
-
-var _ Converter = &fakeCodec{}
-
-type fakeCodec struct {
-	err error
-}
-
-func (f *fakeCodec) Convert(_ context.Context, _ processor.Request) error {
-	return f.err
-}
-
-var _ fileChecker = &fakeFsChecker{}
-
-type fakeFsChecker struct {
-	ok  bool
-	err error
-}
-
-func (f fakeFsChecker) TargetIsNewer(_, _ string) (bool, error) {
-	return f.ok, f.err
 }
 
 func TestFsFileChecker_TargetIsNewer(t *testing.T) {
@@ -150,4 +129,25 @@ func TestFsFileChecker_TargetIsNewer(t *testing.T) {
 			tt.wantErr(t, err)
 		})
 	}
+}
+
+var _ Transcoder = &fakeTranscoder{}
+
+type fakeTranscoder struct {
+	err error
+}
+
+func (f *fakeTranscoder) Transcode(_ context.Context, _ transcoder.Request) error {
+	return f.err
+}
+
+var _ fileChecker = &fakeFsChecker{}
+
+type fakeFsChecker struct {
+	ok  bool
+	err error
+}
+
+func (f fakeFsChecker) TargetIsNewer(_, _ string) (bool, error) {
+	return f.ok, f.err
 }

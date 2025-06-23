@@ -58,7 +58,7 @@ func (p *Profile) Inspect(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats
 		return ffmpeg.VideoStats{}, err
 	}
 	if minimumBitrate := max(minimumSourceBitrate, minimumTargetBitrate); sourceVideoStats.BitRate < minimumBitrate {
-		return ffmpeg.VideoStats{}, &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least " + strconv.Itoa(minimumBitrate) + " bps"}
+		return ffmpeg.VideoStats{}, &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(2)}
 	}
 
 	// create target videoStats.  If we're asked to cap the bitrate, we ask for the minimum bitrate of the target codec.

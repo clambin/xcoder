@@ -1,4 +1,4 @@
-package processor
+package transcoder
 
 import (
 	"github.com/clambin/videoConvertor/ffmpeg"
@@ -18,7 +18,7 @@ var makeConvertCommandTests = []struct {
 			Target:      "foo.hevc.mkv",
 			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 8},
 		},
-		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
+		want:    "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
 		wantErr: assert.NoError,
 	},
 	{
@@ -28,7 +28,7 @@ var makeConvertCommandTests = []struct {
 			Target:      "foo.hevc.mkv",
 			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000, BitsPerSample: 10},
 		},
-		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -y",
+		want:    "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main10 foo.hevc.mkv -loglevel error -nostats -y",
 		wantErr: assert.NoError,
 	},
 	{
@@ -38,7 +38,7 @@ var makeConvertCommandTests = []struct {
 			Target:      "foo.hevc.mkv",
 			TargetStats: ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000},
 		},
-		want:    "-i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v libx265 -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
+		want:    "-hwaccel videotoolbox -i foo.mkv -b:v 4000000 -c:a copy -c:s copy -c:v hevc_videotoolbox -f matroska -profile:v main foo.hevc.mkv -loglevel error -nostats -y",
 		wantErr: assert.NoError,
 	},
 	{

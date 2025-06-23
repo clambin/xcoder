@@ -117,5 +117,5 @@ func Probe(path string) (VideoStats, error) {
 	if err := cmd.Run(); err != nil {
 		return VideoStats{}, fmt.Errorf("[%s] %w", stdErr.String(), err)
 	}
-	return parseVideoStats(stdOut.String())
+	return parseVideoStats(&stdOut)
 }

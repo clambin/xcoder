@@ -45,13 +45,13 @@ func TestProfile_Inspect(t *testing.T) {
 			name:    "source bitrate too low",
 			profile: Profile{TargetCodec: "hevc", Rules: []Rule{SkipTargetCodec(), SkipVideoHeight(1080)}},
 			source:  ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 4_000_000},
-			wantErr: &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least 6000000 bps"},
+			wantErr: &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least 6.00 mbps"},
 		},
 		{
 			name:    "target bitrate too low",
 			profile: Profile{TargetCodec: "h264", Rules: []Rule{SkipTargetCodec(), SkipVideoHeight(1080)}},
 			source:  ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 4_000_000},
-			wantErr: &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least 6000000 bps"},
+			wantErr: &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least 6.00 mbps"},
 		},
 		{
 			name:            "valid source, capped",

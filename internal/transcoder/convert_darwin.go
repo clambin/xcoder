@@ -1,4 +1,4 @@
-package processor
+package transcoder
 
 import (
 	"github.com/clambin/videoConvertor/ffmpeg"
@@ -6,8 +6,11 @@ import (
 
 // videoCodecs translates generic codec names into the OS-specific codec names
 var videoCodecs = map[string]string{
-	"hevc": "libx265",
+	"hevc": "hevc_videotoolbox",
 }
 
 // inputArguments are added before the input chain.
-var inputArguments = ffmpeg.Args{}
+// Use MacOS videotoolbox to decode video streams.
+var inputArguments = ffmpeg.Args{
+	"hwaccel": "videotoolbox",
+}

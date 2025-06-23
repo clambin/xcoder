@@ -13,7 +13,7 @@ import (
 
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/pipeline"
-	"github.com/clambin/videoConvertor/internal/processor"
+	"github.com/clambin/videoConvertor/internal/transcoder"
 	"github.com/clambin/videoConvertor/internal/ui"
 	"github.com/rivo/tview"
 	"golang.org/x/sync/errgroup"
@@ -44,7 +44,7 @@ func Run(ctx context.Context, _ io.Writer) error {
 
 	u := ui.New(&list, cfg)
 	l := cfg.Logger(u.LogViewer, nil)
-	ff := processor.Processor{Logger: l.With("component", "ffmpeg")}
+	ff := transcoder.Transcoder{Logger: l.With("component", "ffmpeg")}
 	a := tview.NewApplication().SetRoot(u.Root, true)
 	itemCh := make(chan *pipeline.WorkItem)
 
@@ -60,7 +60,10 @@ func Run(ctx context.Context, _ io.Writer) error {
 	}
 	const converterCount = 2
 	for range converterCount {
-		g.Go(func() error { pipeline.Convert(subCtx, &ff, &list, cfg, l.With("component", "processor")); return nil })
+		g.Go(func() error {
+			pipeline.Transcode(subCtx, &ff, &list, cfg, l.With("component", "transcoder"))
+			return nil
+		})
 	}
 
 	g.Go(func() error { u.Run(subCtx, a, 250*time.Millisecond); return nil })

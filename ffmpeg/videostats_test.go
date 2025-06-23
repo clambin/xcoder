@@ -1,6 +1,7 @@
 package ffmpeg
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -77,7 +78,7 @@ func Test_parseVideoStats(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := parseVideoStats(tt.input)
+			got, err := parseVideoStats(strings.NewReader(tt.input))
 			assert.Equal(t, tt.want, got)
 			tt.wantErr(t, err)
 		})
@@ -145,7 +146,7 @@ func TestVideoStats_LogValue(t *testing.T) {
 }
 
 // Current:
-// BenchmarkParse-10    	  688326	      1736 ns/op	    1176 B/op	      20 allocs/op
+// BenchmarkParse-10    	  623712	      1919 ns/op	    1664 B/op	      24 allocs/op
 func BenchmarkParse(b *testing.B) {
 	const input = `{
 		"streams": [
@@ -158,7 +159,7 @@ func BenchmarkParse(b *testing.B) {
 
 	b.ReportAllocs()
 	for b.Loop() {
-		if _, err := parseVideoStats(input); err != nil {
+		if _, err := parseVideoStats(strings.NewReader(input)); err != nil {
 			b.Fatal(err)
 		}
 	}

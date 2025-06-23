@@ -9,26 +9,26 @@ import (
 
 	"github.com/clambin/videoConvertor/ffmpeg"
 	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/processor"
+	"github.com/clambin/videoConvertor/internal/transcoder"
 )
 
 const (
 	convertInterval = 100 * time.Millisecond
 )
 
-func Convert(ctx context.Context, converter Converter, queue *Queue, cfg configuration.Configuration, logger *slog.Logger) {
-	convertWithFileChecker(ctx, converter, queue, fsFileChecker{}, cfg, logger)
+func Transcode(ctx context.Context, tc Transcoder, queue *Queue, cfg configuration.Configuration, logger *slog.Logger) {
+	transcodeWithFileChecker(ctx, tc, queue, fsFileChecker{}, cfg, logger)
 }
 
-type Converter interface {
-	Convert(ctx context.Context, request processor.Request) error
+type Transcoder interface {
+	Transcode(ctx context.Context, request transcoder.Request) error
 }
 
 type fileChecker interface {
 	TargetIsNewer(a, b string) (bool, error)
 }
 
-func convertWithFileChecker(ctx context.Context, codec Converter, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
+func transcodeWithFileChecker(ctx context.Context, tc Transcoder, queue *Queue, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
 	ticker := time.NewTicker(convertInterval)
 	defer ticker.Stop()
 	for {
@@ -38,12 +38,12 @@ func convertWithFileChecker(ctx context.Context, codec Converter, queue *Queue, 
 		case <-ticker.C:
 		}
 		if item := queue.NextToConvert(); item != nil {
-			convertItem(ctx, item, codec, f, cfg, logger)
+			transcodeItem(ctx, item, tc, f, cfg, logger)
 		}
 	}
 }
 
-func convertItem(ctx context.Context, item *WorkItem, codec Converter, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
+func transcodeItem(ctx context.Context, item *WorkItem, tc Transcoder, f fileChecker, cfg configuration.Configuration, logger *slog.Logger) {
 	// Build target name
 	target := buildTargetFilename(item, "", cfg.Profile.TargetCodec, "mkv")
 	logger = logger.With("target", target)
@@ -61,32 +61,31 @@ func convertItem(ctx context.Context, item *WorkItem, codec Converter, f fileChe
 	}
 
 	// build the request
-	req := processor.Request{
+	var lastDurationReported time.Duration
+	const reportInterval = 1 * time.Minute
+	totalDuration := item.SourceVideoStats().Duration
+	req := transcoder.Request{
 		Source:      item.Source,
 		Target:      target,
 		TargetStats: item.TargetVideoStats(),
+		ProgressCB: func(progress ffmpeg.Progress) {
+			item.Progress.Update(progress)
+			if progress.Converted-lastDurationReported > reportInterval {
+				logger.Info("conversion in progress",
+					"progress", progress.Converted,
+					"speed", progress.Speed,
+					"completed", strconv.FormatFloat(100*progress.Converted.Seconds()/totalDuration.Seconds(), 'f', 2, 64)+"%",
+				)
+				lastDurationReported = progress.Converted
+			}
+		},
 	}
 
 	logger.Info("target determined", "bitrate", req.TargetStats.BitRate)
 
-	var lastDurationReported time.Duration
-	const reportInterval = 1 * time.Minute
-	totalDuration := item.SourceVideoStats().Duration
-	req.ProgressCB = func(progress ffmpeg.Progress) {
-		item.Progress.Update(progress)
-		if progress.Converted-lastDurationReported > reportInterval {
-			logger.Info("conversion in progress",
-				"progress", progress.Converted,
-				"speed", progress.Speed,
-				"completed", strconv.FormatFloat(100*progress.Converted.Seconds()/totalDuration.Seconds(), 'f', 2, 64)+"%",
-			)
-			lastDurationReported = progress.Converted
-		}
-	}
-
 	// convert the file
 	logger.Debug("converting")
-	if err = codec.Convert(ctx, req); err != nil {
+	if err = tc.Transcode(ctx, req); err != nil {
 		_ = os.Remove(target)
 		logger.Warn("conversion failed", "err", err)
 		item.SetStatus(Failed, err)

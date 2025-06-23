@@ -1,4 +1,4 @@
-package processor
+package transcoder
 
 import (
 	"context"
@@ -73,7 +73,7 @@ func Test_makeConvertCommand(t *testing.T) {
 			key := ctxKey("test")
 			ctx := context.WithValue(t.Context(), key, "test")
 
-			s, err := makeConvertCommand(ctx, tt.request, nil, nil)
+			s, err := makeTranscodeCommand(ctx, tt.request, nil, nil)
 			tt.wantErr(t, err)
 			if err != nil {
 				return

@@ -1,4 +1,4 @@
-package processor
+package transcoder
 
 import (
 	"context"
@@ -11,20 +11,20 @@ import (
 	"github.com/clambin/videoConvertor/ffmpeg"
 )
 
-// Processor implements video scanning (ffprobe) and converting (ffmpeg)
-type Processor struct {
+// Transcoder implements video scanning (ffprobe) and transcoding (ffmpeg)
+type Transcoder struct {
 	Logger *slog.Logger
 }
 
-func (p Processor) Scan(_ context.Context, path string) (ffmpeg.VideoStats, error) {
+func (p Transcoder) Scan(_ context.Context, path string) (ffmpeg.VideoStats, error) {
 	return ffmpeg.Probe(path)
 }
 
-func (p Processor) Convert(ctx context.Context, request Request) error {
+func (p Transcoder) Transcode(ctx context.Context, request Request) error {
 	if err := request.IsValid(); err != nil {
 		return err
 	}
-	cmd, err := makeConvertCommand(ctx, request, request.ProgressCB, p.Logger.With("component", "ffmpeg"))
+	cmd, err := makeTranscodeCommand(ctx, request, request.ProgressCB, p.Logger.With("component", "ffmpeg"))
 	if err != nil {
 		return fmt.Errorf("failed to create command: %w", err)
 	}
@@ -60,8 +60,8 @@ func (r Request) IsValid() error {
 	return nil
 }
 
-// makeConvertCommand creates an exec.Command to run ffmeg with the required configuration.
-func makeConvertCommand(ctx context.Context, request Request, cb func(progress ffmpeg.Progress), logger *slog.Logger) (*exec.Cmd, error) {
+// makeTranscodeCommand creates an exec.Command to run ffmeg with the required configuration.
+func makeTranscodeCommand(ctx context.Context, request Request, cb func(progress ffmpeg.Progress), logger *slog.Logger) (*exec.Cmd, error) {
 	codecName, ok := videoCodecs[request.TargetStats.VideoCodec]
 	if !ok {
 		return nil, fmt.Errorf("unsupported video codec: %s", request.TargetStats.VideoCodec)

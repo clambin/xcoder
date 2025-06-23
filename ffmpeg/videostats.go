@@ -3,6 +3,7 @@ package ffmpeg
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -18,7 +19,7 @@ type VideoStats struct {
 	Width         int
 }
 
-func parseVideoStats(input string) (VideoStats, error) {
+func parseVideoStats(r io.Reader) (VideoStats, error) {
 	var stats struct {
 		Format struct {
 			Filename string `json:"filename"`
@@ -34,7 +35,7 @@ func parseVideoStats(input string) (VideoStats, error) {
 		} `json:"streams"`
 	}
 
-	if err := json.Unmarshal([]byte(input), &stats); err != nil {
+	if err := json.NewDecoder(r).Decode(&stats); err != nil {
 		return VideoStats{}, fmt.Errorf("json: %w", err)
 	}
 

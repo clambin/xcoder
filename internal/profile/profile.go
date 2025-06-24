@@ -183,7 +183,7 @@ func getMinimumBitRate(videoStats ffmpeg.VideoStats, from string, to string) (in
 	}
 	targetMinimumBitrates, ok := minimumBitrates[to]
 	if !ok {
-		return 0, fmt.Errorf("unsupported video codec: %s", from)
+		return 0, fmt.Errorf("unsupported video codec: %s", to)
 	}
 	return max(sourceMinimumBitrates.getBitrate(videoStats.Height), targetMinimumBitrates.getBitrate(videoStats.Height)), nil
 }

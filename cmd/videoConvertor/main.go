@@ -13,7 +13,6 @@ import (
 
 	"github.com/clambin/videoConvertor/internal/configuration"
 	"github.com/clambin/videoConvertor/internal/pipeline"
-	"github.com/clambin/videoConvertor/internal/transcoder"
 	"github.com/clambin/videoConvertor/internal/ui"
 	"github.com/rivo/tview"
 	"golang.org/x/sync/errgroup"
@@ -39,35 +38,19 @@ func Run(ctx context.Context, _ io.Writer) error {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	var list pipeline.Queue
-	list.SetActive(cfg.Active)
+	var queue pipeline.Queue
+	queue.SetActive(cfg.Active)
 
-	u := ui.New(&list, cfg)
+	u := ui.New(&queue, cfg)
 	l := cfg.Logger(u.LogViewer, nil)
-	ff := transcoder.Transcoder{Logger: l.With("component", "ffmpeg")}
 	a := tview.NewApplication().SetRoot(u.Root, true)
-	itemCh := make(chan *pipeline.WorkItem)
 
-	subCtx, cancel := context.WithCancel(ctx)
 	var g errgroup.Group
-	g.Go(func() error { return pipeline.Scan(subCtx, cfg.Input, &list, itemCh, l.With("component", "scanner")) })
-	const inspectorCount = 8
-	for range inspectorCount {
-		g.Go(func() error {
-			pipeline.Inspect(subCtx, itemCh, &ff, cfg.Profile, l.With("component", "inspector"))
-			return nil
-		})
-	}
-	const converterCount = 2
-	for range converterCount {
-		g.Go(func() error {
-			pipeline.Transcode(subCtx, &ff, &list, cfg, l.With("component", "transcoder"))
-			return nil
-		})
-	}
-
+	subCtx, cancel := context.WithCancel(ctx)
+	g.Go(func() error { return pipeline.Run(subCtx, cfg, &queue, l) })
 	g.Go(func() error { u.Run(subCtx, a, 250*time.Millisecond); return nil })
 	_ = a.Run()
+
 	cancel()
 	return g.Wait()
 }

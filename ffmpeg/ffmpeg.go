@@ -102,15 +102,13 @@ func (a Args) compile() []string {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func Probe(path string) (VideoStats, error) {
-	args := []string{
+	cmd := exec.Command("ffprobe",
 		"-show_format",
 		"-show_streams",
 		"-loglevel", "error",
 		"-output_format", "json",
 		path,
-	}
-
-	cmd := exec.Command("ffprobe", args...)
+	)
 	var stdOut, stdErr bytes.Buffer
 	cmd.Stdout = &stdOut
 	cmd.Stderr = &stdErr

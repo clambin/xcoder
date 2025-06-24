@@ -51,7 +51,8 @@ func inspectItem(ctx context.Context, item *WorkItem, codec Decoder, videoProfil
 	if err != nil {
 		l.Debug("should not convert file", "err", err)
 		status := Rejected
-		if errors.Is(err, &profile.ErrSourceRejected{}) {
+		var err2 *profile.ErrSourceRejected
+		if errors.As(err, &err2) && err2.Skip() {
 			status = Skipped
 		}
 		item.SetStatus(status, err)

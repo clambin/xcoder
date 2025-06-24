@@ -28,15 +28,15 @@ func TestInspect(t *testing.T) {
 			name:    "video skipped",
 			profile: "hevc-high",
 			args: args{
-				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
+				stats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 8_000_000, Duration: time.Hour, BitsPerSample: 10},
 			},
 			want: Skipped,
 		},
 		{
 			name:    "video rejected",
-			profile: "hevc-low",
+			profile: "hevc-high",
 			args: args{
-				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 1024, Duration: time.Hour, BitsPerSample: 10},
+				stats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 720, BitRate: 8_000_000, Duration: time.Hour, BitsPerSample: 10},
 			},
 			want: Rejected,
 		},
@@ -76,6 +76,7 @@ func TestInspect(t *testing.T) {
 				status, _ := item.Status()
 				return status == tt.want
 			}, time.Second, 10*time.Millisecond)
+			// t.Log(item.Status())
 		})
 	}
 }

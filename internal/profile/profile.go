@@ -13,6 +13,16 @@ var profiles = map[string]Profile{
 		TargetCodec: "hevc",
 		Rules: []Rule{
 			SkipTargetCodec(),
+			RejectBitrateTooLow(),
+		},
+		CapBitrate: true,
+	},
+	"hevc-medium": {
+		TargetCodec: "hevc",
+		Rules: []Rule{
+			SkipTargetCodec(),
+			RejectVideoHeightTooLow(720),
+			RejectBitrateTooLow(),
 		},
 		CapBitrate: true,
 	},
@@ -20,7 +30,8 @@ var profiles = map[string]Profile{
 		TargetCodec: "hevc",
 		Rules: []Rule{
 			SkipTargetCodec(),
-			SkipVideoHeight(1080),
+			RejectVideoHeightTooLow(1080),
+			RejectBitrateTooLow(),
 		},
 	},
 }
@@ -47,28 +58,13 @@ func (p *Profile) Inspect(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats
 		}
 	}
 
-	// evaluate minimum bitrate for the source. we check both source & target codec, as target codec may need
-	// a higher bitrate than the source codec (e.g. hevc -> h264).
-	minimumSourceBitrate, err := getMinimumBitRate(sourceVideoStats.VideoCodec, sourceVideoStats)
-	if err != nil {
-		return ffmpeg.VideoStats{}, &ErrSourceRejected{Reason: err.Error()}
-	}
-	minimumTargetBitrate, err := getMinimumBitRate(p.TargetCodec, sourceVideoStats)
-	if err != nil {
-		return ffmpeg.VideoStats{}, err
-	}
-	if minimumBitrate := max(minimumSourceBitrate, minimumTargetBitrate); sourceVideoStats.BitRate < minimumBitrate {
-		return ffmpeg.VideoStats{}, &ErrSourceBitrateTooLow{Reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(2)}
-	}
-
 	// create target videoStats.  If we're asked to cap the bitrate, we ask for the minimum bitrate of the target codec.
 	// otherwise, if the source bitrate is higher than the minimum, increate the target bitrate by the same factor.
 	targetVideoStats := sourceVideoStats
 	targetVideoStats.VideoCodec = p.TargetCodec
-	targetVideoStats.BitRate = minimumTargetBitrate
-	if !p.CapBitrate {
-		oversampling := float64(sourceVideoStats.BitRate) / float64(minimumSourceBitrate)
-		targetVideoStats.BitRate = int(float64(minimumTargetBitrate) * oversampling)
+	var err error
+	if targetVideoStats.BitRate, err = getTargetBitrate(sourceVideoStats, sourceVideoStats.VideoCodec, p.TargetCodec, p.CapBitrate); err != nil {
+		return ffmpeg.VideoStats{}, err
 	}
 	return targetVideoStats, nil
 }
@@ -80,16 +76,31 @@ type Rule func(profile *Profile, sourceStats ffmpeg.VideoStats) error
 func SkipTargetCodec() Rule {
 	return func(profile *Profile, sourceStats ffmpeg.VideoStats) error {
 		if sourceStats.VideoCodec == profile.TargetCodec {
-			return &ErrSourceRejected{Reason: "source video already in target codec"}
+			return &ErrSourceRejected{skip: true, reason: "source video already in target codec"}
 		}
 		return nil
 	}
 }
 
-func SkipVideoHeight(height int) Rule {
+func RejectVideoHeightTooLow(height int) Rule {
 	return func(_ *Profile, sourceStats ffmpeg.VideoStats) error {
 		if sourceStats.Height < height {
-			return &ErrSourceRejected{Reason: "source video height is less than " + strconv.Itoa(height)}
+			return &ErrSourceRejected{reason: "source video height is less than " + strconv.Itoa(height)}
+		}
+		return nil
+	}
+}
+
+func RejectBitrateTooLow() Rule {
+	return func(profile *Profile, sourceStats ffmpeg.VideoStats) error {
+		// evaluate minimum bitrate for the source. we check both source & target codec, as target codec may need
+		// a higher bitrate than the source codec (e.g. hevc -> h264).
+		minimumBitrate, err := getMinimumBitRate(sourceStats, sourceStats.VideoCodec, profile.TargetCodec)
+		if err != nil {
+			return &ErrSourceRejected{reason: err.Error()}
+		}
+		if sourceStats.BitRate < minimumBitrate {
+			return &ErrSourceRejected{reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(2)}
 		}
 		return nil
 	}
@@ -98,29 +109,24 @@ func SkipVideoHeight(height int) Rule {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type ErrSourceRejected struct {
-	Reason string
+	skip   bool
+	reason string
+}
+
+func NewErrSourceRejected(skip bool, reason string) *ErrSourceRejected {
+	return &ErrSourceRejected{skip: skip, reason: reason}
+}
+
+func (e *ErrSourceRejected) Skip() bool {
+	return e.skip
 }
 
 func (e *ErrSourceRejected) Error() string {
-	return e.Reason
+	return e.reason
 }
 
 func (e *ErrSourceRejected) Is(e2 error) bool {
 	var err *ErrSourceRejected
-	ok := errors.As(e2, &err)
-	return ok
-}
-
-type ErrSourceBitrateTooLow struct {
-	Reason string
-}
-
-func (e *ErrSourceBitrateTooLow) Error() string {
-	return e.Reason
-}
-
-func (e *ErrSourceBitrateTooLow) Is(e2 error) bool {
-	var err *ErrSourceBitrateTooLow
 	ok := errors.As(e2, &err)
 	return ok
 }
@@ -168,11 +174,34 @@ var minimumBitrates = map[string]bitRates{
 	},
 }
 
-func getMinimumBitRate(codec string, videoStats ffmpeg.VideoStats) (int, error) {
-	rates, ok := minimumBitrates[codec]
+// getMinimumBitRate determines minimum bitrate for the source. we check both source & target codec, as target codec may need
+// a higher bitrate than the source codec (e.g. hevc -> h264).
+func getMinimumBitRate(videoStats ffmpeg.VideoStats, from string, to string) (int, error) {
+	sourceMinimumBitrates, ok := minimumBitrates[from]
 	if !ok {
-		return 0, fmt.Errorf("unsupported video codec: %s", codec)
+		return 0, fmt.Errorf("unsupported video codec: %s", from)
 	}
-	rate := rates.getBitrate(videoStats.Height)
-	return rate, nil
+	targetMinimumBitrates, ok := minimumBitrates[to]
+	if !ok {
+		return 0, fmt.Errorf("unsupported video codec: %s", from)
+	}
+	return max(sourceMinimumBitrates.getBitrate(videoStats.Height), targetMinimumBitrates.getBitrate(videoStats.Height)), nil
+}
+
+func getTargetBitrate(videoStats ffmpeg.VideoStats, from string, to string, capBitrate bool) (int, error) {
+	sourceMinimumBitrates, ok := minimumBitrates[from]
+	if !ok {
+		return 0, fmt.Errorf("unsupported video codec: %s", from)
+	}
+	targetMinimumBitrates, ok := minimumBitrates[to]
+	if !ok {
+		return 0, fmt.Errorf("unsupported video codec: %s", to)
+	}
+
+	bitrate := targetMinimumBitrates.getBitrate(videoStats.Height)
+	if !capBitrate {
+		oversampling := float64(videoStats.BitRate) / float64(sourceMinimumBitrates.getBitrate(videoStats.Height))
+		bitrate = int(float64(bitrate) * oversampling)
+	}
+	return bitrate, nil
 }

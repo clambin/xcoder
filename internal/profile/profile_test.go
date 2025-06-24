@@ -61,6 +61,26 @@ func TestProfiles(t *testing.T) {
 	}
 }
 
+func TestGetProfile(t *testing.T) {
+	tests := []struct {
+		name      string
+		wantErr   assert.ErrorAssertionFunc
+		wantCodec string
+	}{
+		{"hevc-high", assert.NoError, "hevc"},
+		{"hevc-medium", assert.NoError, "hevc"},
+		{"hevc-low", assert.NoError, "hevc"},
+		{"invalid", assert.Error, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			profile, err := GetProfile(tt.name)
+			tt.wantErr(t, err)
+			assert.Equal(t, tt.wantCodec, profile.TargetCodec)
+		})
+	}
+}
+
 func TestProfile_Inspect(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -97,13 +117,13 @@ func TestProfile_Inspect(t *testing.T) {
 			name:    "source bitrate too low",
 			profile: Profile{TargetCodec: "hevc", Rules: []Rule{RejectBitrateTooLow()}},
 			source:  ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 4_000_000},
-			wantErr: NewErrSourceRejected(false, "source bitrate must be at least 6.00 mbps"),
+			wantErr: NewErrSourceRejected(false, "source bitrate must be at least 6.0 mbps"),
 		},
 		{
 			name:    "target bitrate too low",
 			profile: Profile{TargetCodec: "h264", Rules: []Rule{RejectBitrateTooLow()}},
 			source:  ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 4_000_000},
-			wantErr: NewErrSourceRejected(false, "source bitrate must be at least 6.00 mbps"),
+			wantErr: NewErrSourceRejected(false, "source bitrate must be at least 6.0 mbps"),
 		},
 		{
 			name:            "valid source, capped",

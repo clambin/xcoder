@@ -3,7 +3,10 @@ package profile
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/clambin/videoConvertor/ffmpeg"
 )
@@ -47,7 +50,13 @@ func GetProfile(name string) (Profile, error) {
 	if profile, ok := profiles[name]; ok {
 		return profile, nil
 	}
-	return Profile{}, fmt.Errorf("invalid profile name: %s", name)
+	return Profile{}, fmt.Errorf("invalid profile name: %q. supported profile names: %s", name, strings.Join(SupportedProfiles(), ", "))
+}
+
+func SupportedProfiles() []string {
+	p := slices.Collect(maps.Keys(profiles))
+	slices.Sort(p)
+	return p
 }
 
 func (p *Profile) Inspect(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats, error) {
@@ -100,7 +109,7 @@ func RejectBitrateTooLow() Rule {
 			return &ErrSourceRejected{reason: err.Error()}
 		}
 		if sourceStats.BitRate < minimumBitrate {
-			return &ErrSourceRejected{reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(2)}
+			return &ErrSourceRejected{reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(1)}
 		}
 		return nil
 	}

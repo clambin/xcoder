@@ -1,12 +1,9 @@
 package configuration
 
 import (
-	"flag"
-	"fmt"
-	"os"
-
 	"codeberg.org/clambin/go-common/flagger"
 	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/spf13/viper"
 )
 
 type Configuration struct {
@@ -19,24 +16,16 @@ type Configuration struct {
 	Overwrite   bool            `flagger.usage:"overwrite existing files"`
 }
 
-func GetConfiguration() (Configuration, error) {
-	return getConfigurationWithFlagSet(flag.CommandLine, os.Args[1:]...)
-}
-
-func getConfigurationWithFlagSet(f *flag.FlagSet, args ...string) (Configuration, error) {
-	cfg := Configuration{
-		Input:       "/media",
-		ProfileName: "hevc-high",
-	}
-	flagger.SetFlags(f, &cfg)
-	if err := f.Parse(args); err != nil {
+func GetConfigurationFromViper(v *viper.Viper) (cfg Configuration, err error) {
+	cfg.Active = v.GetBool("active")
+	cfg.Input = v.GetString("input")
+	cfg.Log.Format = v.GetString("log.format")
+	cfg.Log.Level = v.GetString("log.level")
+	cfg.Overwrite = v.GetBool("overwrite")
+	cfg.Remove = v.GetBool("remove")
+	cfg.ProfileName = v.GetString("profile")
+	if cfg.Profile, err = profile.GetProfile(cfg.ProfileName); err != nil {
 		return Configuration{}, err
 	}
-
-	var err error
-	if cfg.Profile, err = profile.GetProfile(cfg.ProfileName); err != nil {
-		return Configuration{}, fmt.Errorf("invalid profile %q: %w", cfg.ProfileName, err)
-	}
-
 	return cfg, nil
 }

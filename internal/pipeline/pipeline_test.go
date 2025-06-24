@@ -15,12 +15,10 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	tmpDir := t.TempDir()
-
 	p, _ := profile.GetProfile("hevc-high")
 	cfg := configuration.Configuration{
 		Profile: p,
-		Input:   tmpDir,
+		Input:   t.TempDir(),
 	}
 	var queue Queue
 	l := slog.New(slog.DiscardHandler)
@@ -28,15 +26,17 @@ func TestRun(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	go func() { errCh <- Run(ctx, cfg, &queue, l) }()
 
-	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "video.mkv"), []byte{}, 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(cfg.Input, "video.mkv"), []byte{}, 0644))
 
-	assert.Eventually(t, func() bool { return len(queue.List()) > 0 }, time.Second, time.Millisecond)
+	assert.Eventually(t, func() bool {
+		items := queue.List()
+		if len(queue.List()) != 1 {
+			return false
+		}
+		status, _ := items[0].Status()
+		return status == Failed
+	}, time.Second, time.Millisecond)
 
 	cancel()
 	require.NoError(t, <-errCh)
-
-	items := queue.List()
-	require.Len(t, items, 1)
-	status, _ := items[0].Status()
-	assert.Equal(t, Failed, status)
 }

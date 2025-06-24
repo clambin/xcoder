@@ -19,8 +19,8 @@ type Configuration struct {
 func GetConfigurationFromViper(v *viper.Viper) (cfg Configuration, err error) {
 	cfg.Active = v.GetBool("active")
 	cfg.Input = v.GetString("input")
-	cfg.Log.Format = v.GetString("log.format")
-	cfg.Log.Level = v.GetString("log.level")
+	cfg.Format = v.GetString("log.format")
+	cfg.Level = v.GetString("log.level")
 	cfg.Overwrite = v.GetBool("overwrite")
 	cfg.Remove = v.GetBool("remove")
 	cfg.ProfileName = v.GetString("profile")

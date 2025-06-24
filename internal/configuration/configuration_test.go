@@ -1,14 +1,22 @@
 package configuration
 
-/*
-func TestGetConfiguration(t *testing.T) {
-	f := flag.NewFlagSet("", flag.ContinueOnError)
-	cfg, err := getConfigurationWithFlagSet(f)
-	assert.NoError(t, err)
-	assert.Equal(t, "hevc-high", cfg.ProfileName)
+import (
+	"testing"
 
-	f = flag.NewFlagSet("", flag.ContinueOnError)
-	_, err = getConfigurationWithFlagSet(f, "-profile", "invalid")
-	assert.Error(t, err)
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestGetConfigurationFromViper(t *testing.T) {
+	v := viper.New()
+	v.Set("profile", "invalid")
+
+	_, err := GetConfigurationFromViper(v)
+	require.Error(t, err)
+
+	v.Set("profile", "hevc-high")
+	cfg, err := GetConfigurationFromViper(v)
+	require.NoError(t, err)
+	assert.Equal(t, "hevc", cfg.Profile.TargetCodec)
 }
-*/

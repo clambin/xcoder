@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
-	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/xcoder/ffmpeg"
+	"github.com/clambin/xcoder/internal/profile"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,7 +1,7 @@
 package transcoder
 
 import (
-	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/clambin/xcoder/ffmpeg"
 )
 
 // videoCodecs translates generic codec names into the OS-specific codec names

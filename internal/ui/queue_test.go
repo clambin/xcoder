@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"codeberg.org/clambin/go-common/set"
-	"github.com/clambin/videoConvertor/internal/pipeline"
-	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/xcoder/internal/pipeline"
+	"github.com/clambin/xcoder/internal/profile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

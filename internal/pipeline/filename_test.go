@@ -3,7 +3,7 @@ package pipeline
 import (
 	"testing"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/stretchr/testify/assert"
 )
 

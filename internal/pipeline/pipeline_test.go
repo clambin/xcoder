@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/xcoder/internal/configuration"
+	"github.com/clambin/xcoder/internal/profile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

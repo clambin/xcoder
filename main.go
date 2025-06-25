@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/clambin/videoConvertor/internal/cmd"
+	"github.com/clambin/xcoder/internal/cmd"
 )
 
 func main() {

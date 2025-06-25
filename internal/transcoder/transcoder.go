@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/clambin/xcoder/ffmpeg"
 )
 
 // Transcoder implements video scanning (ffprobe) and transcoding (ffmpeg)

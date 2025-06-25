@@ -10,8 +10,8 @@ import (
 
 var (
 	rootCmd = cobra.Command{
-		Use:   "transcode",
-		Short: "TODO",
+		Use:   "xcoder",
+		Short: "Transcode media files",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			charmer.SetTextLogger(cmd, viper.GetBool("log.debug"))
 		},
@@ -19,7 +19,6 @@ var (
 
 		},
 	}
-	//configFilename string
 )
 
 func Execute() error {

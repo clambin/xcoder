@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/clambin/xcoder/ffmpeg"
 )
 
 var profiles = map[string]Profile{
@@ -177,7 +177,7 @@ var minimumBitrates = map[string]bitRates{
 	},
 	"hevc": {
 		{height: 480, bitrate: 750_000},
-		{height: 720, bitrate: 1500_000},
+		{height: 720, bitrate: 1_500_000},
 		{height: 1080, bitrate: 3_000_000},
 		{height: 2160, bitrate: 15_000_000},
 	},

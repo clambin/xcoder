@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"codeberg.org/clambin/go-common/charmer"
-	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

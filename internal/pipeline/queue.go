@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
+	"github.com/clambin/xcoder/ffmpeg"
 )
 
 type Queue struct {

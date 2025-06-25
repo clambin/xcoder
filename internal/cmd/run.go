@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"codeberg.org/clambin/go-common/charmer"
-	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/pipeline"
-	"github.com/clambin/videoConvertor/internal/ui"
+	"github.com/clambin/xcoder/internal/configuration"
+	"github.com/clambin/xcoder/internal/pipeline"
+	"github.com/clambin/xcoder/internal/ui"
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

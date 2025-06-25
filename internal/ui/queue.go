@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 
 	"codeberg.org/clambin/go-common/set"
-	"github.com/clambin/videoConvertor/internal/pipeline"
+	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )

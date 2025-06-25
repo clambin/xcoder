@@ -2,7 +2,7 @@ package configuration
 
 import (
 	"codeberg.org/clambin/go-common/flagger"
-	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/xcoder/internal/profile"
 	"github.com/spf13/viper"
 )
 

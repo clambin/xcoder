@@ -1,4 +1,4 @@
-module github.com/clambin/videoConvertor
+module github.com/clambin/xcoder
 
 go 1.24
 

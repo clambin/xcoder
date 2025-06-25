@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/transcoder"
+	"github.com/clambin/xcoder/internal/configuration"
+	"github.com/clambin/xcoder/internal/transcoder"
 	"golang.org/x/sync/errgroup"
 )
 

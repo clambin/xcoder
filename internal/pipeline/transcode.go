@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
-	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/transcoder"
+	"github.com/clambin/xcoder/ffmpeg"
+	"github.com/clambin/xcoder/internal/configuration"
+	"github.com/clambin/xcoder/internal/transcoder"
 )
 
 const (

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
-	"github.com/clambin/videoConvertor/internal/configuration"
-	"github.com/clambin/videoConvertor/internal/profile"
-	"github.com/clambin/videoConvertor/internal/transcoder"
+	"github.com/clambin/xcoder/ffmpeg"
+	"github.com/clambin/xcoder/internal/configuration"
+	"github.com/clambin/xcoder/internal/profile"
+	"github.com/clambin/xcoder/internal/transcoder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

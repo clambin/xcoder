@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/clambin/videoConvertor/ffmpeg"
-	"github.com/clambin/videoConvertor/internal/profile"
+	"github.com/clambin/xcoder/ffmpeg"
+	"github.com/clambin/xcoder/internal/profile"
 )
 
 type Decoder interface {

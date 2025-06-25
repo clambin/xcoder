@@ -49,7 +49,7 @@ func initConfig() {
 		viper.SetConfigName("config")
 	}
 	if err := viper.ReadInConfig(); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "failed to read config file: "+err.Error())
+		_, _ = fmt.Fprintln(os.Stderr, "failed to read config file: "+err.Error())
 	}
 }
 

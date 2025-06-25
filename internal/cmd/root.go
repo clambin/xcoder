@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"runtime/debug"
 
 	"codeberg.org/clambin/go-common/charmer"
@@ -19,13 +22,13 @@ var (
 
 		},
 	}
+
+	configFilename string
 )
 
 func Execute() error {
 	return rootCmd.Execute()
 }
-
-var arguments charmer.Arguments
 
 func init() {
 	buildInfo, ok := debug.ReadBuildInfo()
@@ -34,28 +37,30 @@ func init() {
 	}
 	rootCmd.Version = buildInfo.Main.Version
 
-	// cobra.OnInitialize(initConfig)
-	// rootCmd.Flags().StringVar(&configFilename, "config", "", "Configuration file")
-	_ = charmer.SetPersistentFlags(&rootCmd, viper.GetViper(), arguments)
-	_ = charmer.SetDefaults(viper.GetViper(), arguments)
+	cobra.OnInitialize(initConfig)
+	rootCmd.Flags().StringVar(&configFilename, "config", "", "Configuration file")
 }
 
-/*
 func initConfig() {
 	if configFilename != "" {
 		viper.SetConfigFile(configFilename)
 	} else {
-		viper.AddConfigPath("/etc/mediamon/")
-		viper.AddConfigPath("$HOME/.mediamon")
-		viper.AddConfigPath(".")
+		viper.AddConfigPath(mustConfigDir())
 		viper.SetConfigName("config")
 	}
-
-	viper.SetEnvPrefix("XCODE")
-	viper.AutomaticEnv()
-
 	if err := viper.ReadInConfig(); err != nil {
-		slog.Error("failed to read config file", "err", err)
+		_, _ = fmt.Fprintf(os.Stderr, "failed to read config file: "+err.Error())
 	}
 }
-*/
+
+func mustConfigDir() string {
+	cfgDir, err := os.UserConfigDir()
+	if err != nil {
+		panic("failed to get user config dir: " + err.Error())
+	}
+	cfgDir = filepath.Join(cfgDir, "com.github.clambin.xcoder")
+	if err = os.MkdirAll(cfgDir, os.ModePerm); err != nil {
+		panic("failed to create config dir: " + err.Error())
+	}
+	return cfgDir
+}

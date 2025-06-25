@@ -27,13 +27,13 @@ func TestTranscode(t *testing.T) {
 		profile            string
 		ffmpegErr          error
 		fileCheckerResults fileCheckerResults
-		want               WorkStatus
+		want               Status
 		wantErr            bool
 	}{
 		{
 			name:      "video conversion failed",
 			profile:   "hevc-low",
-			ffmpegErr: errors.New("failed"),
+			ffmpegErr: errors.New("failed"), //nolint:err113
 			want:      Failed,
 			wantErr:   true,
 		},
@@ -57,12 +57,12 @@ func TestTranscode(t *testing.T) {
 			go transcodeWithFileChecker(t.Context(), &ff, &q, fakeFsChecker{ok: tt.fileCheckerResults.ok, err: tt.fileCheckerResults.err}, cfg, l)
 
 			i := q.Add("foo.mkv")
-			i.SetStatus(Inspected, nil)
+			i.SetWorkStatus(WorkStatus{Status: Inspected})
 			i.AddSourceStats(ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
 
 			assert.Eventually(t, func() bool {
-				status, err := i.Status()
-				return status == tt.want && ((tt.wantErr && err != nil) || (!tt.wantErr && err == nil))
+				workStatus := i.WorkStatus()
+				return workStatus.Status == tt.want && ((tt.wantErr && workStatus.Err != nil) || (!tt.wantErr && workStatus.Err == nil))
 			}, time.Second, convertInterval)
 		})
 	}

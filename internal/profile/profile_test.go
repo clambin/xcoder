@@ -1,7 +1,6 @@
 package profile
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/clambin/xcoder/ffmpeg"
@@ -105,13 +104,13 @@ func TestProfile_Inspect(t *testing.T) {
 			name:    "invalid source codec",
 			profile: Profile{},
 			source:  ffmpeg.VideoStats{VideoCodec: "invalid"},
-			wantErr: errors.New("unsupported video codec: invalid"),
+			wantErr: &UnsupportedCodecError{Codec: "invalid"},
 		},
 		{
 			name:    "invalid target codec",
 			profile: Profile{TargetCodec: "invalid"},
 			source:  ffmpeg.VideoStats{VideoCodec: "h264"},
-			wantErr: errors.New("unsupported video codec: invalid"),
+			wantErr: &UnsupportedCodecError{Codec: "invalid"},
 		},
 		{
 			name:    "source bitrate too low",
@@ -144,12 +143,10 @@ func TestProfile_Inspect(t *testing.T) {
 			targetVideoStats, err := tt.profile.Inspect(tt.source)
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				if errors.Is(tt.wantErr, &ErrSourceRejected{}) {
-					assert.ErrorIs(t, err, tt.wantErr)
-				}
+				require.ErrorIs(t, err, tt.wantErr)
 				assert.Equal(t, tt.wantErr.Error(), err.Error())
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 			assert.Equal(t, tt.wantTargetStats, targetVideoStats)
 		})

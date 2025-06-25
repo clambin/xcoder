@@ -40,7 +40,7 @@ func inspectItem(ctx context.Context, item *WorkItem, codec Decoder, videoProfil
 	if err != nil {
 		l.Warn("failed to scan file", "err", err)
 		err = fmt.Errorf("inspection failed: %w", err)
-		item.SetStatus(Failed, err)
+		item.SetWorkStatus(WorkStatus{Status: Failed})
 		return err
 	}
 	item.AddSourceStats(sourceStats)
@@ -51,16 +51,16 @@ func inspectItem(ctx context.Context, item *WorkItem, codec Decoder, videoProfil
 	if err != nil {
 		l.Debug("should not convert file", "err", err)
 		status := Rejected
-		var err2 *profile.ErrSourceRejected
+		var err2 *profile.SourceRejectedError
 		if errors.As(err, &err2) && err2.Skip() {
 			status = Skipped
 		}
-		item.SetStatus(status, err)
+		item.SetWorkStatus(WorkStatus{Status: status, Err: err})
 		return err
 	}
 
 	// Ok to convert
 	item.AddTargetStats(targetStats)
-	item.SetStatus(Inspected, nil)
+	item.SetWorkStatus(WorkStatus{Status: Inspected})
 	return nil
 }

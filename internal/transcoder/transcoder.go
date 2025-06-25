@@ -9,9 +9,10 @@ import (
 	"strconv"
 
 	"github.com/clambin/xcoder/ffmpeg"
+	"github.com/clambin/xcoder/internal/profile"
 )
 
-// Transcoder implements video scanning (ffprobe) and transcoding (ffmpeg)
+// Transcoder implements video scanning (ffprobe) and transcoding (ffmpeg).
 type Transcoder struct {
 	Logger *slog.Logger
 }
@@ -57,7 +58,7 @@ func (r Request) isValid() error {
 	return nil
 }
 
-// buildTranscodeCommand creates an exec.Command to run ffmeg for the request
+// buildTranscodeCommand creates an exec.Command to run ffmeg for the request.
 func (r Request) buildTranscodeCommand(ctx context.Context, cb func(ffmpeg.Progress), logger *slog.Logger) (*exec.Cmd, error) {
 	if err := r.isValid(); err != nil {
 		return nil, err
@@ -81,20 +82,20 @@ func (r Request) buildTranscodeCommand(ctx context.Context, cb func(ffmpeg.Progr
 	return cmd.Build(ctx), nil
 }
 
-// this may need to move to _darwin/_linux
+// this may need to move to _darwin/_linux.
 func makeVideoOutputArgs(stats ffmpeg.VideoStats) (ffmpeg.Args, error) {
 	codecName, ok := videoCodecs[stats.VideoCodec]
 	if !ok {
-		return nil, fmt.Errorf("unsupported video codec: %s", stats.VideoCodec)
+		return nil, &profile.UnsupportedCodecError{Codec: stats.VideoCodec}
 	}
-	profile := "main"
+	prof := "main"
 	if stats.BitsPerSample == 10 {
-		profile = "main10"
+		prof = "main10"
 	}
 
 	return ffmpeg.Args{
 		"c:v":       codecName,
-		"profile:v": profile,
+		"profile:v": prof,
 		"b:v":       strconv.Itoa(stats.BitRate),
 	}, nil
 }

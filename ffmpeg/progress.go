@@ -67,7 +67,7 @@ type Progress struct {
 	Speed     float64
 }
 
-// progress reads the ffmpeg progress information and returns Progress records on a channel
+// progress reads the ffmpeg progress information and returns Progress records on a channel.
 func progress(r io.Reader, logger *slog.Logger) chan Progress {
 	var (
 		convertedMarker = []byte("out_time_ms=")

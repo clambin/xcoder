@@ -27,7 +27,6 @@ func TestQueue(t *testing.T) {
 		count++
 	}
 	assert.Equal(t, l.Size(), count)
-
 }
 
 func TestQueue_NextToConvert(t *testing.T) {
@@ -38,12 +37,10 @@ func TestQueue_NextToConvert(t *testing.T) {
 	i := l.NextToConvert()
 	require.NotNil(t, i)
 	assert.Equal(t, "foo", i.Source)
-	status, err := i.Status()
-	assert.Equal(t, Converting, status)
-	assert.NoError(t, err)
+	assert.Equal(t, WorkStatus{Status: Converting}, i.WorkStatus())
 
 	// automatically added items are not returned if the Queue is inactive
-	l.Add("foo").status = Inspected
+	l.Add("foo").workStatus.Status = Inspected
 	i = l.NextToConvert()
 	assert.Nil(t, i)
 
@@ -51,9 +48,7 @@ func TestQueue_NextToConvert(t *testing.T) {
 	l.SetActive(true)
 	i = l.NextToConvert()
 	require.NotNil(t, i)
-	status, err = i.Status()
-	assert.Equal(t, Converting, status)
-	assert.NoError(t, err)
+	assert.Equal(t, WorkStatus{Status: Converting}, i.WorkStatus())
 }
 
 func TestQueue_Active(t *testing.T) {
@@ -77,7 +72,7 @@ func TestQueue_Stats(t *testing.T) {
 func TestWorkItem_RemainingFormatted(t *testing.T) {
 	tests := []struct {
 		name     string
-		status   WorkStatus
+		status   Status
 		input    time.Duration
 		expected string
 	}{
@@ -98,7 +93,7 @@ func TestWorkItem_RemainingFormatted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var item WorkItem
-			item.SetStatus(tt.status, nil)
+			item.SetWorkStatus(WorkStatus{Status: tt.status})
 			item.Progress.Duration = 2 * tt.input
 			item.Progress.Update(ffmpeg.Progress{Converted: tt.input, Speed: 1})
 			assert.Equal(t, tt.expected, item.RemainingFormatted())
@@ -109,7 +104,7 @@ func TestWorkItem_RemainingFormatted(t *testing.T) {
 func TestWorkItem_CompletedFormatted(t *testing.T) {
 	tests := []struct {
 		name   string
-		status WorkStatus
+		status Status
 		input  time.Duration
 		want   string
 	}{
@@ -123,7 +118,7 @@ func TestWorkItem_CompletedFormatted(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var item WorkItem
-			item.SetStatus(tt.status, nil)
+			item.SetWorkStatus(WorkStatus{Status: tt.status})
 			item.Progress.Duration = time.Hour
 			item.Progress.Update(ffmpeg.Progress{Converted: tt.input, Speed: 1})
 			assert.Equal(t, tt.want, item.CompletedFormatted())
@@ -135,5 +130,5 @@ func TestWorkStatus_String(t *testing.T) {
 	for val, label := range workStatusToString {
 		assert.Equal(t, label, val.String())
 	}
-	assert.Equal(t, "unknown", WorkStatus(-1).String())
+	assert.Equal(t, "unknown", Status(-1).String())
 }

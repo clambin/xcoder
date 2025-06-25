@@ -35,7 +35,7 @@ func init() {
 	rootCmd.Version = buildInfo.Main.Version
 
 	// cobra.OnInitialize(initConfig)
-	//rootCmd.Flags().StringVar(&configFilename, "config", "", "Configuration file")
+	// rootCmd.Flags().StringVar(&configFilename, "config", "", "Configuration file")
 	_ = charmer.SetPersistentFlags(&rootCmd, viper.GetViper(), arguments)
 	_ = charmer.SetDefaults(viper.GetViper(), arguments)
 }

@@ -33,8 +33,7 @@ func TestRun(t *testing.T) {
 		if len(queue.List()) != 1 {
 			return false
 		}
-		status, _ := items[0].Status()
-		return status == Failed
+		return items[0].WorkStatus().Status == Failed
 	}, time.Second, time.Millisecond)
 
 	cancel()

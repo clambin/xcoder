@@ -19,7 +19,7 @@ type UI struct {
 }
 
 type Application interface {
-	QueueUpdateDraw(func()) *tview.Application
+	QueueUpdateDraw(f func()) *tview.Application
 }
 
 func New(list *pipeline.Queue, cfg configuration.Configuration) *UI {

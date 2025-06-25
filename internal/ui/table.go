@@ -71,7 +71,7 @@ func (t *Table) trimRows(rows int) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// cellPool reduces memory allocations for tview.TableCell objects
+// cellPool reduces memory allocations for tview.TableCell objects.
 var cellPool = sync.Pool{
 	New: func() any {
 		return tview.NewTableCell("")

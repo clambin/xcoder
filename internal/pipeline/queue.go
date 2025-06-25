@@ -38,30 +38,6 @@ func (q *Queue) NextToConvert() *WorkItem {
 	return q.checkout(Inspected, Converting)
 }
 
-func (q *Queue) dequeue() *WorkItem {
-	q.lock.Lock()
-	defer q.lock.Unlock()
-	var item *WorkItem
-	if len(q.waiting) > 0 {
-		item = q.waiting[0]
-		item.SetStatus(Converting, nil)
-		q.waiting = q.waiting[1:]
-	}
-	return item
-}
-
-func (q *Queue) checkout(current, next WorkStatus) *WorkItem {
-	q.lock.RLock()
-	defer q.lock.RUnlock()
-	for _, item := range q.queue {
-		if status, _ := item.Status(); status == current {
-			item.SetStatus(next, nil)
-			return item
-		}
-	}
-	return nil
-}
-
 // Queue adds an item ready to be converted. This item will be processed, regardless of whether the queue is active or not.
 func (q *Queue) Queue(item *WorkItem) {
 	q.lock.Lock()
@@ -113,12 +89,36 @@ func (q *Queue) ToggleActive() {
 	q.active = !q.active
 }
 
+func (q *Queue) dequeue() *WorkItem {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+	var item *WorkItem
+	if len(q.waiting) > 0 {
+		item = q.waiting[0]
+		item.SetWorkStatus(WorkStatus{Status: Converting})
+		q.waiting = q.waiting[1:]
+	}
+	return item
+}
+
+func (q *Queue) checkout(current, next Status) *WorkItem {
+	q.lock.RLock()
+	defer q.lock.RUnlock()
+	for _, item := range q.queue {
+		if workStatus := item.WorkStatus(); workStatus.Status == current {
+			item.SetWorkStatus(WorkStatus{Status: next})
+			return item
+		}
+	}
+	return nil
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type WorkStatus int
+type Status int
 
 const (
-	Waiting WorkStatus = iota
+	Waiting Status = iota
 	Inspecting
 	Skipped
 	Rejected
@@ -128,7 +128,7 @@ const (
 	Failed
 )
 
-var workStatusToString = map[WorkStatus]string{
+var workStatusToString = map[Status]string{
 	Waiting:    "waiting",
 	Inspecting: "inspecting",
 	Skipped:    "skipped",
@@ -139,8 +139,8 @@ var workStatusToString = map[WorkStatus]string{
 	Failed:     "failed",
 }
 
-func (ws WorkStatus) String() string {
-	if label, ok := workStatusToString[ws]; ok {
+func (s Status) String() string {
+	if label, ok := workStatusToString[s]; ok {
 		return label
 	}
 	return "unknown"
@@ -149,26 +149,29 @@ func (ws WorkStatus) String() string {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type WorkItem struct {
-	err         error
+	workStatus  WorkStatus
 	Source      string
 	sourceStats ffmpeg.VideoStats
 	targetStats ffmpeg.VideoStats
 	Progress    Progress
-	status      WorkStatus
 	lock        sync.RWMutex
 }
 
-func (w *WorkItem) Status() (WorkStatus, error) {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	return w.status, w.err
+type WorkStatus struct {
+	Err    error
+	Status Status
 }
 
-func (w *WorkItem) SetStatus(status WorkStatus, err error) {
+func (w *WorkItem) WorkStatus() WorkStatus {
+	w.lock.RLock()
+	defer w.lock.RUnlock()
+	return w.workStatus
+}
+
+func (w *WorkItem) SetWorkStatus(workStatus WorkStatus) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	w.status = status
-	w.err = err
+	w.workStatus = workStatus
 }
 
 func (w *WorkItem) SourceVideoStats() ffmpeg.VideoStats {
@@ -199,7 +202,7 @@ func (w *WorkItem) AddTargetStats(stats ffmpeg.VideoStats) {
 func (w *WorkItem) RemainingFormatted() string {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
-	if w.status != Converting {
+	if w.workStatus.Status != Converting {
 		return ""
 	}
 	var output string
@@ -233,7 +236,7 @@ func formatDuration(d time.Duration) string {
 func (w *WorkItem) CompletedFormatted() string {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
-	if w.status != Converting {
+	if w.workStatus.Status != Converting {
 		return ""
 	}
 	if p := w.Progress.Completed(); p > 0 {

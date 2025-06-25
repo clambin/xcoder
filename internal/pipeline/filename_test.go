@@ -35,7 +35,7 @@ func Test_makeTargetFilename(t *testing.T) {
 		},
 		{
 			name:   "series with spaces",
-			source: "/tmp/series 2024 S01E07 attrib attrib attrib.mkv",
+			source: "/tmp/series 2024 S01E07 attrib1 attrib2 attrib3.mkv",
 			stats:  stats1080,
 			want:   "/directory/series 2024.s01e07.1080.hevc.mkv",
 		},

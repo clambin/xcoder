@@ -67,7 +67,7 @@ func Test_makeConvertCommand(t *testing.T) {
 	for _, tt := range makeConvertCommandTests {
 		t.Run(tt.name, func(t *testing.T) {
 			// ffmpeg-go.Silent() uses a global variable. :-(
-			//t.Parallel()
+			// t.Parallel()
 
 			type ctxKey string
 			key := ctxKey("test")
@@ -82,7 +82,7 @@ func Test_makeConvertCommand(t *testing.T) {
 			clArgs := strings.Join(s.Args[1:], " ")
 			assert.Equal(t, tt.want, clArgs)
 			// check that the command will be run with our context
-			//assert.Equal(t, "test", s.Context.Value(key))
+			// assert.Equal(t, "test", s.Context.Value(key))
 		})
 	}
 }

@@ -13,7 +13,7 @@ import (
 func TestUI(t *testing.T) {
 	var list pipeline.Queue
 	list.Add("foo")
-	list.List()[0].SetStatus(pipeline.Skipped, nil)
+	list.List()[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Skipped})
 
 	cfg := configuration.Configuration{Input: "/foo", ProfileName: "foo"}
 	ui := New(&list, cfg)
@@ -59,7 +59,7 @@ func TestUI(t *testing.T) {
 
 	// Request a file to be converted
 	ui.queueViewer.Select(1, 0)
-	list.List()[0].SetStatus(pipeline.Inspected, nil)
+	list.List()[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Inspected})
 	assert.Nil(t, ui.queueViewer.handleInput(tcell.NewEventKey(tcell.KeyEnter, rune(tcell.KeyEnter), tcell.ModNone)))
 	item := list.NextToConvert()
 	require.NotNil(t, item)

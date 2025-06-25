@@ -52,11 +52,11 @@ func transcodeItem(ctx context.Context, item *WorkItem, tc Transcoder, f fileChe
 	targetIsNewer, err := f.TargetIsNewer(item.Source, target)
 	if err != nil {
 		logger.Error("failed to check if target is newer", "err", err)
-		item.SetStatus(Failed, err)
+		item.SetWorkStatus(WorkStatus{Status: Failed, Err: err})
 	}
 	if targetIsNewer && !cfg.Overwrite {
 		logger.Info("already converted")
-		item.SetStatus(Skipped, err)
+		item.SetWorkStatus(WorkStatus{Status: Skipped, Err: err})
 		return
 	}
 
@@ -88,7 +88,7 @@ func transcodeItem(ctx context.Context, item *WorkItem, tc Transcoder, f fileChe
 	if err = tc.Transcode(ctx, req); err != nil {
 		_ = os.Remove(target)
 		logger.Warn("conversion failed", "err", err)
-		item.SetStatus(Failed, err)
+		item.SetWorkStatus(WorkStatus{Status: Failed, Err: err})
 		return
 	}
 
@@ -96,11 +96,11 @@ func transcodeItem(ctx context.Context, item *WorkItem, tc Transcoder, f fileChe
 	if cfg.Remove {
 		if err = os.Remove(item.Source); err != nil {
 			logger.Warn("failed to remove source file", "err", err)
-			item.SetStatus(Failed, err)
+			item.SetWorkStatus(WorkStatus{Status: Failed, Err: err})
 		}
 	}
 	logger.Info("converted successfully")
-	item.SetStatus(Converted, nil)
+	item.SetWorkStatus(WorkStatus{Status: Converted})
 }
 
 type fsFileChecker struct{}
@@ -114,7 +114,7 @@ func (c fsFileChecker) TargetIsNewer(source, target string) (bool, error) {
 	}
 	tStats, err := os.Stat(target)
 	if err != nil {
-		return false, nil
+		return false, nil //nolint:nilerr
 	}
 	return tStats.ModTime().After(sStats.ModTime()), nil
 }

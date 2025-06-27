@@ -15,17 +15,12 @@ import (
 )
 
 func TestTranscode(t *testing.T) {
-	type fileCheckerResults struct {
-		ok  bool
-		err error
-	}
 	testCases := []struct {
-		name               string
-		profile            string
-		ffmpegErr          error
-		fileCheckerResults fileCheckerResults
-		want               Status
-		wantErr            bool
+		name      string
+		profile   string
+		ffmpegErr error
+		want      Status
+		wantErr   bool
 	}{
 		{
 			name:      "video conversion failed",
@@ -151,6 +146,6 @@ func (f *fakeTranscoder) Progress(_ func(ffmpeg.Progress), _ string) *ffmpeg.FFM
 	return nil
 }
 
-func (f *fakeTranscoder) Run(ctx context.Context) error {
+func (f *fakeTranscoder) Run(_ context.Context) error {
 	return f.err
 }

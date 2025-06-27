@@ -10,9 +10,6 @@ import (
 	"time"
 
 	"github.com/clambin/xcoder/ffmpeg"
-	"github.com/clambin/xcoder/internal/configuration"
-	"github.com/clambin/xcoder/internal/profile"
-	"github.com/clambin/xcoder/internal/transcoder"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,18 +44,20 @@ func TestTranscode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			ff := fakeTranscoder{err: tt.ffmpegErr}
+			//ff := fakeTranscoder{err: tt.ffmpegErr}
 			var q Queue
 			q.SetActive(true)
-			var cfg configuration.Configuration
-			cfg.Profile, _ = profile.GetProfile(tt.profile)
+			var cfg Configuration
+			cfg.Profile, _ = GetProfile(tt.profile)
 			l := slog.New(slog.DiscardHandler)
 
-			go transcodeWithFileChecker(t.Context(), &ff, &q, fakeFsChecker{ok: tt.fileCheckerResults.ok, err: tt.fileCheckerResults.err}, cfg, l)
+			go Transcode(t.Context(), &q, cfg, l)
 
 			i := q.Add("foo.mkv")
+			i.Source.VideoStats = ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 8_000_000}
+			i.Target.VideoStats = ffmpeg.VideoStats{VideoCodec: "hevc", BitRate: 4_000_000}
+			i.transcoder = &fakeTranscoder{err: tt.ffmpegErr}
 			i.SetWorkStatus(WorkStatus{Status: Inspected})
-			i.AddSourceStats(ffmpeg.VideoStats{VideoCodec: "h264", BitRate: 4_000_000})
 
 			assert.Eventually(t, func() bool {
 				workStatus := i.WorkStatus()
@@ -131,16 +130,6 @@ func TestFsFileChecker_TargetIsNewer(t *testing.T) {
 	}
 }
 
-var _ Transcoder = &fakeTranscoder{}
-
-type fakeTranscoder struct {
-	err error
-}
-
-func (f *fakeTranscoder) Transcode(_ context.Context, _ transcoder.Request) error {
-	return f.err
-}
-
 var _ fileChecker = &fakeFsChecker{}
 
 type fakeFsChecker struct {
@@ -150,4 +139,18 @@ type fakeFsChecker struct {
 
 func (f fakeFsChecker) TargetIsNewer(_, _ string) (bool, error) {
 	return f.ok, f.err
+}
+
+var _ transcoder = &fakeTranscoder{}
+
+type fakeTranscoder struct {
+	err error
+}
+
+func (f *fakeTranscoder) Progress(_ func(ffmpeg.Progress), _ string) *ffmpeg.FFMPEG {
+	return nil
+}
+
+func (f *fakeTranscoder) Run(ctx context.Context) error {
+	return f.err
 }

@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"iter"
 	"slices"
 	"strconv"
@@ -20,7 +21,7 @@ type Queue struct {
 func (q *Queue) Add(filename string) *WorkItem {
 	q.lock.Lock()
 	defer q.lock.Unlock()
-	item := &WorkItem{Source: filename}
+	item := &WorkItem{Source: MediaFile{Path: filename}}
 	q.queue = append(q.queue, item)
 	return item
 }
@@ -149,17 +150,27 @@ func (s Status) String() string {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type WorkItem struct {
-	workStatus  WorkStatus
-	Source      string
-	sourceStats ffmpeg.VideoStats
-	targetStats ffmpeg.VideoStats
-	Progress    Progress
-	lock        sync.RWMutex
+	transcoder transcoder
+	workStatus WorkStatus
+	Source     MediaFile
+	Target     MediaFile
+	Progress   Progress
+	lock       sync.RWMutex
+}
+
+type transcoder interface {
+	Progress(cb func(ffmpeg.Progress), progressSocketPath string) *ffmpeg.FFMPEG
+	Run(context.Context) error
 }
 
 type WorkStatus struct {
 	Err    error
 	Status Status
+}
+
+type MediaFile struct {
+	Path       string
+	VideoStats ffmpeg.VideoStats
 }
 
 func (w *WorkItem) WorkStatus() WorkStatus {
@@ -174,30 +185,7 @@ func (w *WorkItem) SetWorkStatus(workStatus WorkStatus) {
 	w.workStatus = workStatus
 }
 
-func (w *WorkItem) SourceVideoStats() ffmpeg.VideoStats {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	return w.sourceStats
-}
-
-func (w *WorkItem) AddSourceStats(stats ffmpeg.VideoStats) {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	w.sourceStats = stats
-	w.Progress.Duration = stats.Duration
-}
-
-func (w *WorkItem) TargetVideoStats() ffmpeg.VideoStats {
-	w.lock.RLock()
-	defer w.lock.RUnlock()
-	return w.targetStats
-}
-
-func (w *WorkItem) AddTargetStats(stats ffmpeg.VideoStats) {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	w.targetStats = stats
-}
+// TODO: this doesn't look like the right place for this.
 
 func (w *WorkItem) RemainingFormatted() string {
 	w.lock.RLock()
@@ -232,6 +220,8 @@ func formatDuration(d time.Duration) string {
 	}
 	return output
 }
+
+// TODO: this doesn't look like the right place for this
 
 func (w *WorkItem) CompletedFormatted() string {
 	w.lock.RLock()

@@ -9,21 +9,59 @@ import (
 )
 
 func TestFFMPEG_Build(t *testing.T) {
-	cmd := ffmpeg.Input("foo.mkv", ffmpeg.Args{"hwaccel": "hevc_videotoolbox"}).
-		Output("foo.hevc", ffmpeg.Args{
-			"c:v":       "hevc_videotoolbox",
-			"profile:v": "main",
-			"crf":       "10",
-			"c:a":       "copy",
-			"c:s":       "copy",
-			"f":         "matroska",
-		}).
-		LogLevel("error").
-		NoStats().
-		OverWriteTarget().
-		// ProgressSocket("socket").
-		AddGlobalArguments(ffmpeg.Args{"foo": "bar"})
+	tests := []struct {
+		name string
+		ff   *ffmpeg.FFMPEG
+		want string
+	}{
+		{
+			name: "simple",
+			ff: ffmpeg.Decode("foo.mkv").
+				Encode(
+					"-c:v", "hevc_videotoolbox",
+					"-b:v", "1000",
+					"-profile:v", "main",
+					"-c:a", "copy",
+					"-c:s", "copy",
+				).
+				Muxer("matroska").
+				Output("foo.hevc"),
+			want: `-i foo.mkv -c:v hevc_videotoolbox -b:v 1000 -profile:v main -c:a copy -c:s copy -f matroska foo.hevc`,
+		},
+		{
+			name: "no output",
+			ff: ffmpeg.Decode("foo.mkv").
+				Encode(
+					"-c:v", "hevc_videotoolbox",
+					"-profile:v", "main",
+					"-c:a", "copy",
+					"-c:s", "copy",
+				).
+				Muxer("matroska"),
+			want: `-i foo.mkv -c:v hevc_videotoolbox -profile:v main -c:a copy -c:s copy -f matroska -`,
+		},
+		{
+			name: "full example",
+			ff: ffmpeg.Decode("foo.mkv", "-hwaccel", "videotoolbox").
+				Encode(
+					"-c:v", "hevc_videotoolbox",
+					"-profile:v", "main",
+					"-crf", "10",
+					"-c:a", "copy",
+					"-c:s", "copy",
+				).
+				Muxer("matroska").
+				Output("foo.hevc").
+				LogLevel("error").
+				NoStats().
+				OverWriteTarget().Progress(func(_ ffmpeg.Progress) {}, "/tmp/progress.sock"),
+			want: `-hwaccel videotoolbox -i foo.mkv -c:v hevc_videotoolbox -profile:v main -crf 10 -c:a copy -c:s copy -f matroska -loglevel error -nostats -y -progress unix:///tmp/progress.sock foo.hevc`,
+		},
+	}
 
-	want := `-hwaccel hevc_videotoolbox -i foo.mkv -c:a copy -c:s copy -c:v hevc_videotoolbox -crf 10 -f matroska -profile:v main foo.hevc -foo bar -loglevel error -nostats -y`
-	assert.Equal(t, want, strings.Join(cmd.Build(t.Context()).Args[1:], " "))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, strings.Join(tt.ff.Build(t.Context()).Args[1:], " "))
+		})
+	}
 }

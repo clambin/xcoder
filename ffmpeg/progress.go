@@ -4,31 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"time"
 )
-
-// makeProgressSocket creates and serves a unix socket for ffmpeg progress information.  Callers can use this to keep
-// track of the progress of the conversion.
-func makeProgressSocket() (net.Listener, string, error) {
-	tmpDir, err := os.MkdirTemp("", "ffmpeg-")
-	if err != nil {
-		return nil, "", err
-	}
-	sockFileName := path.Join(tmpDir, "ffmpeg.sock")
-	l, err := net.Listen("unix", sockFileName)
-	if err != nil {
-		return nil, "", fmt.Errorf("progress socket: listen: %w", err)
-	}
-	return l, sockFileName, nil
-}
 
 // serveProgressSocket reads the ffmpeg progress and calls the process callback function.
 func serveProgressSocket(ctx context.Context, l net.Listener, path string, progressCallback func(Progress), logger *slog.Logger) {

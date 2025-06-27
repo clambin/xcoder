@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/clambin/xcoder/internal/configuration"
 	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -22,7 +21,7 @@ type Application interface {
 	QueueUpdateDraw(f func()) *tview.Application
 }
 
-func New(list *pipeline.Queue, cfg configuration.Configuration) *UI {
+func New(list *pipeline.Queue, cfg pipeline.Configuration) *UI {
 	h := newHeader(list, cfg)
 	b := tview.NewPages()
 

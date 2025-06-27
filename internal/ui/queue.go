@@ -216,7 +216,7 @@ func (w *workItems) buildRow(item *pipeline.WorkItem) []*tview.TableCell {
 	if w.filters.on(workStatus.Status) {
 		return nil
 	}
-	source := item.Source
+	source := item.Source.Path
 	if !w.fullName.Load() {
 		source = filepath.Base(source)
 	}
@@ -226,8 +226,8 @@ func (w *workItems) buildRow(item *pipeline.WorkItem) []*tview.TableCell {
 	}
 	return []*tview.TableCell{
 		getTableCell(source, tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetReference(item),
-		getTableCell(item.SourceVideoStats().String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
-		getTableCell(item.TargetVideoStats().String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(item.Source.VideoStats.String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(item.Target.VideoStats.String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
 		getTableCell(workStatus.Status.String(), colorStatus(workStatus.Status), tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
 		getTableCell(item.CompletedFormatted(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignRight),
 		getTableCell(item.RemainingFormatted(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignRight),

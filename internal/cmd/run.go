@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"codeberg.org/clambin/go-common/charmer"
-	"github.com/clambin/xcoder/internal/configuration"
 	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/clambin/xcoder/internal/ui"
 	"github.com/rivo/tview"
@@ -43,7 +42,7 @@ func init() {
 }
 
 func run(ctx context.Context, v *viper.Viper) error {
-	cfg, err := configuration.GetConfigurationFromViper(v)
+	cfg, err := pipeline.GetConfigurationFromViper(v)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_makeTargetFilename(t *testing.T) {
+func Test_buildTargetFilename(t *testing.T) {
 	stats1080 := ffmpeg.VideoStats{Height: 1080}
 
 	tests := []struct {
@@ -72,9 +72,7 @@ func Test_makeTargetFilename(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			item := WorkItem{Source: tt.source}
-			item.AddSourceStats(tt.stats)
-			target := buildTargetFilename(&item, "/directory", "hevc", "mkv")
+			target := buildTargetFilename(MediaFile{Path: tt.source, VideoStats: tt.stats}, "/directory", "hevc", "mkv")
 			assert.Equal(t, tt.want, target)
 		})
 	}

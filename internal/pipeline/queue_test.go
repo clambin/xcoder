@@ -33,10 +33,11 @@ func TestQueue_NextToConvert(t *testing.T) {
 	var l Queue
 
 	// manually waiting items are returned even if the Queue is inactive
-	l.Queue(&WorkItem{Source: "foo"})
+	source := MediaFile{Path: "foo"}
+	l.Queue(&WorkItem{Source: source})
 	i := l.NextToConvert()
 	require.NotNil(t, i)
-	assert.Equal(t, "foo", i.Source)
+	assert.Equal(t, source, i.Source)
 	assert.Equal(t, WorkStatus{Status: Converting}, i.WorkStatus())
 
 	// automatically added items are not returned if the Queue is inactive
@@ -58,15 +59,6 @@ func TestQueue_Active(t *testing.T) {
 	assert.True(t, l.Active())
 	l.ToggleActive()
 	assert.False(t, l.Active())
-}
-
-func TestQueue_Stats(t *testing.T) {
-	stats := ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 5_000_000}
-	var item WorkItem
-	item.AddSourceStats(stats)
-	assert.Equal(t, stats, item.SourceVideoStats())
-	item.AddTargetStats(stats)
-	assert.Equal(t, stats, item.TargetVideoStats())
 }
 
 func TestWorkItem_RemainingFormatted(t *testing.T) {

@@ -6,15 +6,14 @@ import (
 
 	"codeberg.org/clambin/go-common/set"
 	"github.com/clambin/xcoder/internal/pipeline"
-	"github.com/clambin/xcoder/internal/profile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_workListViewer(t *testing.T) {
 	var list pipeline.Queue
-	list.Add("A").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Skipped, Err: profile.NewErrSourceRejected(false, "source in target codec")})
-	list.Add("B").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Rejected, Err: profile.NewErrSourceRejected(true, "bitrate too low")})
+	list.Add("A").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Skipped, Err: pipeline.NewErrSourceRejected(false, "source in target codec")})
+	list.Add("B").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Rejected, Err: pipeline.NewErrSourceRejected(true, "bitrate too low")})
 	list.Add("C").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Inspected})
 	list.Add("D").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Converted})
 

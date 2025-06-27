@@ -1,4 +1,4 @@
-package profile
+package pipeline
 
 import (
 	"errors"
@@ -59,23 +59,36 @@ func SupportedProfiles() []string {
 	return p
 }
 
-func (p *Profile) Inspect(sourceVideoStats ffmpeg.VideoStats) (ffmpeg.VideoStats, error) {
+func (p *Profile) Inspect(item *WorkItem) (*ffmpeg.FFMPEG, error) {
 	// evaluate all rules
 	for _, rule := range p.Rules {
-		if err := rule(p, sourceVideoStats); err != nil {
-			return ffmpeg.VideoStats{}, err
+		if err := rule(p, item.Source.VideoStats); err != nil {
+			return nil, err
 		}
 	}
 
-	// create target videoStats.  If we're asked to cap the bitrate, we ask for the minimum bitrate of the target codec.
+	// determine filename of the output
+	item.Target.Path = buildTargetFilename(item.Source, "", p.TargetCodec, "mkv")
+
+	// determine target videoStats.  If we're asked to cap the bitrate, we ask for the minimum bitrate of the target codec.
 	// otherwise, if the source bitrate is higher than the minimum, increate the target bitrate by the same factor.
-	targetVideoStats := sourceVideoStats
-	targetVideoStats.VideoCodec = p.TargetCodec
+	item.Target.VideoStats = item.Source.VideoStats
+	item.Target.VideoStats.VideoCodec = p.TargetCodec
 	var err error
-	if targetVideoStats.BitRate, err = getTargetBitrate(sourceVideoStats, sourceVideoStats.VideoCodec, p.TargetCodec, p.CapBitrate); err != nil {
-		return ffmpeg.VideoStats{}, err
+	if item.Target.VideoStats.BitRate, err = getTargetBitrate(item.Source.VideoStats, item.Source.VideoStats.VideoCodec, p.TargetCodec, p.CapBitrate); err != nil {
+		return nil, err
 	}
-	return targetVideoStats, nil
+
+	// build the transcoder
+	xcoder := ffmpeg.
+		Decode(item.Source.Path, decoderOptions[item.Target.VideoStats.VideoCodec]...).
+		Encode(encoderArguments(item.Target.VideoStats)...).
+		Muxer("matroska"). // mkv only
+		NoStats().
+		LogLevel("error").
+		Output(item.Target.Path)
+
+	return xcoder, nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -2,34 +2,11 @@ package ffmpeg
 
 import (
 	"log/slog"
-	"net"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-func TestFFMPEG_ProgressSocket(t *testing.T) {
-	done := make(chan struct{})
-	listener, sock, err := makeProgressSocket()
-	require.NoError(t, err)
-
-	handler := func(p Progress) {
-		t.Helper()
-		assert.Equal(t, time.Second, p.Converted)
-		assert.InEpsilon(t, 1.0, p.Speed, 0.001)
-		done <- struct{}{}
-	}
-	go serveProgressSocket(t.Context(), listener, sock, handler, slog.New(slog.DiscardHandler))
-
-	fd, err := net.Dial("unix", sock)
-	require.NoError(t, err)
-	_, err = fd.Write([]byte("out_time_ms=1000000\nspeed=1.0x\nprogress=end\n"))
-	require.NoError(t, err)
-	<-done
-}
 
 func Test_progress(t *testing.T) {
 	tests := []struct {

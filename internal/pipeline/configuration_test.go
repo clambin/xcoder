@@ -1,4 +1,4 @@
-package configuration
+package pipeline
 
 import (
 	"testing"

@@ -15,12 +15,6 @@ var (
 	rootCmd = cobra.Command{
 		Use:   "xcoder",
 		Short: "Transcode media files",
-		PreRun: func(cmd *cobra.Command, args []string) {
-			charmer.SetTextLogger(cmd, viper.GetBool("log.debug"))
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-
-		},
 	}
 
 	configFilename string

@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -78,30 +79,34 @@ func (ff *FFMPEG) Build(ctx context.Context) *exec.Cmd {
 	return exec.CommandContext(ctx, "ffmpeg", args...)
 }
 
-func (ff *FFMPEG) Run(ctx context.Context) error {
+func (ff *FFMPEG) Run(ctx context.Context, logger *slog.Logger) error {
 	if ff.progressSocketPath != "" {
-		l, err := net.Listen("unix", ff.progressSocketPath)
-		if err != nil {
-			return fmt.Errorf("listen: %w", err)
+		if err := ff.runProgressSocket(ctx, logger); err != nil {
+			return err
 		}
-		// TODO: race condition?  cmd may run before serve is blocking on Accept?
-		go serveProgressSocket(ctx, l, ff.progressSocketPath, ff.progress, slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	}
 	cmd := ff.Build(ctx)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("ffmpeg: %v (%s)", err, formatError(&stderr))
+		return fmt.Errorf("ffmpeg: %v (%s)", err, strings.TrimSuffix(stderr.String(), "\n"))
 	}
 	return err
 }
 
-func formatError(buf *bytes.Buffer) string {
-	return strings.TrimSuffix(buf.String(), "\n")
-	/*lines := strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n")
-	if len(lines) == 0 {
-		return ""
+func (ff *FFMPEG) runProgressSocket(ctx context.Context, logger *slog.Logger) error {
+	l, err := net.Listen("unix", ff.progressSocketPath)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
 	}
-	return lines[len(lines)-1]*/
+	go func() {
+		if err := serveProgressSocket(ctx, l, ff.progress, logger); err != nil {
+			logger.Error("status socket failure", "err", err)
+		}
+		if err := os.RemoveAll(filepath.Dir(ff.progressSocketPath)); err != nil {
+			logger.Error("failed to clean up progress socket", "err", err)
+		}
+	}()
+	return nil
 }

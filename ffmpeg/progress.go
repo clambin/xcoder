@@ -4,27 +4,19 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
-	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 )
 
 // serveProgressSocket reads the ffmpeg progress and calls the process callback function.
-func serveProgressSocket(ctx context.Context, l net.Listener, path string, progressCallback func(Progress), logger *slog.Logger) {
-	defer func() {
-		if err := os.RemoveAll(filepath.Dir(path)); err != nil {
-			logger.Error("failed to clean up status socket", "err", err)
-		}
-	}()
-
+func serveProgressSocket(ctx context.Context, l net.Listener, progressCallback func(Progress), logger *slog.Logger) error {
 	fd, err := l.Accept()
 	if err != nil {
-		logger.Error("failed to serve status socket", "err", err)
-		return
+		return fmt.Errorf("failed to serve status socket: %w", err)
 	}
 
 	defer func() { _ = fd.Close() }()
@@ -35,12 +27,12 @@ func serveProgressSocket(ctx context.Context, l net.Listener, path string, progr
 		case prog, ok := <-ch:
 			if !ok {
 				logger.Debug("progress socket closed")
-				return
+				return nil
 			}
 			progressCallback(prog)
 		case <-ctx.Done():
 			logger.Debug("context cancelled", "err", ctx.Err())
-			return
+			return nil
 		}
 	}
 }

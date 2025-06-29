@@ -32,22 +32,18 @@ func Inspect(ctx context.Context, ch <-chan *WorkItem, cfg Configuration, probe 
 		case item := <-ch:
 			l := logger.With("source", item.Source)
 			err := inspectItem(ctx, item, cfg, probe, f, l)
-			if err == nil {
+			var sourceRejectedError *SourceRejectedError
+			var sourceSkippedError *SourceSkippedError
+			switch {
+			case err == nil:
 				item.SetWorkStatus(WorkStatus{Status: Inspected})
-			} else {
-				var sourceRejectedError *SourceRejectedError
-				switch {
-				case errors.As(err, &sourceRejectedError):
-					logger.Debug("file rejected", "err", err)
-					status := Rejected
-					if sourceRejectedError.Skip() {
-						status = Skipped
-					}
-					item.SetWorkStatus(WorkStatus{Status: status, Err: err})
-				default:
-					logger.Debug("inspection failed", "err", err)
-					item.SetWorkStatus(WorkStatus{Status: Failed, Err: err})
-				}
+			case errors.As(err, &sourceRejectedError):
+				item.SetWorkStatus(WorkStatus{Status: Rejected, Err: err})
+			case errors.As(err, &sourceSkippedError):
+				item.SetWorkStatus(WorkStatus{Status: Skipped, Err: err})
+			default:
+				l.Warn("inspection failed", "err", err)
+				item.SetWorkStatus(WorkStatus{Status: Failed, Err: err})
 			}
 		}
 	}
@@ -74,7 +70,7 @@ func inspectItem(_ context.Context, item *WorkItem, cfg Configuration, probe fun
 		return err
 	}
 	if targetIsNewer && !cfg.Overwrite {
-		return NewErrSourceRejected(true, "source is already converted")
+		return &SourceSkippedError{Reason: "source is already converted"}
 	}
 
 	// Ok to convert

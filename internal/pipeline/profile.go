@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -98,7 +97,7 @@ type Rule func(profile *Profile, sourceStats ffmpeg.VideoStats) error
 func SkipTargetCodec() Rule {
 	return func(profile *Profile, sourceStats ffmpeg.VideoStats) error {
 		if sourceStats.VideoCodec == profile.TargetCodec {
-			return &SourceRejectedError{skip: true, reason: "source video already in target codec"}
+			return &SourceSkippedError{Reason: "source video already in target codec"}
 		}
 		return nil
 	}
@@ -107,7 +106,7 @@ func SkipTargetCodec() Rule {
 func RejectVideoHeightTooLow(height int) Rule {
 	return func(_ *Profile, sourceStats ffmpeg.VideoStats) error {
 		if sourceStats.Height < height {
-			return &SourceRejectedError{reason: "source video height is less than " + strconv.Itoa(height)}
+			return &SourceRejectedError{Reason: "source video height is less than " + strconv.Itoa(height)}
 		}
 		return nil
 	}
@@ -119,52 +118,13 @@ func RejectBitrateTooLow() Rule {
 		// a higher bitrate than the source codec (e.g. hevc -> h264).
 		minimumBitrate, err := getMinimumBitRate(sourceStats, sourceStats.VideoCodec, profile.TargetCodec)
 		if err != nil {
-			return &SourceRejectedError{reason: err.Error()}
+			return &SourceRejectedError{Reason: err.Error()}
 		}
 		if sourceStats.BitRate < minimumBitrate {
-			return &SourceRejectedError{reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(1)}
+			return &SourceRejectedError{Reason: "source bitrate must be at least " + ffmpeg.Bits(minimumBitrate).Format(1)}
 		}
 		return nil
 	}
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-type SourceRejectedError struct {
-	reason string
-	skip   bool
-}
-
-func NewErrSourceRejected(skip bool, reason string) *SourceRejectedError {
-	return &SourceRejectedError{skip: skip, reason: reason}
-}
-
-func (e *SourceRejectedError) Skip() bool {
-	return e.skip
-}
-
-func (e *SourceRejectedError) Error() string {
-	return e.reason
-}
-
-func (e *SourceRejectedError) Is(e2 error) bool {
-	var err *SourceRejectedError
-	ok := errors.As(e2, &err)
-	return ok && e.skip == err.skip && e.reason == err.reason
-}
-
-type UnsupportedCodecError struct {
-	Codec string
-}
-
-func (e *UnsupportedCodecError) Error() string {
-	return "unsupported codec: " + e.Codec
-}
-
-func (e *UnsupportedCodecError) Is(e2 error) bool {
-	var err *UnsupportedCodecError
-	ok := errors.As(e2, &err)
-	return ok && e.Codec == err.Codec
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

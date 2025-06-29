@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -45,7 +46,7 @@ func verify(ctx context.Context, path string) {
 		fmt.Printf("\r%s ... %.1f%%", path, 100*progress)
 	}, tempSocketPath)
 
-	err = f.Run(ctx)
+	err = f.Run(ctx, slog.Default())
 	if err == nil {
 		fmt.Println(" PASS")
 	} else {

@@ -31,18 +31,18 @@ var workListShortCuts = shortcutsPage{
 type queueViewer struct {
 	*Table
 	queue *pipeline.Queue
-	DataSource
+	dataSource
 }
 
 func newQueueViewer(list *pipeline.Queue) *queueViewer {
-	dataSource := &workItems{
+	source := &workItems{
 		list:    list,
 		filters: filters{statuses: set.New[pipeline.Status]()},
 	}
 	v := queueViewer{
-		Table:      NewTable(dataSource),
+		Table:      NewTable(source),
 		queue:      list,
-		DataSource: dataSource,
+		dataSource: source,
 	}
 	v.SetInputCapture(v.handleInput)
 	return &v
@@ -142,7 +142,7 @@ func colorStatus(status pipeline.Status) tcell.Color {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-var _ DataSource = &workItems{}
+var _ dataSource = &workItems{}
 
 type workItems struct {
 	list     *pipeline.Queue
@@ -226,8 +226,8 @@ func (w *workItems) buildRow(item *pipeline.WorkItem) []*tview.TableCell {
 	}
 	return []*tview.TableCell{
 		getTableCell(source, tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft).SetReference(item),
-		getTableCell(item.Source.VideoStats.String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
-		getTableCell(item.Target.VideoStats.String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(item.SourceVideoStats().String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
+		getTableCell(item.TargetVideoStats().String(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
 		getTableCell(workStatus.Status.String(), colorStatus(workStatus.Status), tview.Styles.PrimitiveBackgroundColor, tview.AlignLeft),
 		getTableCell(item.CompletedFormatted(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignRight),
 		getTableCell(item.RemainingFormatted(), tview.Styles.PrimaryTextColor, tview.Styles.PrimitiveBackgroundColor, tview.AlignRight),

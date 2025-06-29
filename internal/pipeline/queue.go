@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"iter"
+	"log/slog"
 	"slices"
 	"strconv"
 	"sync"
@@ -116,39 +117,6 @@ func (q *Queue) checkout(current, next Status) *WorkItem {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Status int
-
-const (
-	Waiting Status = iota
-	Inspecting
-	Skipped
-	Rejected
-	Inspected
-	Converting
-	Converted
-	Failed
-)
-
-var workStatusToString = map[Status]string{
-	Waiting:    "waiting",
-	Inspecting: "inspecting",
-	Skipped:    "skipped",
-	Rejected:   "rejected",
-	Inspected:  "inspected",
-	Converting: "converting",
-	Converted:  "converted",
-	Failed:     "failed",
-}
-
-func (s Status) String() string {
-	if label, ok := workStatusToString[s]; ok {
-		return label
-	}
-	return "unknown"
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 type WorkItem struct {
 	transcoder transcoder
 	workStatus WorkStatus
@@ -160,7 +128,7 @@ type WorkItem struct {
 
 type transcoder interface {
 	Progress(cb func(ffmpeg.Progress), progressSocketPath string) *ffmpeg.FFMPEG
-	Run(context.Context) error
+	Run(context.Context, *slog.Logger) error
 }
 
 type WorkStatus struct {
@@ -185,8 +153,6 @@ func (w *WorkItem) SetWorkStatus(workStatus WorkStatus) {
 	w.workStatus = workStatus
 }
 
-// TODO: this doesn't look like the right place for this.
-
 func (w *WorkItem) RemainingFormatted() string {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
@@ -194,7 +160,7 @@ func (w *WorkItem) RemainingFormatted() string {
 		return ""
 	}
 	var output string
-	if d := w.Progress.Remaining(); d >= 0 { // not sure why I added this check?
+	if d := w.Progress.Remaining(); d >= 0 {
 		output = formatDuration(d)
 	}
 	return output
@@ -221,8 +187,6 @@ func formatDuration(d time.Duration) string {
 	return output
 }
 
-// TODO: this doesn't look like the right place for this
-
 func (w *WorkItem) CompletedFormatted() string {
 	w.lock.RLock()
 	defer w.lock.RUnlock()
@@ -233,4 +197,54 @@ func (w *WorkItem) CompletedFormatted() string {
 		return strconv.FormatFloat(100*p, 'f', 1, 64) + "%"
 	}
 	return ""
+}
+
+func (w *WorkItem) SourceVideoStats() ffmpeg.VideoStats {
+	w.lock.RLock()
+	defer w.lock.RUnlock()
+	return w.Source.VideoStats
+}
+
+func (w *WorkItem) TargetVideoStats() ffmpeg.VideoStats {
+	w.lock.RLock()
+	defer w.lock.RUnlock()
+	return w.Target.VideoStats
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type Status int
+
+const (
+	Waiting Status = iota
+	Inspecting
+	Skipped
+	Rejected
+	Inspected
+	Converting
+	Converted
+	Failed
+)
+
+func (s Status) String() string {
+	switch s {
+	case Waiting:
+		return "waiting"
+	case Inspecting:
+		return "inspecting"
+	case Skipped:
+		return "skipped"
+	case Rejected:
+		return "rejected"
+	case Inspected:
+		return "inspected"
+	case Converting:
+		return "converting"
+	case Converted:
+		return "converted"
+	case Failed:
+		return "failed"
+	default:
+		return "unknown"
+	}
 }

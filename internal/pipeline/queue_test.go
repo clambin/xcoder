@@ -30,24 +30,24 @@ func TestQueue(t *testing.T) {
 }
 
 func TestQueue_NextToConvert(t *testing.T) {
-	var l Queue
+	var queue Queue
 
 	// manually waiting items are returned even if the Queue is inactive
 	source := MediaFile{Path: "foo"}
-	l.Queue(&WorkItem{Source: source})
-	i := l.NextToConvert()
+	queue.Queue(&WorkItem{Source: source})
+	i := queue.NextToConvert()
 	require.NotNil(t, i)
 	assert.Equal(t, source, i.Source)
 	assert.Equal(t, WorkStatus{Status: Converting}, i.WorkStatus())
 
 	// automatically added items are not returned if the Queue is inactive
-	l.Add("foo").workStatus.Status = Inspected
-	i = l.NextToConvert()
+	queue.Add("foo").workStatus.Status = Inspected
+	i = queue.NextToConvert()
 	assert.Nil(t, i)
 
 	// automatically added items are not returned if the Queue is active
-	l.SetActive(true)
-	i = l.NextToConvert()
+	queue.SetActive(true)
+	i = queue.NextToConvert()
 	require.NotNil(t, i)
 	assert.Equal(t, WorkStatus{Status: Converting}, i.WorkStatus())
 }
@@ -118,9 +118,34 @@ func TestWorkItem_CompletedFormatted(t *testing.T) {
 	}
 }
 
-func TestWorkStatus_String(t *testing.T) {
-	for val, label := range workStatusToString {
-		assert.Equal(t, label, val.String())
+func TestWorkItem_VideoStats(t *testing.T) {
+	i := &WorkItem{
+		Source: MediaFile{Path: "foo", VideoStats: ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 8_000_000}},
+		Target: MediaFile{Path: "bar", VideoStats: ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 4_000_000}},
 	}
-	assert.Equal(t, "unknown", Status(-1).String())
+	assert.Equal(t, "h264/1080/8.00 mbps", i.SourceVideoStats().String())
+	assert.Equal(t, "hevc/1080/4.00 mbps", i.TargetVideoStats().String())
+}
+
+func TestWorkStatus_String(t *testing.T) {
+	tests := []struct {
+		want   string
+		status Status
+	}{
+		{"waiting", Waiting},
+		{"inspecting", Inspecting},
+		{"skipped", Skipped},
+		{"inspected", Inspected},
+		{"rejected", Rejected},
+		{"converting", Converting},
+		{"converted", Converted},
+		{"failed", Failed},
+		{"unknown", -1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.status.String())
+		})
+	}
 }

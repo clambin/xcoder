@@ -38,7 +38,7 @@ func BenchmarkTable_Update(b *testing.B) {
 	}
 }
 
-var _ DataSource = &fakeDataSource{}
+var _ dataSource = &fakeDataSource{}
 
 type fakeDataSource struct {
 	rows []string

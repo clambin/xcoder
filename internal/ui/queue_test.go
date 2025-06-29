@@ -12,8 +12,8 @@ import (
 
 func Test_workListViewer(t *testing.T) {
 	var list pipeline.Queue
-	list.Add("A").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Skipped, Err: pipeline.NewErrSourceRejected(false, "source in target codec")})
-	list.Add("B").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Rejected, Err: pipeline.NewErrSourceRejected(true, "bitrate too low")})
+	list.Add("A").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Skipped, Err: &pipeline.SourceRejectedError{Reason: "source in target codec"}})
+	list.Add("B").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Rejected, Err: &pipeline.SourceSkippedError{Reason: "bitrate too low"}})
 	list.Add("C").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Inspected})
 	list.Add("D").SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Converted})
 
@@ -55,7 +55,7 @@ func Test_workListViewer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := newQueueViewer(&list)
-			v.DataSource.(*workItems).filters.toggle(tt.filters...)
+			v.dataSource.(*workItems).filters.toggle(tt.filters...)
 			v.refresh()
 
 			assert.Equal(t, tt.wantCount, v.GetRowCount())

@@ -25,7 +25,7 @@ func Transcode(ctx context.Context, queue *Queue, cfg Configuration, logger *slo
 		case <-ticker.C:
 		}
 		if item := queue.NextToConvert(); item != nil {
-			transcodeItem(ctx, item, cfg, logger)
+			transcodeItem(ctx, item, cfg, logger.With("source", item.Source.Path))
 		}
 	}
 }
@@ -42,7 +42,7 @@ func transcodeItem(ctx context.Context, item *WorkItem, cfg Configuration, logge
 
 	// convert the file
 	logger.Debug("converting")
-	if err = item.transcoder.Run(ctx); err != nil {
+	if err = item.transcoder.Run(ctx, logger); err != nil {
 		_ = os.Remove(item.Target.Path)
 		logger.Warn("conversion failed", "err", err)
 		item.SetWorkStatus(WorkStatus{Status: Failed, Err: err})
@@ -62,8 +62,8 @@ func transcodeItem(ctx context.Context, item *WorkItem, cfg Configuration, logge
 
 func progress(item *WorkItem, logger *slog.Logger) func(ffmpeg.Progress) {
 	var lastDurationReported time.Duration
-	const reportInterval = 1 * time.Minute
-	totalDuration := item.Source.VideoStats.Duration
+	const reportInterval = time.Minute
+	item.Progress.Duration = item.Source.VideoStats.Duration
 
 	return func(p ffmpeg.Progress) {
 		item.Progress.Update(p)
@@ -71,7 +71,7 @@ func progress(item *WorkItem, logger *slog.Logger) func(ffmpeg.Progress) {
 			logger.Info("conversion in progress",
 				"progress", p.Converted,
 				"speed", p.Speed,
-				"completed", strconv.FormatFloat(100*p.Converted.Seconds()/totalDuration.Seconds(), 'f', 2, 64)+"%",
+				"completed", strconv.FormatFloat(100*p.Converted.Seconds()/item.Progress.Duration.Seconds(), 'f', 2, 64)+"%",
 			)
 			lastDurationReported = p.Converted
 		}

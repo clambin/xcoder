@@ -146,6 +146,6 @@ func (f *fakeTranscoder) Progress(_ func(ffmpeg.Progress), _ string) *ffmpeg.FFM
 	return nil
 }
 
-func (f *fakeTranscoder) Run(_ context.Context) error {
+func (f *fakeTranscoder) Run(_ context.Context, _ *slog.Logger) error {
 	return f.err
 }

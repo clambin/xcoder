@@ -9,7 +9,7 @@ require (
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/gdamore/tcell/v2 v2.8.1
 	github.com/psanford/memfs v0.0.0-20241019191636-4ef911798f9b
-	github.com/rivo/tview v0.0.0-20250501113434-0c592cd31026
+	github.com/rivo/tview v0.0.0-20250625164341-a4a78f1e05cb
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.15.0
 )

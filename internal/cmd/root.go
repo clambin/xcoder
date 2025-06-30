@@ -31,7 +31,7 @@ func init() {
 	rootCmd.Version = buildInfo.Main.Version
 
 	cobra.OnInitialize(initConfig)
-	rootCmd.Flags().StringVar(&configFilename, "config", "", "Configuration file")
+	rootCmd.PersistentFlags().StringVar(&configFilename, "config", "", "Configuration file")
 }
 
 func initConfig() {

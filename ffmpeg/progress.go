@@ -83,22 +83,22 @@ func progress(r io.Reader, logger *slog.Logger) chan Progress {
 }
 
 func parseProgressLine(line []byte, prefix []byte, value any, suffix []byte) bool {
-	arg, ok := bytes.CutPrefix(line, prefix)
-	if !ok {
+	if !bytes.HasPrefix(line, prefix) {
 		return false
 	}
+
 	if len(suffix) > 0 {
-		arg = bytes.TrimSuffix(arg, suffix)
+		line = bytes.TrimSuffix(line, suffix)
 	}
 	switch p := value.(type) {
 	case *float64:
-		*p, _ = strconv.ParseFloat(string(arg), 64)
+		*p, _ = strconv.ParseFloat(string(line[len(prefix):]), 64)
 	case *uint64:
-		*p, _ = strconv.ParseUint(string(arg), 10, 64)
+		*p, _ = strconv.ParseUint(string(line[len(prefix):]), 10, 64)
 	case *int:
-		*p, _ = strconv.Atoi(string(arg))
+		*p, _ = strconv.Atoi(string(line[len(prefix):]))
 	case *[]byte:
-		*p = arg
+		*p = line[len(prefix):]
 	default:
 		return false
 	}

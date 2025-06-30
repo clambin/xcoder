@@ -6,8 +6,13 @@ import (
 	"github.com/clambin/xcoder/ffmpeg"
 )
 
-var decoderOptions = map[string][]string{
-	"hevc": {"-hwaccel", "videotoolbox"},
+func DecoderArguments(videoStats ffmpeg.VideoStats) []string {
+	switch videoStats.VideoCodec {
+	case "h264", "hevc":
+		return []string{"-hwaccel", "videotoolbox"}
+	default:
+		return []string{}
+	}
 }
 
 func encoderArguments(videoStats ffmpeg.VideoStats) []string {

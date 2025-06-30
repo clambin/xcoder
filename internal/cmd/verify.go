@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/clambin/xcoder/ffmpeg"
+	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/spf13/cobra"
 )
 
@@ -41,10 +42,14 @@ func verify(ctx context.Context, path string) {
 	}
 	tempSocketPath := filepath.Join(tmpDir, "ffmpeg-verify.sock")
 
-	f := ffmpeg.Decode(path, "-hwaccel", "videotoolbox").Muxer("null").LogLevel("error").NoStats().Progress(func(p ffmpeg.Progress) {
-		progress := p.Converted.Seconds() / stats.Duration.Seconds()
-		fmt.Printf("\r%s ... %.1f%%", path, 100*progress)
-	}, tempSocketPath)
+	f := ffmpeg.
+		Decode(path, pipeline.DecoderArguments(ffmpeg.VideoStats{VideoCodec: "hevc"})...).
+		Muxer("null").LogLevel("error").
+		NoStats().
+		Progress(func(p ffmpeg.Progress) {
+			progress := p.Converted.Seconds() / stats.Duration.Seconds()
+			fmt.Printf("\r%s ... %.1f%%", path, 100*progress)
+		}, tempSocketPath)
 
 	err = f.Run(ctx, slog.Default())
 	if err == nil {

@@ -80,7 +80,7 @@ func (p *Profile) Inspect(item *WorkItem) (*ffmpeg.FFMPEG, error) {
 
 	// build the transcoder
 	xcoder := ffmpeg.
-		Decode(item.Source.Path, decoderOptions[item.Target.VideoStats.VideoCodec]...).
+		Decode(item.Source.Path, DecoderArguments(item.Source.VideoStats)...).
 		Encode(encoderArguments(item.Target.VideoStats)...).
 		Muxer("matroska"). // mkv only
 		NoStats().

@@ -7,6 +7,7 @@ import (
 )
 
 var decoderOptions = map[string][]string{
+	"h264": {"-hwaccel", "videotoolbox"},
 	"hevc": {"-hwaccel", "videotoolbox"},
 }
 

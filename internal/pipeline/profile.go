@@ -175,11 +175,11 @@ var minimumBitrates = map[string]bitRates{
 func getMinimumBitRate(videoStats ffmpeg.VideoStats, from string, to string) (int, error) {
 	sourceMinimumBitrates, ok := minimumBitrates[from]
 	if !ok {
-		return 0, &UnsupportedCodecError{Codec: from}
+		return 0, &SourceRejectedError{Reason: "unsupported source video codec: " + from}
 	}
 	targetMinimumBitrates, ok := minimumBitrates[to]
 	if !ok {
-		return 0, &UnsupportedCodecError{Codec: to}
+		return 0, &SourceRejectedError{Reason: "unsupported target video codec: " + to}
 	}
 	return max(sourceMinimumBitrates.getBitrate(videoStats.Height), targetMinimumBitrates.getBitrate(videoStats.Height)), nil
 }
@@ -187,11 +187,11 @@ func getMinimumBitRate(videoStats ffmpeg.VideoStats, from string, to string) (in
 func getTargetBitrate(videoStats ffmpeg.VideoStats, from string, to string, capBitrate bool) (int, error) {
 	sourceMinimumBitrates, ok := minimumBitrates[from]
 	if !ok {
-		return 0, &UnsupportedCodecError{Codec: from}
+		return 0, &SourceRejectedError{Reason: "unsupported source video codec: " + from}
 	}
 	targetMinimumBitrates, ok := minimumBitrates[to]
 	if !ok {
-		return 0, &UnsupportedCodecError{Codec: to}
+		return 0, &SourceRejectedError{Reason: "unsupported target video codec: " + to}
 	}
 	bitrate := targetMinimumBitrates.getBitrate(videoStats.Height)
 	if !capBitrate {

@@ -29,17 +29,3 @@ func (e *SourceSkippedError) Is(e2 error) bool {
 	ok := errors.As(e2, &err)
 	return ok && e.Reason == err.Reason
 }
-
-type UnsupportedCodecError struct {
-	Codec string
-}
-
-func (e *UnsupportedCodecError) Error() string {
-	return "unsupported codec: " + e.Codec
-}
-
-func (e *UnsupportedCodecError) Is(e2 error) bool {
-	var err *UnsupportedCodecError
-	ok := errors.As(e2, &err)
-	return ok && e.Codec == err.Codec
-}

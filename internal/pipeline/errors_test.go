@@ -17,9 +17,3 @@ func TestSourceSkippedError(t *testing.T) {
 	assert.Equal(t, "test", err.Error())
 	assert.ErrorIs(t, err, &SourceSkippedError{Reason: err.Error()})
 }
-
-func TestUnsupportedCodecError(t *testing.T) {
-	err := &UnsupportedCodecError{Codec: "test"}
-	assert.Equal(t, "unsupported codec: test", err.Error())
-	assert.ErrorIs(t, err, &UnsupportedCodecError{Codec: "test"})
-}

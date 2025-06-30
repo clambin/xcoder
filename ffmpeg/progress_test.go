@@ -65,14 +65,10 @@ func Test_progress(t *testing.T) {
 }
 
 func Benchmark_progress(b *testing.B) {
-	// Current:
-	// Benchmark_progress-10    	     571	   2112925 ns/op	    4398 B/op	       7 allocs/op
+	// Benchmark_progress-10    	    5250	    215401 ns/op	    4290 B/op	       4 allocs/op
 	var input strings.Builder
 	for range 1000 {
-		for range 100 {
-			input.WriteString("token=value\n")
-		}
-		input.WriteString("speed=1.1x\nout_time_ms=1\n")
+		input.WriteString("frame=10\nfps=25.0\nout_time_us=1000\ndup_frames=1\ndrop_frames=2\nspeed=1.1x\n")
 	}
 	input.WriteString("progress=end\n")
 	buf := input.String()

@@ -2,13 +2,13 @@ package ffmpeg
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log/slog"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -57,29 +57,20 @@ func progress(r io.Reader, logger *slog.Logger) chan Progress {
 		s := bufio.NewScanner(r)
 		var prog Progress
 		for s.Scan() {
-			line := s.Text()
-			args := strings.SplitN(line, "=", 2)
-			if len(args) != 2 {
-				logger.Warn("invalid progress line", "line", line)
-				continue
+			line := s.Bytes()
+			parseProgressLine(line, []byte("frame="), &prog.Frame, nil)
+			parseProgressLine(line, []byte("fps="), &prog.FPS, nil)
+			var usec uint64
+			if parseProgressLine(s.Bytes(), []byte("out_time_us="), &usec, nil) {
+				prog.Converted = time.Duration(usec) * time.Microsecond
 			}
-			switch args[0] {
-			case "frame":
-				prog.Frame, _ = strconv.ParseUint(args[1], 10, 64)
-			case "fps":
-				prog.FPS, _ = strconv.ParseFloat(args[1], 64)
-			case "out_time_us":
-				microSeconds, _ := strconv.Atoi(args[1])
-				prog.Converted = time.Duration(microSeconds) * time.Microsecond
-			case "dup_frames":
-				prog.DuplicateFrames, _ = strconv.ParseUint(args[1], 10, 64)
-			case "drop_frames":
-				prog.DroppedFrames, _ = strconv.ParseUint(args[1], 10, 64)
-			case "speed":
-				prog.Speed, _ = strconv.ParseFloat(strings.TrimSuffix(args[1], "x"), 64)
-			case "progress":
+			parseProgressLine(line, []byte("dup_frames="), &prog.DuplicateFrames, nil)
+			parseProgressLine(line, []byte("drop_frames="), &prog.DroppedFrames, nil)
+			parseProgressLine(line, []byte("speed="), &prog.Speed, []byte("x"))
+			var p []byte
+			if parseProgressLine(line, []byte("progress="), &p, nil) {
 				ch <- prog
-				if args[1] == "end" {
+				if bytes.Equal(line, []byte("end")) {
 					return
 				}
 			}
@@ -89,4 +80,27 @@ func progress(r io.Reader, logger *slog.Logger) chan Progress {
 		}
 	}()
 	return ch
+}
+
+func parseProgressLine(line []byte, prefix []byte, value any, suffix []byte) bool {
+	arg, ok := bytes.CutPrefix(line, prefix)
+	if !ok {
+		return false
+	}
+	if len(suffix) > 0 {
+		arg = bytes.TrimSuffix(arg, suffix)
+	}
+	switch p := value.(type) {
+	case *float64:
+		*p, _ = strconv.ParseFloat(string(arg), 64)
+	case *uint64:
+		*p, _ = strconv.ParseUint(string(arg), 10, 64)
+	case *int:
+		*p, _ = strconv.Atoi(string(arg))
+	case *[]byte:
+		*p = arg
+	default:
+		return false
+	}
+	return true
 }

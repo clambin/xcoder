@@ -2,13 +2,13 @@ package ffmpeg
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log/slog"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -38,42 +38,50 @@ func serveProgressSocket(ctx context.Context, l net.Listener, progressCallback f
 }
 
 type Progress struct {
-	Converted time.Duration
-	Speed     float64
+	Frame           uint64
+	FPS             float64
+	Converted       time.Duration
+	DuplicateFrames uint64
+	DroppedFrames   uint64
+	Speed           float64
+	// TBD: stream_0_0_q=-0.0
+	// TBD: bitrate=N/A
+	// TBD: total_size=N/A
 }
 
 // progress reads the ffmpeg progress information and returns Progress records on a channel.
 func progress(r io.Reader, logger *slog.Logger) chan Progress {
-	var (
-		convertedMarker = []byte("out_time_ms=")
-		speedMarker     = []byte("speed=")
-		endMarker       = []byte("progress=end")
-	)
 	ch := make(chan Progress)
 	go func() {
 		defer close(ch)
 		s := bufio.NewScanner(r)
-		var haveProgress, haveSpeed bool
 		var prog Progress
 		for s.Scan() {
-			line := s.Bytes()
-			switch {
-			case bytes.HasPrefix(line, convertedMarker):
-				microSeconds, _ := strconv.Atoi(string(line[len(convertedMarker):]))
+			line := s.Text()
+			args := strings.SplitN(line, "=", 2)
+			if len(args) != 2 {
+				logger.Warn("invalid progress line", "line", line)
+				continue
+			}
+			switch args[0] {
+			case "frame":
+				prog.Frame, _ = strconv.ParseUint(args[1], 10, 64)
+			case "fps":
+				prog.FPS, _ = strconv.ParseFloat(args[1], 64)
+			case "out_time_us":
+				microSeconds, _ := strconv.Atoi(args[1])
 				prog.Converted = time.Duration(microSeconds) * time.Microsecond
-				haveProgress = true
-			case bytes.HasPrefix(line, speedMarker):
-				line = bytes.TrimSuffix(line, []byte("x"))
-				prog.Speed, _ = strconv.ParseFloat(string(line[len(speedMarker):]), 64)
-				haveSpeed = true
-			}
-			if haveProgress && haveSpeed {
+			case "dup_frames":
+				prog.DuplicateFrames, _ = strconv.ParseUint(args[1], 10, 64)
+			case "drop_frames":
+				prog.DroppedFrames, _ = strconv.ParseUint(args[1], 10, 64)
+			case "speed":
+				prog.Speed, _ = strconv.ParseFloat(strings.TrimSuffix(args[1], "x"), 64)
+			case "progress":
 				ch <- prog
-				haveProgress = false
-				haveSpeed = false
-			}
-			if bytes.Equal(line, endMarker) {
-				return
+				if args[1] == "end" {
+					return
+				}
 			}
 		}
 		if err := s.Err(); err != nil {

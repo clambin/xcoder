@@ -90,7 +90,7 @@ func TestFFMPEG_runProgressSocket(t *testing.T) {
 	}, time.Second, 50*time.Millisecond)
 	t.Cleanup(func() { require.NoError(t, conn.Close()) })
 
-	_, _ = conn.Write([]byte("speed=1.0x\nout_time_ms=1000\nprogress=end\n"))
+	_, _ = conn.Write([]byte("speed=1.0x\nout_time_us=1000\nprogress=end\n"))
 
 	assert.Eventually(t, func() bool {
 		p, ok := prog.Load().(Progress)

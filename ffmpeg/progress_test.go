@@ -65,7 +65,6 @@ func Test_progress(t *testing.T) {
 }
 
 func Benchmark_progress(b *testing.B) {
-	// Benchmark_progress-10    	    2359	    461877 ns/op	    4295 B/op	       4 allocs/op
 	// Benchmark_progress-10    	    2719	    445150 ns/op	    4290 B/op	       4 allocs/op
 	var input strings.Builder
 	for line := range 1000 {

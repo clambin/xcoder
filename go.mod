@@ -5,7 +5,7 @@ go 1.24
 toolchain go1.24.4
 
 require (
-	codeberg.org/clambin/go-common/charmer v0.3.0
+	codeberg.org/clambin/go-common/charmer v0.3.1
 	codeberg.org/clambin/go-common/flagger v0.2.3
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/gdamore/tcell/v2 v2.8.1
@@ -23,7 +23,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
-	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect

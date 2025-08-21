@@ -1,5 +1,5 @@
-codeberg.org/clambin/go-common/charmer v0.3.0 h1:MGsCgIWchgGfCCcTgniJirttHG1n26PLeGhQXsN26NQ=
-codeberg.org/clambin/go-common/charmer v0.3.0/go.mod h1:nK6y2sL2AasTxdBjwtAOM9NKv1YNiR1Yutgm/wVquo0=
+codeberg.org/clambin/go-common/charmer v0.3.1 h1:UNKLEEfnwTwVQZ9RhzSN2sBJtEbwEuqSV0VNGQjR/rg=
+codeberg.org/clambin/go-common/charmer v0.3.1/go.mod h1:fBChoP4EE2NsRMV7p0d4rfd+U6D7YPZRvgGX7evSZ5A=
 codeberg.org/clambin/go-common/flagger v0.2.3 h1:5Owf5IIpCmUlDSL1XGHtCTM4WblIimTScTgX8cEOKjE=
 codeberg.org/clambin/go-common/flagger v0.2.3/go.mod h1:BbmB5YvTEq4l/xrwNdkWDIFBpDEA2KHEdCbMd2q81Oc=
 codeberg.org/clambin/go-common/set v0.6.0 h1:R+Pe98XsmW3sdMtBZ/G/FKsgeeynhbqoCTrL+pGApUQ=

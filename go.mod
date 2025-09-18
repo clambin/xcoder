@@ -5,7 +5,7 @@ go 1.24
 toolchain go1.24.4
 
 require (
-	codeberg.org/clambin/go-common/charmer v0.3.0
+	codeberg.org/clambin/go-common/charmer v0.3.1
 	codeberg.org/clambin/go-common/flagger v0.2.3
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/gdamore/tcell/v2 v2.8.1

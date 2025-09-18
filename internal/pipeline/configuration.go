@@ -1,18 +1,22 @@
 package pipeline
 
 import (
-	"codeberg.org/clambin/go-common/flagger"
 	"github.com/spf13/viper"
 )
 
 type Configuration struct {
-	flagger.Log
+	Log
 	Input       string  `flagger.usage:"input directory"`
 	ProfileName string  `flagger.name:"profile" flagger.usage:"conversion profile"`
 	Profile     Profile `flagger.skip:"true"`
 	Active      bool    `flagger.usage:"start processor in active mode"`
 	Remove      bool    `flagger.usage:"remove source files after successful conversion"`
 	Overwrite   bool    `flagger.usage:"overwrite existing files"`
+}
+
+type Log struct {
+	Level  string
+	Format string
 }
 
 func GetConfigurationFromViper(v *viper.Viper) (cfg Configuration, err error) {

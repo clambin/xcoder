@@ -55,6 +55,16 @@ func (q *Queue) List() []*WorkItem {
 	return slices.Clone(q.queue)
 }
 
+func (q *Queue) Stats() map[Status]int {
+	q.lock.RLock()
+	defer q.lock.RUnlock()
+	stats := make(map[Status]int)
+	for _, item := range q.queue {
+		stats[item.WorkStatus().Status]++
+	}
+	return stats
+}
+
 func (q *Queue) Size() int {
 	q.lock.RLock()
 	defer q.lock.RUnlock()

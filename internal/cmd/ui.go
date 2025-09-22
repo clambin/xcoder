@@ -2,28 +2,29 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
+	"log/slog"
 
 	"codeberg.org/clambin/go-common/charmer"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clambin/xcoder/internal/pipeline"
-	"github.com/clambin/xcoder/internal/ui"
-	"github.com/rivo/tview"
+	"github.com/clambin/xcoder/internal/tui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 )
 
 var (
-	runCmd = &cobra.Command{
-		Use:   "run",
+	uiCmd = &cobra.Command{
+		Use:   "ui",
 		Short: "Interactively transcode video files",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), viper.GetViper())
+			return runUI(cmd.Context(), viper.GetViper())
 		},
 	}
 
-	runArgs = charmer.Arguments{
+	uiArgs = charmer.Arguments{
 		"active":     {Default: false, Help: "start processor in active mode"},
 		"input":      {Default: ".", Help: "input directory"},
 		"log.format": {Default: "json", Help: "log format"},
@@ -35,13 +36,13 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(runCmd)
-	if err := charmer.SetPersistentFlags(runCmd, viper.GetViper(), runArgs); err != nil {
+	rootCmd.AddCommand(uiCmd)
+	if err := charmer.SetPersistentFlags(uiCmd, viper.GetViper(), uiArgs); err != nil {
 		panic(err)
 	}
 }
 
-func run(ctx context.Context, v *viper.Viper) error {
+func runUI(ctx context.Context, v *viper.Viper) error {
 	cfg, err := pipeline.GetConfigurationFromViper(v)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
@@ -50,16 +51,20 @@ func run(ctx context.Context, v *viper.Viper) error {
 	var queue pipeline.Queue
 	queue.SetActive(cfg.Active)
 
-	u := ui.New(&queue, cfg)
-	l := cfg.Logger(u.LogViewer, nil)
-	a := tview.NewApplication().SetRoot(u.Root, true)
+	u := tui.New(&queue, cfg)
+	a := tea.NewProgram(u, tea.WithAltScreen(), tea.WithoutCatchPanics())
+
+	// TODO: need bubble to read & show slog log
+	//l := cfg.Logger(u.LogViewer, nil)
+	l := slog.New(slog.DiscardHandler)
 
 	var g errgroup.Group
 	subCtx, cancel := context.WithCancel(ctx)
-	g.Go(func() error { return pipeline.Run(subCtx, cfg, &queue, l) })
-	g.Go(func() error { u.Run(subCtx, a, 250*time.Millisecond); return nil })
-	_ = a.Run()
 
+	g.Go(func() error { return pipeline.Run(subCtx, cfg, &queue, l) })
+
+	_, err = a.Run()
 	cancel()
-	return g.Wait()
+
+	return errors.Join(err, g.Wait())
 }

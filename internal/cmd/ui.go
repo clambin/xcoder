@@ -54,9 +54,9 @@ func runUI(ctx context.Context, v *viper.Viper) error {
 	u := tui.New(&queue, cfg)
 	a := tea.NewProgram(u, tea.WithAltScreen(), tea.WithoutCatchPanics())
 
-	// TODO: need bubble to read & show slog log
-	//l := cfg.Logger(u.LogViewer, nil)
-	l := slog.New(slog.DiscardHandler)
+	// TODO: respect cfg.Log
+	l := slog.New(slog.NewTextHandler(u.LogWriter(), &slog.HandlerOptions{Level: slog.LevelInfo}))
+	l.Info("starting program")
 
 	var g errgroup.Group
 	subCtx, cancel := context.WithCancel(ctx)

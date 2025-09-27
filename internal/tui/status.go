@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/clambin/bubbles/stream"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -43,7 +44,7 @@ func (s statusLine) Init() tea.Cmd {
 
 func (s statusLine) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
+	case stream.SetSizeMsg:
 		s.width = msg.Width
 		return s, nil
 	case spinner.TickMsg:

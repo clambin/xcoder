@@ -24,6 +24,14 @@ var (
 			key.WithKeys("f"),
 			key.WithHelp("f", "show full path"),
 		),
+		ShowLogs: key.NewBinding(
+			key.WithKeys("l"),
+			key.WithHelp("l", "show logs"),
+		),
+		CloseLogs: key.NewBinding(
+			key.WithKeys(tea.KeyEscape.String()),
+			key.WithHelp("esc", "close logs"),
+		),
 	}
 
 	defaultFilterKeyMap = FilterKeyMap{
@@ -44,10 +52,12 @@ var (
 var _ help.KeyMap = ControllerKeyMap{}
 
 type ControllerKeyMap struct {
-	Quit     key.Binding
-	Activate key.Binding
-	Convert  key.Binding
-	FullPath key.Binding
+	Quit      key.Binding
+	Activate  key.Binding
+	Convert   key.Binding
+	FullPath  key.Binding
+	ShowLogs  key.Binding
+	CloseLogs key.Binding
 }
 
 func (k ControllerKeyMap) ShortHelp() []key.Binding {
@@ -56,6 +66,8 @@ func (k ControllerKeyMap) ShortHelp() []key.Binding {
 		k.Activate,
 		k.Convert,
 		k.FullPath,
+		k.ShowLogs,
+		k.CloseLogs,
 	}
 }
 

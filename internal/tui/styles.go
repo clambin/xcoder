@@ -16,6 +16,7 @@ var (
 		pipeline.Skipped.String():    lipgloss.NewStyle().Foreground(colors.Green),
 		pipeline.Converted.String():  lipgloss.NewStyle().Foreground(colors.Yellow4Alt),
 		pipeline.Converting.String(): lipgloss.NewStyle().Foreground(colors.Orange1),
+		pipeline.Failed.String():     lipgloss.NewStyle().Foreground(colors.Red),
 	}
 )
 

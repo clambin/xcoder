@@ -17,9 +17,6 @@ func TestQueue(t *testing.T) {
 	assert.Empty(t, slices.Collect(l.All()))
 	assert.Zero(t, l.Size())
 	assert.False(t, l.Active())
-	for range l.All() {
-		t.Errorf("should not be reached")
-	}
 
 	l.Add("foo")
 	assert.Equal(t, 1, l.Size())
@@ -59,8 +56,6 @@ func TestQueue_Active(t *testing.T) {
 	assert.False(t, l.Active())
 	l.SetActive(true)
 	assert.True(t, l.Active())
-	l.ToggleActive()
-	assert.False(t, l.Active())
 }
 
 func TestWorkItem_RemainingFormatted(t *testing.T) {

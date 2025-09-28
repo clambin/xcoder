@@ -17,11 +17,11 @@ const (
 var _ tea.Model = statusLine{}
 
 type statusLine struct {
+	styles    StatusStyles
 	queue     Queue
 	spinner   spinner.Model
 	width     int
 	showState bool
-	styles    StatusStyles
 }
 
 func newStatusLine(queue Queue, styles StatusStyles) statusLine {

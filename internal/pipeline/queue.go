@@ -86,21 +86,15 @@ func (q *Queue) SetActive(active bool) {
 	q.active = active
 }
 
-func (q *Queue) ToggleActive() {
-	q.lock.Lock()
-	defer q.lock.Unlock()
-	q.active = !q.active
-}
-
 func (q *Queue) dequeue() *WorkItem {
 	q.lock.Lock()
 	defer q.lock.Unlock()
-	var item *WorkItem
-	if len(q.waiting) > 0 {
-		item = q.waiting[0]
-		item.SetWorkStatus(WorkStatus{Status: Converting})
-		q.waiting = q.waiting[1:]
+	if len(q.waiting) == 0 {
+		return nil
 	}
+	var item *WorkItem
+	item, q.waiting = q.waiting[0], q.waiting[1:]
+	item.SetWorkStatus(WorkStatus{Status: Converting})
 	return item
 }
 

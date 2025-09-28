@@ -132,8 +132,8 @@ func TestVideoStats_LogValue(t *testing.T) {
 		},
 		{
 			name:       "complete",
-			videoStats: VideoStats{VideoCodec: "hevc", Width: 1920, Height: 1080, BitRate: 3_000_000},
-			want:       "[codec=hevc width=1920 height=1080 bitrate=3.0 mbps]",
+			videoStats: VideoStats{VideoCodec: "hevc", Width: 1920, Height: 1080, BitRate: 3_000_000, BitsPerSample: 10},
+			want:       "[codec=hevc width=1920 height=1080 bitrate=3.0 mbps bits=10]",
 		},
 	}
 

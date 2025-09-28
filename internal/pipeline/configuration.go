@@ -47,9 +47,12 @@ func (l Log) Logger(w io.Writer, opts *slog.HandlerOptions) *slog.Logger {
 	return slog.New(h)
 }
 
-func GetConfigurationFromViper(v *viper.Viper) (cfg Configuration, err error) {
+func GetConfigurationFromViper(v *viper.Viper, args []string) (cfg Configuration, err error) {
+	if len(args) != 1 {
+		return cfg, fmt.Errorf("invalid number of arguments: %d", len(args))
+	}
+	cfg.Input = args[0]
 	cfg.Active = v.GetBool("active")
-	cfg.Input = v.GetString("input")
 	cfg.Format = v.GetString("log.format")
 	cfg.Level = v.GetString("log.level")
 	cfg.Overwrite = v.GetBool("overwrite")

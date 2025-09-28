@@ -56,21 +56,21 @@ type Queue interface {
 var _ tea.Model = Controller{}
 
 type Controller struct {
+	mediaFilterStyle lipgloss.Style
 	queue            Queue
-	configPane       configPane
 	statusLine       tea.Model
-	tableHelp        helper.Helper
-	logHelp          helper.Helper
 	queuePane        tea.Model
 	logPane          tea.Model
+	configPane       configPane
+	keyMap           ControllerKeyMap
+	selectedRow      table.Row
+	tableHelp        helper.Helper
+	logHelp          helper.Helper
 	filter           filter
 	width            int
 	height           int
-	keyMap           ControllerKeyMap
-	showFullPath     bool
-	selectedRow      table.Row
-	mediaFilterStyle lipgloss.Style
 	activePane       activePane
+	showFullPath     bool
 	textFilterOn     bool
 }
 

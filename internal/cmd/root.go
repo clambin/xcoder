@@ -19,10 +19,11 @@ import (
 
 var (
 	rootCmd = cobra.Command{
-		Use:   "xcoder",
+		Use:   "xcoder [flags] [directory]",
 		Short: "Transcode media files",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runUI(cmd.Context(), viper.GetViper())
+			return runUI(cmd.Context(), viper.GetViper(), args)
 		},
 	}
 
@@ -30,8 +31,7 @@ var (
 
 	uiArgs = charmer.Arguments{
 		"active":     {Default: false, Help: "start processor in active mode"},
-		"input":      {Default: ".", Help: "input directory"},
-		"log.format": {Default: "json", Help: "log format"},
+		"log.format": {Default: "text", Help: "log format"},
 		"log.level":  {Default: "info", Help: "log level"},
 		"overwrite":  {Default: false, Help: "overwrite existing files"},
 		"remove":     {Default: false, Help: "remove source files after successful transcoding"},
@@ -81,8 +81,11 @@ func mustConfigDir() string {
 	return cfgDir
 }
 
-func runUI(ctx context.Context, v *viper.Viper) error {
-	cfg, err := pipeline.GetConfigurationFromViper(v)
+func runUI(ctx context.Context, v *viper.Viper, args []string) error {
+	if len(args) == 0 {
+		args = []string{"."}
+	}
+	cfg, err := pipeline.GetConfigurationFromViper(v, args)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}

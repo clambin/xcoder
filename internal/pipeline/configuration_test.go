@@ -14,11 +14,11 @@ func TestGetConfigurationFromViper(t *testing.T) {
 	v := viper.New()
 	v.Set("profile", "invalid")
 
-	_, err := GetConfigurationFromViper(v)
+	_, err := GetConfigurationFromViper(v, []string{"."})
 	require.Error(t, err)
 
 	v.Set("profile", "hevc-high")
-	cfg, err := GetConfigurationFromViper(v)
+	cfg, err := GetConfigurationFromViper(v, []string{"."})
 	require.NoError(t, err)
 	assert.Equal(t, "hevc", cfg.Profile.TargetCodec)
 }

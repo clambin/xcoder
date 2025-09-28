@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"strings"
 
 	"codeberg.org/clambin/go-common/charmer"
 	tea "github.com/charmbracelet/bubbletea"
@@ -54,8 +56,7 @@ func runUI(ctx context.Context, v *viper.Viper) error {
 	u := tui.New(&queue, cfg)
 	a := tea.NewProgram(u, tea.WithAltScreen(), tea.WithoutCatchPanics())
 
-	// TODO: respect cfg.Log
-	l := slog.New(slog.NewTextHandler(u.LogWriter(), &slog.HandlerOptions{Level: slog.LevelInfo}))
+	l := newLogger(u.LogWriter(), cfg)
 	l.Info("starting program")
 
 	var g errgroup.Group
@@ -67,4 +68,21 @@ func runUI(ctx context.Context, v *viper.Viper) error {
 	cancel()
 
 	return errors.Join(err, g.Wait())
+}
+
+func newLogger(w io.Writer, cfg pipeline.Configuration) *slog.Logger {
+	var opts *slog.HandlerOptions
+	if cfg.Level == "debug" {
+		opts = &slog.HandlerOptions{Level: slog.LevelDebug}
+	}
+	var h slog.Handler
+	switch strings.ToLower(cfg.Format) {
+	case "json":
+		h = slog.NewJSONHandler(w, opts)
+	case "text":
+		h = slog.NewTextHandler(w, opts)
+	default:
+		panic(fmt.Sprintf("invalid format: %s", cfg.Format))
+	}
+	return slog.New(h)
 }

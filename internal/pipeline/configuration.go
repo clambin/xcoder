@@ -1,22 +1,50 @@
 package pipeline
 
 import (
+	"cmp"
+	"fmt"
+	"io"
+	"log/slog"
+	"os"
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
 type Configuration struct {
 	Log
-	Input       string  `flagger.usage:"input directory"`
-	ProfileName string  `flagger.name:"profile" flagger.usage:"conversion profile"`
-	Profile     Profile `flagger.skip:"true"`
-	Active      bool    `flagger.usage:"start processor in active mode"`
-	Remove      bool    `flagger.usage:"remove source files after successful conversion"`
-	Overwrite   bool    `flagger.usage:"overwrite existing files"`
+	Input       string
+	ProfileName string
+	Profile     Profile
+	Active      bool
+	Remove      bool
+	Overwrite   bool
 }
 
 type Log struct {
 	Level  string
 	Format string
+}
+
+// Logger returns a new logger with the given options, writing to w.
+// If w is nil, it defaults to os.Stderr.
+func (l Log) Logger(w io.Writer, opts *slog.HandlerOptions) *slog.Logger {
+	if opts == nil {
+		opts = &slog.HandlerOptions{}
+	}
+	if strings.ToLower(l.Level) == "debug" {
+		opts = &slog.HandlerOptions{Level: slog.LevelDebug}
+	}
+	var h slog.Handler
+	switch strings.ToLower(l.Format) {
+	case "json":
+		h = slog.NewJSONHandler(cmp.Or[io.Writer](w, os.Stderr), opts)
+	case "text":
+		h = slog.NewTextHandler(cmp.Or[io.Writer](w, os.Stderr), opts)
+	default:
+		panic(fmt.Sprintf("invalid format: %s", l.Format))
+	}
+	return slog.New(h)
 }
 
 func GetConfigurationFromViper(v *viper.Viper) (cfg Configuration, err error) {

@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	codeberg.org/clambin/bubbles v0.5.0
-	codeberg.org/clambin/go-common/charmer v0.3.1
+	codeberg.org/clambin/go-common/charmer v0.4.0
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10

@@ -6,8 +6,8 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
-// configPane is a pane that displays the current configuration.
-// since the configuration is currently static, we pre-render it.
+// configPane displays the current configuration.
+// Since the configuration is currently static, we pre-render it.
 type configPane struct {
 	content string
 }
@@ -29,10 +29,10 @@ func newConfigPane(cfg pipeline.Configuration, styles ConfigStyles) configPane {
 	}
 
 	var out strings.Builder
-	for i, label := range configLabels {
-		if i > 0 {
-			out.WriteString("\n")
-		}
+	for _, label := range configLabels {
+		//if i > 0 {
+		out.WriteString("\n")
+		//}
 		out.WriteString(styles.LabelStyle.Render(label + strings.Repeat(" ", labelWidth-len(label)) + ": "))
 		var value string
 		switch label {

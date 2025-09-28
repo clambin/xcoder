@@ -29,8 +29,8 @@ var (
 			key.WithHelp("l", "show logs"),
 		),
 		CloseLogs: key.NewBinding(
-			key.WithKeys(tea.KeyEscape.String()),
-			key.WithHelp("esc", "close logs"),
+			key.WithKeys(tea.KeyEscape.String(), "l"),
+			key.WithHelp("esc/l", "close logs"),
 		),
 	}
 
@@ -65,14 +65,14 @@ func (k ControllerKeyMap) ShortHelp() []key.Binding {
 		k.Quit,
 		k.Activate,
 		k.Convert,
-		k.FullPath,
-		k.ShowLogs,
-		k.CloseLogs,
 	}
 }
 
 func (k ControllerKeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{k.ShortHelp()}
+	return [][]key.Binding{
+		k.ShortHelp(),            // General
+		{k.FullPath, k.ShowLogs}, // View
+	}
 }
 
 var _ help.KeyMap = FilterKeyMap{}

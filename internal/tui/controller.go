@@ -58,7 +58,8 @@ type Controller struct {
 	queue            Queue
 	configPane       configPane
 	statusLine       tea.Model
-	helpPane         helper.Helper
+	tableHelp        helper.Helper
+	logHelp          helper.Helper
 	queuePane        tea.Model
 	logPane          tea.Model
 	filter           filter
@@ -93,7 +94,8 @@ func New(queue Queue, cfg pipeline.Configuration) Controller {
 		mediaFilterStyle: styles.MediaFilter,
 		keyMap:           defaultKeyMap,
 	}
-	ui.helpPane = helper.New().Styles(styles.Help).Sections(ui.helpSections())
+	ui.tableHelp = helper.New().Styles(styles.Help).Sections(ui.tableHelpSections())
+	ui.logHelp = helper.New().Styles(styles.Help).Sections(ui.logHelpSections())
 	return ui
 }
 
@@ -121,11 +123,13 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		c.width = msg.Width
 		c.height = msg.Height
+		c.tableHelp = c.tableHelp.Width(msg.Width - lipgloss.Width(c.configPane.View()))
+		c.logHelp = c.logHelp.Width(msg.Width - lipgloss.Width(c.configPane.View()))
 		c.queuePane, cmd = c.queuePane.Update(table.SetSizeMsg{Width: msg.Width, Height: c.contentHeight()})
 		cmds = append(cmds, cmd)
 		c.logPane, cmd = c.logPane.Update(stream.SetSizeMsg{Width: msg.Width, Height: c.contentHeight()})
 		cmds = append(cmds, cmd)
-		c.statusLine, cmd = c.statusLine.Update(stream.SetSizeMsg{Width: msg.Width, Height: c.contentHeight()})
+		c.statusLine, cmd = c.statusLine.Update(msg)
 		cmds = append(cmds, cmd)
 	case autoRefreshMsg:
 		cmds = append(cmds,
@@ -217,8 +221,14 @@ func (c Controller) View() string {
 
 func (c Controller) viewHeader() string {
 	config := lipgloss.NewStyle().Padding(0, 5, 0, 0).Render(c.configPane.View())
-	help := c.helpPane.Width(c.width - lipgloss.Width(config)).View()
-	return lipgloss.JoinHorizontal(lipgloss.Left, "\n"+config, help)
+	var help string
+	switch c.activePane {
+	case queuePane:
+		help = c.tableHelp.View()
+	case logPane:
+		help = c.logHelp.View()
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left, config, help)
 }
 
 func (c Controller) viewBody() string {
@@ -240,12 +250,22 @@ func (c Controller) contentHeight() int {
 	return c.height - lipgloss.Height(c.viewHeader()) - lipgloss.Height(c.viewFooter())
 }
 
-func (c Controller) helpSections() []helper.Section {
+func (c Controller) tableHelpSections() []helper.Section {
+	h := c.keyMap.FullHelp()
+	filterBindings := c.filter.keyMap.ShortHelp()
+	filterBindings = append(filterBindings, table.DefaultFilterTableKeyMap().FilterKeyMap.ShortHelp()...)
+	return []helper.Section{
+		{Title: "General", Keys: h[0]},
+		{Title: "View", Keys: h[1]},
+		{Title: "Navigation", Keys: table.DefaultKeyMap().ShortHelp()},
+		{Title: "Filters", Keys: filterBindings},
+	}
+}
+
+func (c Controller) logHelpSections() []helper.Section {
 	return []helper.Section{
 		{Title: "General", Keys: c.keyMap.ShortHelp()},
-		{Title: "Navigation", Keys: table.DefaultKeyMap().ShortHelp()},
-		{Title: "Filters", Keys: table.DefaultFilterTableKeyMap().FilterKeyMap.ShortHelp()},
-		{Title: "Media filters", Keys: c.filter.keyMap.ShortHelp()},
+		{Title: "Navigation", Keys: []key.Binding{c.keyMap.CloseLogs}},
 	}
 }
 

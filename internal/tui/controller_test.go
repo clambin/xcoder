@@ -88,10 +88,9 @@ func (f *fakeQueue) List() []*pipeline.WorkItem {
 
 func (f *fakeQueue) Queue(*pipeline.WorkItem) {
 	f.queue[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Converting})
-	return
 }
 
-func (f *fakeQueue) SetActive(b bool) {
+func (f *fakeQueue) SetActive(_ bool) {
 	panic("implement me")
 }
 

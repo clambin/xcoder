@@ -170,6 +170,7 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				c.activePane = queuePane
 			default:
 				c.logPane, cmd = c.logPane.Update(msg)
+				cmds = append(cmds, cmd)
 			}
 		case queuePane:
 			// if the text filter is on, it receives all inputs.
@@ -181,7 +182,7 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch {
 			case key.Matches(msg, c.keyMap.FullPath):
 				c.showFullPath = !c.showFullPath
-				cmd = c.refreshTableCmd()
+				cmds = append(cmds, c.refreshTableCmd())
 			case key.Matches(msg, c.keyMap.Activate):
 				c.queue.SetActive(!c.queue.Active())
 			case key.Matches(msg, c.keyMap.Convert):

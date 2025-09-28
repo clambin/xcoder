@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"log/slog"
+	"slices"
 	"testing"
 
 	"github.com/psanford/memfs"
@@ -16,14 +17,15 @@ func TestScanFS(t *testing.T) {
 	require.NoError(t, fs.WriteFile("foo/info.txt", []byte(""), 0644))
 	require.NoError(t, fs.MkdirAll("bar", 0000))
 
-	var list Queue
+	var queue Queue
 	ch := make(chan *WorkItem)
 	errCh := make(chan error)
-	go func() { errCh <- ScanFS(t.Context(), fs, "/", &list, ch, slog.Default()) }()
+	go func() { errCh <- ScanFS(t.Context(), fs, "/", &queue, ch, slog.Default()) }()
 	item := <-ch
 	assert.Equal(t, "/foo/video.MKV", item.Source.Path)
 	require.NoError(t, <-errCh)
 
-	require.Len(t, list.List(), 1)
-	assert.Equal(t, "/foo/video.MKV", list.List()[0].Source.Path)
+	items := slices.Collect(queue.All())
+	require.Len(t, items, 1)
+	assert.Equal(t, "/foo/video.MKV", items[0].Source.Path)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"iter"
 	"log/slog"
-	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -45,14 +44,6 @@ func (q *Queue) Queue(item *WorkItem) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 	q.waiting = append(q.waiting, item)
-}
-
-// List returns all items in the queue. This clones the contained slice. For performance reasons,
-// this should only be used for testing. Use All(), which returns an iterator, instead.
-func (q *Queue) List() []*WorkItem {
-	q.lock.RLock()
-	defer q.lock.RUnlock()
-	return slices.Clone(q.queue)
 }
 
 func (q *Queue) Stats() map[Status]int {

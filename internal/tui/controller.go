@@ -2,6 +2,7 @@ package tui
 
 import (
 	"io"
+	"iter"
 	"path/filepath"
 	"time"
 
@@ -46,7 +47,7 @@ const (
 
 type Queue interface {
 	Stats() map[pipeline.Status]int
-	List() []*pipeline.WorkItem
+	All() iter.Seq[*pipeline.WorkItem]
 	Queue(*pipeline.WorkItem)
 	SetActive(bool)
 	Active() bool
@@ -284,9 +285,8 @@ func (c Controller) setTitleCmd() tea.Cmd {
 // refreshTableCmd returns a command that refreshes the table with the current queue state.
 func (c Controller) refreshTableCmd() tea.Cmd {
 	return func() tea.Msg {
-		items := c.queue.List()
-		rows := make([]table.Row, 0, len(items))
-		for _, item := range items {
+		var rows []table.Row
+		for item := range c.queue.All() {
 			if !c.filter.Show(item) {
 				continue
 			}

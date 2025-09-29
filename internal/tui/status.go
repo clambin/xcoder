@@ -14,6 +14,9 @@ const (
 	stateBlinkInterval = 500 * time.Millisecond
 )
 
+// blinkStateMsg is a message blinks the processing state (if batch processing is on).
+type blinkStateMsg struct{}
+
 var _ tea.Model = statusLine{}
 
 type statusLine struct {
@@ -87,5 +90,3 @@ func (s statusLine) viewState() string {
 	}
 	return s.styles.Main.Padding(0, 2, 0, 0).Render("Batch processing: " + state)
 }
-
-type blinkStateMsg struct{}

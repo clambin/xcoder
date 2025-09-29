@@ -17,6 +17,14 @@ const (
 	refreshInterval = 2 * 250 * time.Millisecond
 )
 
+// activePane determines which pane is active, i.e., which one gets keyboard input and which one to display.
+type activePane int
+
+const (
+	queuePane activePane = iota
+	logPane
+)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // internal control messages
 
@@ -164,10 +172,12 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// derive it from the first table load.
 		if len(msg.Rows) > 0 && c.selectedRow == nil {
 			c.selectedRow = msg.Rows[0]
+			_, _ = c.LogWriter().Write([]byte("Selected row: " + c.selectedRow[0].(string) + "\n"))
 		}
 	case table.RowChangedMsg:
 		// mark the selected row so we know which queue item to convert when the user hits <enter>.
 		c.selectedRow = msg.Row
+		_, _ = c.LogWriter().Write([]byte("Selected row: " + c.selectedRow[0].(string) + "\n"))
 	case tea.KeyMsg:
 		// if the queue pane is active and the text filter is on, it receives all keyboard inputs
 		if c.queuePane.TextFilterOn() {

@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"codeberg.org/clambin/bubbles/helper"
-	"codeberg.org/clambin/bubbles/stream"
 	"codeberg.org/clambin/bubbles/table"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,32 +17,40 @@ const (
 	refreshInterval = 2 * 250 * time.Millisecond
 )
 
-var (
-	columns = []table.Column{
-		{Name: "SOURCE"},
-		{Name: "SOURCE STATS", Width: 25},
-		{Name: "TARGET STATS", Width: 25},
-		{Name: "STATUS", Width: 10, RowStyle: table.CellStyle{Style: lipgloss.NewStyle().Transform(table.StringStyler(statusColors))}},
-		{Name: "COMPLETED", Width: 10, RowStyle: table.CellStyle{Style: lipgloss.NewStyle().Align(lipgloss.Right)}},
-		{Name: "REMAINING", Width: 10, RowStyle: table.CellStyle{Style: lipgloss.NewStyle().Align(lipgloss.Right)}},
-		{Name: "ERROR", Width: 40},
-	}
-)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// internal control messages
 
 // autoRefreshMsg refreshes the screen at a regular interval.
 type autoRefreshMsg struct{}
 
-// refreshMsg manually refreshes the screen.
-// This is used to perform a manual refresh of the table (e.g., after a filter change)
-type refreshMsg struct{}
+func autoRefreshCmd() func(_ time.Time) tea.Msg {
+	return func(_ time.Time) tea.Msg {
+		return autoRefreshMsg{}
+	}
+}
 
-type activePane int
+// refreshTableMsg refreshes the table pane.
+type refreshTableMsg struct{}
 
-const (
-	queuePane activePane = iota
-	logPane
-)
+func refreshTableCmd() tea.Cmd {
+	return func() tea.Msg {
+		return refreshTableMsg{}
+	}
+}
 
+// setPaneMsg sets the active pane in the main body
+type setPaneMsg activePane
+
+func setPaneCmd(pane activePane) tea.Cmd {
+	return func() tea.Msg {
+		return setPaneMsg(pane)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Controller
+
+// Queue is the interface for a pipeline.Queue.
 type Queue interface {
 	Stats() map[pipeline.Status]int
 	All() iter.Seq[*pipeline.WorkItem]
@@ -55,153 +61,68 @@ type Queue interface {
 
 var _ tea.Model = Controller{}
 
+// Controller implements the UI for xcoder.
 type Controller struct {
 	mediaFilterStyle lipgloss.Style
 	queue            Queue
 	statusLine       tea.Model
-	queuePane        tea.Model
-	logPane          tea.Model
 	configPane       configPane
+	helpController   helpController
 	keyMap           ControllerKeyMap
 	selectedRow      table.Row
-	tableHelp        helper.Helper
-	logHelp          helper.Helper
+	logPane          logViewer
+	queuePane        queueViewer
 	filter           filter
 	width            int
 	height           int
-	activePane       activePane
 	showFullPath     bool
-	textFilterOn     bool
 }
 
+// New returns a new Controller for the provided Queue.
 func New(queue Queue, cfg pipeline.Configuration) Controller {
 	styles := DefaultStyles()
+	controllerKeyMap := defaultControllerKeyMap()
+	filterKeyMap := defaultFilterKeyMap()
+
 	ui := Controller{
-		queue:      queue,
-		configPane: newConfigPane(cfg, styles.Config),
-		statusLine: newStatusLine(queue, styles.Status),
-		queuePane: table.NewFilterTable(
-			"media files",
-			columns,
-			nil,
-			styles.TableStyle,
-			table.DefaultFilterTableKeyMap(),
-		),
-		logPane: logViewer{
-			Model:       stream.NewStream(80, 25, stream.WithShowToggles(true)),
-			frameStyles: styles.FrameStyle,
-		},
-		filter:           filter{keyMap: defaultFilterKeyMap},
+		queue:            queue,
+		configPane:       newConfigPane(cfg, styles.Config),
+		statusLine:       newStatusLine(queue, styles.Status),
+		queuePane:        newQueueViewer(defaultQueueViewerKeyMap(), styles.TableStyle),
+		logPane:          newLogViewer(defaultLogViewerKeyMap(), styles.FrameStyle),
+		filter:           filter{keyMap: filterKeyMap},
 		mediaFilterStyle: styles.MediaFilter,
-		keyMap:           defaultKeyMap,
+		keyMap:           controllerKeyMap,
+		helpController:   newHelpController(controllerKeyMap, filterKeyMap, styles.Help),
 	}
-	ui.tableHelp = helper.New().Styles(styles.Help).Sections(ui.tableHelpSections())
-	ui.logHelp = helper.New().Styles(styles.Help).Sections(ui.logHelpSections())
 	return ui
 }
 
+// LogWriter returns the io.Writer for the log pane.
+// Calling applications use this to direct log/slog output to the screen.
 func (c Controller) LogWriter() io.Writer {
-	return c.logPane.(logViewer).Model.(io.Writer)
+	return c.logPane.LogWriter()
 }
 
+// Init implements the tea.Model interface. It initializes the controller and all subcomponents.
 func (c Controller) Init() tea.Cmd {
 	return tea.Batch(
 		c.statusLine.Init(),
 		c.queuePane.Init(),
 		c.logPane.Init(),
-		tea.Tick(refreshInterval, func(t time.Time) tea.Msg {
-			return autoRefreshMsg{}
-		}),
+		setPaneCmd(queuePane),
+		tea.Tick(refreshInterval, autoRefreshCmd()),
 	)
 }
 
+// Update implements the tea.Model interface. It updates the controller and all subcomponents.
 func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
-	// process control messages first
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		c.width = msg.Width
-		c.height = msg.Height
-		c.tableHelp = c.tableHelp.Width(msg.Width - lipgloss.Width(c.configPane.View()))
-		c.logHelp = c.logHelp.Width(msg.Width - lipgloss.Width(c.configPane.View()))
-		c.queuePane, cmd = c.queuePane.Update(table.SetSizeMsg{Width: msg.Width, Height: c.contentHeight()})
-		cmds = append(cmds, cmd)
-		c.logPane, cmd = c.logPane.Update(stream.SetSizeMsg{Width: msg.Width, Height: c.contentHeight()})
-		cmds = append(cmds, cmd)
-		c.statusLine, cmd = c.statusLine.Update(msg)
-		cmds = append(cmds, cmd)
-	case autoRefreshMsg:
-		cmds = append(cmds,
-			// refresh the screen
-			func() tea.Msg { return refreshMsg{} },
-			// set up the next refresh
-			tea.Tick(refreshInterval, func(t time.Time) tea.Msg {
-				return autoRefreshMsg{}
-			}),
-		)
-	case refreshMsg:
-		cmds = append(cmds,
-			// set the title according to the filter
-			c.setTitleCmd(),
-			// refresh the table
-			c.refreshTableCmd(),
-		)
-	case table.SetRowsMsg:
-		// if we don't know the selected row yet (i.e., the user hasn't scrolled yet),
-		// derive it from the first table load.
-		if len(msg.Rows) > 0 && c.selectedRow == nil {
-			c.selectedRow = msg.Rows[0]
-		}
-		c.queuePane, cmd = c.queuePane.Update(table.SetRowsMsg{Rows: msg.Rows})
-		cmds = append(cmds, cmd)
-	case table.RowChangedMsg:
-		c.selectedRow = msg.Row
-	case table.FilterStateChangeMsg:
-		c.textFilterOn = msg.State
-	case tea.KeyMsg:
-		if key.Matches(msg, c.keyMap.Quit) {
-			return c, tea.Quit
-		}
-		switch c.activePane {
-		case logPane:
-			switch {
-			case key.Matches(msg, c.keyMap.CloseLogs):
-				c.activePane = queuePane
-			default:
-				c.logPane, cmd = c.logPane.Update(msg)
-				cmds = append(cmds, cmd)
-			}
-		case queuePane:
-			// if the text filter is on, it receives all inputs.
-			if c.textFilterOn {
-				var cmd tea.Cmd
-				c.queuePane, cmd = c.queuePane.Update(msg)
-				return c, cmd
-			}
-			switch {
-			case key.Matches(msg, c.keyMap.FullPath):
-				c.showFullPath = !c.showFullPath
-				cmds = append(cmds, c.refreshTableCmd())
-			case key.Matches(msg, c.keyMap.Activate):
-				c.queue.SetActive(!c.queue.Active())
-			case key.Matches(msg, c.keyMap.Convert):
-				if row := c.selectedRow; row != nil && row[3] == "inspected" {
-					workItem := row[len(row)-1].(table.UserData).Data.(*pipeline.WorkItem)
-					c.queue.Queue(workItem)
-				}
-			case key.Matches(msg, c.keyMap.ShowLogs):
-				c.activePane = logPane
-			default:
-				c.filter, cmd = c.filter.Update(msg)
-				cmds = append(cmds, cmd)
-				c.queuePane, cmd = c.queuePane.Update(msg)
-				cmds = append(cmds, cmd)
-			}
-		}
-	default:
-		c.statusLine, cmd = c.statusLine.Update(msg)
+	// send msg to all subcomponents, except for key msgs
+	if _, ok := msg.(tea.KeyMsg); !ok {
+		c.helpController, cmd = c.helpController.Update(msg)
 		cmds = append(cmds, cmd)
 		c.filter, cmd = c.filter.Update(msg)
 		cmds = append(cmds, cmd)
@@ -209,10 +130,87 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		c.logPane, cmd = c.logPane.Update(msg)
 		cmds = append(cmds, cmd)
+		c.statusLine, cmd = c.statusLine.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		// controller manages the size of the components.
+		c.width = msg.Width
+		c.height = msg.Height
+		// how much room is left for the panes?
+		paneHeight := c.height - lipgloss.Height(c.viewHeader()) - lipgloss.Height(c.viewFooter())
+		cmds = append(cmds,
+			c.queuePane.setSizeCmd(msg.Width, paneHeight),
+			c.logPane.setSizeCmd(msg.Width, paneHeight),
+		)
+	case autoRefreshMsg:
+		// regular refresh. issue a manual refresh and schedule the next update.
+		cmds = append(cmds,
+			// refresh the screen
+			refreshTableCmd(),
+			// set up the next refresh
+			tea.Tick(refreshInterval, autoRefreshCmd()),
+		)
+	case refreshTableMsg:
+		// refresh the table: set the title (based on the filter) and reload the table.
+		cmds = append(cmds,
+			c.setTitleCmd(),
+			c.loadTableCmd(),
+		)
+	case table.SetRowsMsg:
+		// if we don't know the selected row yet (i.e., the user hasn't scrolled yet),
+		// derive it from the first table load.
+		if len(msg.Rows) > 0 && c.selectedRow == nil {
+			c.selectedRow = msg.Rows[0]
+		}
+	case table.RowChangedMsg:
+		// mark the selected row so we know which queue item to convert when the user hits <enter>.
+		c.selectedRow = msg.Row
+	case tea.KeyMsg:
+		// if the queue pane is active and the text filter is on, it receives all keyboard inputs
+		if c.queuePane.TextFilterOn() {
+			c.queuePane, cmd = c.queuePane.Update(msg)
+			cmds = append(cmds, cmd)
+			break
+		}
+		switch {
+		case key.Matches(msg, c.keyMap.Quit):
+			// quit
+			cmds = append(cmds, tea.Quit)
+		case key.Matches(msg, c.keyMap.ShowLogs) && !c.logPane.active:
+			// show logs (only when the log pane is not active)
+			cmds = append(cmds, setPaneCmd(logPane))
+		case key.Matches(msg, c.logPane.keyMap.CloseLogs) && c.logPane.active:
+			// close logs (only when the log pane is active)
+			cmds = append(cmds, setPaneCmd(queuePane))
+		case key.Matches(msg, c.keyMap.Activate):
+			// enable/disable automatic processing
+			c.queue.SetActive(!c.queue.Active())
+		case key.Matches(msg, c.keyMap.Convert):
+			// convert selected item. we only allow this for "inspected" items
+			//(i.e., not converted, rejected, skipped, etc.)
+			if row := c.selectedRow; row != nil {
+				workItem := row[len(row)-1].(table.UserData).Data.(*pipeline.WorkItem)
+				if workItem.WorkStatus().Status == pipeline.Inspected {
+					c.queue.Queue(workItem)
+				}
+			}
+		default:
+			// send unmatched key input to subcomponents.
+			c.filter, cmd = c.filter.Update(msg)
+			cmds = append(cmds, cmd)
+			c.queuePane, cmd = c.queuePane.Update(msg)
+			cmds = append(cmds, cmd)
+			c.logPane, cmd = c.logPane.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 	}
 	return c, tea.Batch(cmds...)
 }
 
+// View implements the tea.Model interface. It renders all subcomponents.
 func (c Controller) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top,
 		c.viewHeader(),
@@ -223,22 +221,19 @@ func (c Controller) View() string {
 
 func (c Controller) viewHeader() string {
 	config := lipgloss.NewStyle().Padding(0, 5, 0, 0).Render(c.configPane.View())
-	var help string
-	switch c.activePane {
-	case queuePane:
-		help = c.tableHelp.View()
-	case logPane:
-		help = c.logHelp.View()
-	}
-	return lipgloss.JoinHorizontal(lipgloss.Left, config, help)
+	width := max(0, c.width-lipgloss.Width(config))
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		config,
+		c.helpController.activeHelpPane().Width(width).View(),
+	)
 }
 
 func (c Controller) viewBody() string {
-	switch c.activePane {
-	case logPane:
-		return c.logPane.View()
-	case queuePane:
+	switch {
+	case c.queuePane.active:
 		return c.queuePane.View()
+	case c.logPane.active:
+		return c.logPane.View()
 	default:
 		return ""
 	}
@@ -248,42 +243,19 @@ func (c Controller) viewFooter() string {
 	return c.statusLine.View()
 }
 
-func (c Controller) contentHeight() int {
-	return c.height - lipgloss.Height(c.viewHeader()) - lipgloss.Height(c.viewFooter())
-}
-
-func (c Controller) tableHelpSections() []helper.Section {
-	h := c.keyMap.FullHelp()
-	filterBindings := c.filter.keyMap.ShortHelp()
-	filterBindings = append(filterBindings, table.DefaultFilterTableKeyMap().FilterKeyMap.ShortHelp()...)
-	return []helper.Section{
-		{Title: "General", Keys: h[0]},
-		{Title: "View", Keys: h[1]},
-		{Title: "Navigation", Keys: table.DefaultKeyMap().ShortHelp()},
-		{Title: "Filters", Keys: filterBindings},
-	}
-}
-
-func (c Controller) logHelpSections() []helper.Section {
-	return []helper.Section{
-		{Title: "General", Keys: c.keyMap.ShortHelp()},
-		{Title: "Navigation", Keys: []key.Binding{c.keyMap.CloseLogs}},
-	}
-}
-
-// setTitleCmd returns a command that sets the title of the table's frame.
+// setTitleCmd sets the title of the table's frame.
 func (c Controller) setTitleCmd() tea.Cmd {
 	return func() tea.Msg {
 		args := c.filter.String()
 		if args != "" {
-			args = "(" + c.mediaFilterStyle.Render(args) + ")"
+			args = " (" + c.mediaFilterStyle.Render(args) + ")"
 		}
 		return table.SetTitleMsg{Title: "media files" + args}
 	}
 }
 
-// refreshTableCmd returns a command that refreshes the table with the current queue state.
-func (c Controller) refreshTableCmd() tea.Cmd {
+// loadTableCmd loads the table with the current Queue state.
+func (c Controller) loadTableCmd() tea.Cmd {
 	return func() tea.Msg {
 		var rows []table.Row
 		for item := range c.queue.All() {

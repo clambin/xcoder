@@ -6,8 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	defaultKeyMap = ControllerKeyMap{
+func defaultControllerKeyMap() ControllerKeyMap {
+	return ControllerKeyMap{
 		Quit: key.NewBinding(
 			key.WithKeys(tea.KeyCtrlC.String(), "q"),
 			key.WithHelp("q/ctrl+c", "quit"),
@@ -33,8 +33,10 @@ var (
 			key.WithHelp("esc/l", "close logs"),
 		),
 	}
+}
 
-	defaultFilterKeyMap = FilterKeyMap{
+func defaultFilterKeyMap() FilterKeyMap {
+	return FilterKeyMap{
 		ShowSkippedFiles: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "show/hide skipped files"),
@@ -47,7 +49,7 @@ var (
 			key.WithKeys("c"),
 			key.WithHelp("c", "show/hide converted files")),
 	}
-)
+}
 
 var _ help.KeyMap = ControllerKeyMap{}
 

@@ -23,13 +23,13 @@ func (f filter) Update(msg tea.Msg) (filter, tea.Cmd) {
 		switch {
 		case key.Matches(msg, f.keyMap.ShowSkippedFiles):
 			f.hideSkipped = !f.hideSkipped
-			return f, func() tea.Msg { return refreshMsg{} }
+			return f, refreshTableCmd()
 		case key.Matches(msg, f.keyMap.ShowRejectedFiles):
 			f.hideRejected = !f.hideRejected
-			return f, func() tea.Msg { return refreshMsg{} }
+			return f, refreshTableCmd()
 		case key.Matches(msg, f.keyMap.ShowConvertedFiles):
 			f.hideConverted = !f.hideConverted
-			return f, func() tea.Msg { return refreshMsg{} }
+			return f, refreshTableCmd()
 		}
 	}
 	return f, nil

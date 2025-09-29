@@ -177,7 +177,13 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case table.RowChangedMsg:
 		// mark the selected row so we know which queue item to convert when the user hits <enter>.
 		c.selectedRow = msg.Row
-		_, _ = c.LogWriter().Write([]byte("Selected row: " + c.selectedRow[0].(string) + "\n"))
+		/*
+			selected := "<nil>"
+			if c.selectedRow != nil {
+				selected = c.selectedRow[0].(string)
+			}
+			_, _ = c.LogWriter().Write([]byte("Selected row: " + selected + "\n"))
+		*/
 	case tea.KeyMsg:
 		// if the queue pane is active and the text filter is on, it receives all keyboard inputs
 		if c.queuePane.TextFilterOn() {
@@ -209,8 +215,10 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		default:
 			// send unmatched key input to subcomponents.
-			c.filter, cmd = c.filter.Update(msg)
-			cmds = append(cmds, cmd)
+			if c.queuePane.active {
+				c.filter, cmd = c.filter.Update(msg)
+				cmds = append(cmds, cmd)
+			}
 			c.queuePane, cmd = c.queuePane.Update(msg)
 			cmds = append(cmds, cmd)
 			c.logPane, cmd = c.logPane.Update(msg)

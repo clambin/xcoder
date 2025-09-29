@@ -1,5 +1,5 @@
-codeberg.org/clambin/bubbles v0.5.0 h1:9R9dm7mHY5GHPUHQL37NkTbccEoUe4FoZP5LSUNhlek=
-codeberg.org/clambin/bubbles v0.5.0/go.mod h1:WSukykQnQa8WE9th0eSl4GhBbLpOYZjy/QC+JJptHuU=
+codeberg.org/clambin/bubbles v0.5.1 h1:JdVdS70yI2P1sGCMquMypSsVuKx3w0qJmHpuOEjB0Bc=
+codeberg.org/clambin/bubbles v0.5.1/go.mod h1:WSukykQnQa8WE9th0eSl4GhBbLpOYZjy/QC+JJptHuU=
 codeberg.org/clambin/go-common/charmer v0.4.0 h1:UmhNOIGhD1WxyPqZ40nesC7GInucnnvGlnPAIiSI/40=
 codeberg.org/clambin/go-common/charmer v0.4.0/go.mod h1:FTjKYy65/VDkT/5CPEyUUnDWCfTj5LjwuX0PcOEgUes=
 codeberg.org/clambin/go-common/set v0.6.0 h1:R+Pe98XsmW3sdMtBZ/G/FKsgeeynhbqoCTrL+pGApUQ=
@@ -28,8 +28,8 @@ github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd h1:vy0G
 github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd/go.mod h1:xe0nKWGd3eJgtqZRaN9RjMtK7xUYchjzPr7q6kcvCCs=
 github.com/charmbracelet/x/exp/golden v0.0.0-20250922100529-c9afca5d6f21 h1:J30udNKRsGUxseyRelxalPKpWWRZfno4LumCbMrb/QE=
 github.com/charmbracelet/x/exp/golden v0.0.0-20250922100529-c9afca5d6f21/go.mod h1:V8n/g3qVKNxr2FR37Y+otCsMySvZr601T0C7coEP0bw=
-github.com/charmbracelet/x/exp/teatest v0.0.0-20250922100529-c9afca5d6f21 h1:Z0Mm/l6tzOEXyksZncTA+wzrjja5TSqLCSB0JtY9VTI=
-github.com/charmbracelet/x/exp/teatest v0.0.0-20250922100529-c9afca5d6f21/go.mod h1:aPVjFrBwbJgj5Qz1F0IXsnbcOVJcMKgu1ySUfTAxh7k=
+github.com/charmbracelet/x/exp/teatest v0.0.0-20250929112927-8219a564b457 h1:/PquMtzK0gh2rZurOKiag1EppU75ejcSH/a3ZcN6DWk=
+github.com/charmbracelet/x/exp/teatest v0.0.0-20250929112927-8219a564b457/go.mod h1:aPVjFrBwbJgj5Qz1F0IXsnbcOVJcMKgu1ySUfTAxh7k=
 github.com/charmbracelet/x/term v0.2.1 h1:AQeHeLZ1OqSXhrAWpYUtZyX1T3zVxfpZuEQMIQaGIAQ=
 github.com/charmbracelet/x/term v0.2.1/go.mod h1:oQ4enTYFV7QN4m0i9mzHrViD7TQKvNEEkHUMCmsxdUg=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=

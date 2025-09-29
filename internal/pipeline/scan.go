@@ -30,7 +30,6 @@ func ScanFS(ctx context.Context, fileSystem fs.FS, baseDir string, queue *Queue,
 			return nil
 		}
 		if d.IsDir() {
-			l.Debug("not a file")
 			return nil
 		}
 		if !videoExtensions.Contains(strings.ToLower(filepath.Ext(path))) {

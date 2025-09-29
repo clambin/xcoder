@@ -6,8 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	defaultKeyMap = ControllerKeyMap{
+func defaultControllerKeyMap() ControllerKeyMap {
+	return ControllerKeyMap{
 		Quit: key.NewBinding(
 			key.WithKeys(tea.KeyCtrlC.String(), "q"),
 			key.WithHelp("q/ctrl+c", "quit"),
@@ -24,9 +24,19 @@ var (
 			key.WithKeys("f"),
 			key.WithHelp("f", "show full path"),
 		),
+		ShowLogs: key.NewBinding(
+			key.WithKeys("l"),
+			key.WithHelp("l", "show logs"),
+		),
+		CloseLogs: key.NewBinding(
+			key.WithKeys(tea.KeyEscape.String(), "l"),
+			key.WithHelp("esc/l", "close logs"),
+		),
 	}
+}
 
-	defaultFilterKeyMap = FilterKeyMap{
+func defaultFilterKeyMap() FilterKeyMap {
+	return FilterKeyMap{
 		ShowSkippedFiles: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "show/hide skipped files"),
@@ -39,15 +49,17 @@ var (
 			key.WithKeys("c"),
 			key.WithHelp("c", "show/hide converted files")),
 	}
-)
+}
 
 var _ help.KeyMap = ControllerKeyMap{}
 
 type ControllerKeyMap struct {
-	Quit     key.Binding
-	Activate key.Binding
-	Convert  key.Binding
-	FullPath key.Binding
+	Quit      key.Binding
+	Activate  key.Binding
+	Convert   key.Binding
+	FullPath  key.Binding
+	ShowLogs  key.Binding
+	CloseLogs key.Binding
 }
 
 func (k ControllerKeyMap) ShortHelp() []key.Binding {
@@ -55,12 +67,14 @@ func (k ControllerKeyMap) ShortHelp() []key.Binding {
 		k.Quit,
 		k.Activate,
 		k.Convert,
-		k.FullPath,
 	}
 }
 
 func (k ControllerKeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{k.ShortHelp()}
+	return [][]key.Binding{
+		k.ShortHelp(),            // General
+		{k.FullPath, k.ShowLogs}, // View
+	}
 }
 
 var _ help.KeyMap = FilterKeyMap{}

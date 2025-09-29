@@ -94,7 +94,7 @@ func (s VideoStats) String() string {
 var _ slog.LogValuer = VideoStats{}
 
 func (s VideoStats) LogValue() slog.Value {
-	values := make([]slog.Attr, 0, 4)
+	values := make([]slog.Attr, 0, 5)
 	if s.VideoCodec != "" {
 		values = append(values, slog.String("codec", s.VideoCodec))
 	}
@@ -103,6 +103,9 @@ func (s VideoStats) LogValue() slog.Value {
 	}
 	if s.BitRate > 0 {
 		values = append(values, slog.String("bitrate", Bits(s.BitRate).Format(1)))
+	}
+	if s.BitsPerSample > 0 {
+		values = append(values, slog.Int("bits", s.BitsPerSample))
 	}
 	return slog.GroupValue(values...)
 }

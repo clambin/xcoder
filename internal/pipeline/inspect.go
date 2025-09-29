@@ -30,7 +30,7 @@ func Inspect(ctx context.Context, ch <-chan *WorkItem, cfg Configuration, probe 
 		case <-ctx.Done():
 			return
 		case item := <-ch:
-			l := logger.With("source", item.Source)
+			l := logger.With("source", item.Source.Path)
 			err := inspectItem(ctx, item, cfg, probe, f, l)
 			var sourceRejectedError *SourceRejectedError
 			var sourceSkippedError *SourceSkippedError
@@ -51,12 +51,11 @@ func Inspect(ctx context.Context, ch <-chan *WorkItem, cfg Configuration, probe 
 
 func inspectItem(_ context.Context, item *WorkItem, cfg Configuration, probe func(string) (ffmpeg.VideoStats, error), f fileChecker, logger *slog.Logger) (err error) {
 	// get the source video stats
-	logger.Debug("inspecting file")
 	item.Source.VideoStats, err = probe(item.Source.Path)
 	if err != nil {
-		return fmt.Errorf("probe failed: %w", err)
+		return fmt.Errorf("probe failed for %q: %w", item.Source.Path, err)
 	}
-	logger.Debug("inspection done", "sourceStats", item.Source.VideoStats)
+	logger.Debug("source inspected", "stats", item.Source.VideoStats)
 
 	// Validate that the video meets the criteria and determine how to transcode it
 	transcoder, err := cfg.Profile.Inspect(item)

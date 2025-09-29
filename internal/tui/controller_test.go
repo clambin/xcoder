@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bytes"
+	"iter"
 	"testing"
 	"time"
 
@@ -82,16 +83,21 @@ func (f *fakeQueue) Stats() map[pipeline.Status]int {
 	}
 }
 
-func (f *fakeQueue) List() []*pipeline.WorkItem {
-	return f.queue
+func (f *fakeQueue) All() iter.Seq[*pipeline.WorkItem] {
+	return func(yield func(*pipeline.WorkItem) bool) {
+		for _, item := range f.queue {
+			if !yield(item) {
+				return
+			}
+		}
+	}
 }
 
 func (f *fakeQueue) Queue(*pipeline.WorkItem) {
 	f.queue[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Converting})
-	return
 }
 
-func (f *fakeQueue) SetActive(b bool) {
+func (f *fakeQueue) SetActive(_ bool) {
 	panic("implement me")
 }
 

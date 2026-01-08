@@ -83,7 +83,6 @@ type Controller struct {
 	filter           filter
 	width            int
 	height           int
-	showFullPath     bool
 }
 
 // New returns a new Controller for the provided Queue.
@@ -161,6 +160,9 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// set up the next refresh
 			tea.Tick(refreshInterval, autoRefreshCmd()),
 		)
+	case filterStateChangedMsg:
+		// filter state change. record the state and schedule a reload of the table.
+		cmds = append(cmds, refreshTableCmd())
 	case refreshTableMsg:
 		// refresh the table: set the title (based on the filter) and reload the table.
 		cmds = append(cmds,
@@ -264,7 +266,7 @@ func (c Controller) viewFooter() string {
 // setTitleCmd sets the title of the table's frame.
 func (c Controller) setTitleCmd() tea.Cmd {
 	return func() tea.Msg {
-		args := c.filter.String()
+		args := c.filter.filterState.String()
 		if args != "" {
 			args = " (" + c.mediaFilterStyle.Render(args) + ")"
 		}
@@ -272,16 +274,16 @@ func (c Controller) setTitleCmd() tea.Cmd {
 	}
 }
 
-// loadTableCmd loads the table with the current Queue state.
+// loadTableCmd builds the table with the current Queue state and issues a command to load it in the table.
 func (c Controller) loadTableCmd() tea.Cmd {
 	return func() tea.Msg {
 		var rows []table.Row
 		for item := range c.queue.All() {
-			if !c.filter.Show(item) {
+			if !c.filter.filterState.Show(item) {
 				continue
 			}
 			source := item.Source.Path
-			if !c.showFullPath {
+			if !c.queuePane.showFullPath {
 				source = filepath.Base(source)
 			}
 			workStatus := item.WorkStatus()

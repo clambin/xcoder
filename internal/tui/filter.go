@@ -10,57 +10,45 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
-type filter struct {
-	keyMap        FilterKeyMap
+// filterStateChangedMsg is a BubbleTea message that indicates that the media filter changed state.
+// Its value is the new filterState.
+type filterStateChangedMsg filterState
+
+// filterState holds the current state of the media filter. It determines which media files should be shown/hidden.
+type filterState struct {
 	hideSkipped   bool
 	hideRejected  bool
 	hideConverted bool
 }
 
-func (f filter) Update(msg tea.Msg) (filter, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, f.keyMap.ShowSkippedFiles):
-			f.hideSkipped = !f.hideSkipped
-			return f, refreshTableCmd()
-		case key.Matches(msg, f.keyMap.ShowRejectedFiles):
-			f.hideRejected = !f.hideRejected
-			return f, refreshTableCmd()
-		case key.Matches(msg, f.keyMap.ShowConvertedFiles):
-			f.hideConverted = !f.hideConverted
-			return f, refreshTableCmd()
-		}
-	}
-	return f, nil
-}
-
-func (f filter) Show(item *pipeline.WorkItem) bool {
+// Show returns true if the given item should be shown
+func (s filterState) Show(item *pipeline.WorkItem) bool {
 	switch item.WorkStatus().Status {
 	case pipeline.Rejected:
-		return !f.hideRejected
+		return !s.hideRejected
 	case pipeline.Converted:
-		return !f.hideConverted
+		return !s.hideConverted
 	case pipeline.Skipped:
-		return !f.hideSkipped
+		return !s.hideSkipped
 	default:
 		return true
 	}
 }
 
-func (f filter) String() string {
+// String returns a string representation of the filter state
+func (s filterState) String() string {
 	on := map[string]struct{}{
 		"skipped":   {},
 		"rejected":  {},
 		"converted": {},
 	}
-	if f.hideSkipped {
+	if s.hideSkipped {
 		delete(on, "skipped")
 	}
-	if f.hideRejected {
+	if s.hideRejected {
 		delete(on, "rejected")
 	}
-	if f.hideConverted {
+	if s.hideConverted {
 		delete(on, "converted")
 	}
 	if len(on) == 3 {
@@ -72,4 +60,28 @@ func (f filter) String() string {
 	onString := slices.Collect(maps.Keys(on))
 	slices.Sort(onString)
 	return strings.Join(onString, ",")
+}
+
+// filter determines which media files should be shown/hidden
+type filter struct {
+	keyMap      FilterKeyMap
+	filterState filterState
+}
+
+func (f filter) Update(msg tea.Msg) (filter, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, f.keyMap.ShowSkippedFiles):
+			f.filterState.hideSkipped = !f.filterState.hideSkipped
+			return f, func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+		case key.Matches(msg, f.keyMap.ShowRejectedFiles):
+			f.filterState.hideRejected = !f.filterState.hideRejected
+			return f, func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+		case key.Matches(msg, f.keyMap.ShowConvertedFiles):
+			f.filterState.hideConverted = !f.filterState.hideConverted
+			return f, func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+		}
+	}
+	return f, nil
 }

@@ -62,13 +62,19 @@ func (s filterState) String() string {
 	return strings.Join(onString, ",")
 }
 
+var _ tea.Model = filter{}
+
 // filter determines which media files should be shown/hidden
 type filter struct {
 	keyMap      FilterKeyMap
 	filterState filterState
 }
 
-func (f filter) Update(msg tea.Msg) (filter, tea.Cmd) {
+func (f filter) Init() tea.Cmd {
+	return func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+}
+
+func (f filter) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -84,4 +90,9 @@ func (f filter) Update(msg tea.Msg) (filter, tea.Cmd) {
 		}
 	}
 	return f, nil
+}
+
+func (f filter) View() string {
+	// not used: controller renders filter state directly
+	return ""
 }

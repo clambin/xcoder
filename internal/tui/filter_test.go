@@ -74,42 +74,40 @@ func TestFilterState_Show(t *testing.T) {
 	}
 }
 
-func TestFilter_Update(t *testing.T) {
+func TestFilter(t *testing.T) {
 	keyMap := defaultFilterKeyMap()
-	f := filter{
-		keyMap: keyMap,
+	var f tea.Model = filter{keyMap: keyMap}
+
+	cmd := f.Init()
+	require.NotNil(t, cmd)
+	msg := cmd()
+	require.IsType(t, filterStateChangedMsg{}, msg)
+	assert.Equal(t, filterState{}, filterState(msg.(filterStateChangedMsg)))
+
+	// note: these must be executed in order
+	tests := []struct {
+		key  string
+		want filterState
+	}{
+		{"s", filterState{true, false, false}},
+		{"s", filterState{false, false, false}},
+		{"r", filterState{false, true, false}},
+		{"c", filterState{false, true, true}},
 	}
-
-	// Test ShowSkippedFiles
-	var cmd tea.Cmd
-	f, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("s")})
-	assert.True(t, f.filterState.hideSkipped)
-	checkFilterState(t, f.filterState, cmd)
-
-	// Toggle back
-	f, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("s")})
-	assert.False(t, f.filterState.hideSkipped)
-	checkFilterState(t, f.filterState, cmd)
-
-	// Test ShowRejectedFiles
-	f, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("r")})
-	assert.True(t, f.filterState.hideRejected)
-	checkFilterState(t, f.filterState, cmd)
-
-	// Test ShowConvertedFiles
-	f, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")})
-	assert.True(t, f.filterState.hideConverted)
-	checkFilterState(t, f.filterState, cmd)
+	for _, tt := range tests {
+		var cmd tea.Cmd
+		f, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)})
+		assert.Equal(t, tt.want, f.(filter).filterState)
+		require.NotNil(t, cmd)
+		msg := cmd()
+		require.IsType(t, filterStateChangedMsg{}, msg)
+		assert.Equal(t, tt.want, filterState(msg.(filterStateChangedMsg)))
+	}
 
 	// Test unknown key
 	_, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
 	assert.Nil(t, cmd)
-}
 
-func checkFilterState(t *testing.T, want filterState, cmd tea.Cmd) {
-	t.Helper()
-	require.NotNil(t, cmd)
-	msg := cmd()
-	assert.IsType(t, filterStateChangedMsg{}, msg)
-	assert.Equal(t, want, filterState(msg.(filterStateChangedMsg)))
+	// filter has no output
+	assert.Equal(t, "", f.View())
 }

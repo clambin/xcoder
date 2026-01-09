@@ -44,15 +44,16 @@ type Controller struct {
 	mediaFilterStyle lipgloss.Style
 	queue            Queue
 	statusLine       tea.Model
+	filter           tea.Model
 	configPane       configPane
 	helpController   helpController
 	keyMap           ControllerKeyMap
 	selectedRow      table.Row
 	logPane          logViewer
 	queuePane        queueViewer
-	filter           filter
 	width            int
 	height           int
+	filterState      filterState
 }
 
 // New returns a new Controller for the provided Queue.
@@ -132,12 +133,13 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 	case filterStateChangedMsg:
 		// filter state change. record the state and schedule a reload of the table.
+		c.filterState = filterState(msg)
 		cmds = append(cmds, refreshTableCmd())
 	case refreshTableMsg:
 		// refresh the table: set the title (based on the filter) and reload the table.
 		cmds = append(cmds,
-			setTitleCmd(c.filter.filterState, c.mediaFilterStyle),
-			loadTableCmd(c.queue.All(), c.filter.filterState, c.queuePane.showFullPath),
+			setTitleCmd(c.filterState, c.mediaFilterStyle),
+			loadTableCmd(c.queue.All(), c.filterState, c.queuePane.showFullPath),
 		)
 	case table.SetRowsMsg:
 		// if we don't know the selected row yet (i.e., the user hasn't scrolled yet),

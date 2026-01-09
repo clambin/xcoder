@@ -1,10 +1,8 @@
 package tui
 
 import (
-	"bytes"
 	"strings"
 	"testing"
-	"time"
 
 	"codeberg.org/clambin/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,18 +20,12 @@ func TestQueueViewer(t *testing.T) {
 		{"source", "source stats", "target stats", "waiting", "", "", "", table.UserData{Data: &pipeline.WorkItem{}}},
 	}
 	tm.Send(table.SetRowsMsg{Rows: rows})
-
-	teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
-		return bytes.Contains(bts, []byte("waiting"))
-	}, teatest.WithDuration(time.Second), teatest.WithCheckInterval(10*time.Millisecond),
-	)
+	waitFor(t, tm.Output(), []byte("waiting"))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
-
-	teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
-		return strings.Contains(ansi.Strip(string(bts)), "filter")
-	}, teatest.WithDuration(time.Second), teatest.WithCheckInterval(10*time.Millisecond),
-	)
+	waitForFunc(t, tm.Output(), func(b []byte) bool {
+		return strings.Contains(ansi.Strip(string(b)), "filter")
+	})
 }
 
 var _ tea.Model = queueViewerModel{}

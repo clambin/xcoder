@@ -3,10 +3,10 @@ package tui
 import (
 	"io"
 	"iter"
-	"path/filepath"
 	"time"
 
 	"codeberg.org/clambin/bubbles/table"
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -24,36 +24,6 @@ const (
 	queuePane activePane = iota
 	logPane
 )
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// internal control messages
-
-// autoRefreshMsg refreshes the screen at a regular interval.
-type autoRefreshMsg struct{}
-
-func autoRefreshCmd() func(_ time.Time) tea.Msg {
-	return func(_ time.Time) tea.Msg {
-		return autoRefreshMsg{}
-	}
-}
-
-// refreshTableMsg refreshes the table pane.
-type refreshTableMsg struct{}
-
-func refreshTableCmd() tea.Cmd {
-	return func() tea.Msg {
-		return refreshTableMsg{}
-	}
-}
-
-// setPaneMsg sets the active pane in the main body
-type setPaneMsg activePane
-
-func setPaneCmd(pane activePane) tea.Cmd {
-	return func() tea.Msg {
-		return setPaneMsg(pane)
-	}
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Controller
@@ -166,26 +136,19 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case refreshTableMsg:
 		// refresh the table: set the title (based on the filter) and reload the table.
 		cmds = append(cmds,
-			c.setTitleCmd(),
-			c.loadTableCmd(),
+			setTitleCmd(c.filter.filterState, c.mediaFilterStyle),
+			loadTableCmd(c.queue.All(), c.filter.filterState, c.queuePane.showFullPath),
 		)
 	case table.SetRowsMsg:
 		// if we don't know the selected row yet (i.e., the user hasn't scrolled yet),
 		// derive it from the first table load.
 		if len(msg.Rows) > 0 && c.selectedRow == nil {
 			c.selectedRow = msg.Rows[0]
-			_, _ = c.LogWriter().Write([]byte("Selected row: " + c.selectedRow[0].(string) + "\n"))
+			// _, _ = c.LogWriter().Write([]byte("Selected row: " + c.selectedRow[0].(string) + "\n"))
 		}
 	case table.RowChangedMsg:
 		// mark the selected row so we know which queue item to convert when the user hits <enter>.
 		c.selectedRow = msg.Row
-		/*
-			selected := "<nil>"
-			if c.selectedRow != nil {
-				selected = c.selectedRow[0].(string)
-			}
-			_, _ = c.LogWriter().Write([]byte("Selected row: " + selected + "\n"))
-		*/
 	case tea.KeyMsg:
 		// if the queue pane is active and the text filter is on, it receives all keyboard inputs
 		if c.queuePane.TextFilterOn() {
@@ -263,45 +226,96 @@ func (c Controller) viewFooter() string {
 	return c.statusLine.View()
 }
 
-// setTitleCmd sets the title of the table's frame.
-func (c Controller) setTitleCmd() tea.Cmd {
-	return func() tea.Msg {
-		args := c.filter.filterState.String()
-		if args != "" {
-			args = " (" + c.mediaFilterStyle.Render(args) + ")"
-		}
-		return table.SetTitleMsg{Title: "media files" + args}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ControllerKeyMap
+
+func defaultControllerKeyMap() ControllerKeyMap {
+	return ControllerKeyMap{
+		Quit: key.NewBinding(
+			key.WithKeys(tea.KeyCtrlC.String(), "q"),
+			key.WithHelp("q/ctrl+c", "quit"),
+		),
+		Activate: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "activate batch transcoding"),
+		),
+		Convert: key.NewBinding(
+			key.WithKeys(tea.KeyEnter.String()),
+			key.WithHelp("enter", "transcode selected item"),
+		),
+		FullPath: key.NewBinding(
+			key.WithKeys("f"),
+			key.WithHelp("f", "show full path"),
+		),
+		ShowLogs: key.NewBinding(
+			key.WithKeys("l"),
+			key.WithHelp("l", "show logs"),
+		),
+		CloseLogs: key.NewBinding(
+			key.WithKeys(tea.KeyEscape.String(), "l"),
+			key.WithHelp("esc/l", "close logs"),
+		),
 	}
 }
 
-// loadTableCmd builds the table with the current Queue state and issues a command to load it in the table.
-func (c Controller) loadTableCmd() tea.Cmd {
-	return func() tea.Msg {
-		var rows []table.Row
-		for item := range c.queue.All() {
-			if !c.filter.filterState.Show(item) {
-				continue
-			}
-			source := item.Source.Path
-			if !c.queuePane.showFullPath {
-				source = filepath.Base(source)
-			}
-			workStatus := item.WorkStatus()
-			var errString string
-			if workStatus.Err != nil {
-				errString = workStatus.Err.Error()
-			}
-			rows = append(rows, table.Row{
-				source,
-				item.SourceVideoStats().String(),
-				item.TargetVideoStats().String(),
-				workStatus.Status.String(),
-				item.CompletedFormatted(),
-				item.RemainingFormatted(),
-				errString,
-				table.UserData{Data: item},
-			})
-		}
-		return table.SetRowsMsg{Rows: rows}
+func defaultFilterKeyMap() FilterKeyMap {
+	return FilterKeyMap{
+		ShowSkippedFiles: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "show/hide skipped files"),
+		),
+		ShowRejectedFiles: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "show/hide rejected files"),
+		),
+		ShowConvertedFiles: key.NewBinding(
+			key.WithKeys("c"),
+			key.WithHelp("c", "show/hide converted files")),
 	}
+}
+
+var _ help.KeyMap = ControllerKeyMap{}
+
+type ControllerKeyMap struct {
+	Quit      key.Binding
+	Activate  key.Binding
+	Convert   key.Binding
+	FullPath  key.Binding
+	ShowLogs  key.Binding
+	CloseLogs key.Binding
+}
+
+func (k ControllerKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		k.Quit,
+		k.Activate,
+		k.Convert,
+	}
+}
+
+func (k ControllerKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{
+		k.ShortHelp(),            // General
+		{k.FullPath, k.ShowLogs}, // View
+	}
+}
+
+var _ help.KeyMap = FilterKeyMap{}
+
+type FilterKeyMap struct {
+	ShowSkippedFiles   key.Binding
+	ShowRejectedFiles  key.Binding
+	ShowConvertedFiles key.Binding
+}
+
+func (f FilterKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		f.ShowSkippedFiles,
+		f.ShowRejectedFiles,
+		f.ShowConvertedFiles,
+	}
+}
+
+func (f FilterKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{f.ShortHelp()}
 }

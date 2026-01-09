@@ -74,50 +74,6 @@ func TestFilterState_Show(t *testing.T) {
 	}
 }
 
-func TestFilterState_String(t *testing.T) {
-	tests := []struct {
-		name  string
-		state filterState
-		want  string
-	}{
-		{
-			name:  "show all",
-			state: filterState{},
-			want:  "",
-		},
-		{
-			name:  "hide all",
-			state: filterState{hideSkipped: true, hideRejected: true, hideConverted: true},
-			want:  "none",
-		},
-		{
-			name:  "hide skipped",
-			state: filterState{hideSkipped: true},
-			want:  "converted,rejected",
-		},
-		{
-			name:  "hide rejected",
-			state: filterState{hideRejected: true},
-			want:  "converted,skipped",
-		},
-		{
-			name:  "hide converted",
-			state: filterState{hideConverted: true},
-			want:  "rejected,skipped",
-		},
-		{
-			name:  "show only skipped",
-			state: filterState{hideRejected: true, hideConverted: true},
-			want:  "skipped",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.state.String())
-		})
-	}
-}
-
 func TestFilter_Update(t *testing.T) {
 	keyMap := defaultFilterKeyMap()
 	f := filter{

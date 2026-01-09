@@ -22,7 +22,7 @@ var (
 // queueViewer displays the queue of media files
 //
 // Since queueViewer does not have access to the selected media filters (converted, skipped, etc.),
-// queueViewer is only responsible for displaying the table, keyboard input and local settings (like whether
+// queueViewer is only responsible for displaying the table, keyboard input, and local settings (like whether
 // to show the full path or not).  More advanced functionality (like filtering) is done in the Controller.
 type queueViewer struct {
 	tea.Model
@@ -32,13 +32,13 @@ type queueViewer struct {
 	showFullPath bool
 }
 
-func newQueueViewer(keyMap queueViewerKeyMap, styles table.FilterTableStyles) queueViewer {
+func newQueueViewer(keyMap queueViewerKeyMap, tableStyles table.FilterTableStyles) queueViewer {
 	return queueViewer{
 		Model: table.NewFilterTable(
 			"media files",
 			columns,
 			nil,
-			styles,
+			tableStyles,
 			keyMap.FilterTableKeyMap,
 		),
 		keyMap: keyMap,

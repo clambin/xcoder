@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bytes"
+	"io"
 	"iter"
 	"testing"
 	"time"
@@ -50,25 +51,23 @@ func TestController(t *testing.T) {
 	q := fakeQueue{queue: worklist}
 	c := New(&q, pipeline.Configuration{})
 	tm := teatest.NewTestModel(t, c, teatest.WithInitialTermSize(128, 25))
-
-	teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
-		return bytes.Contains(bts, []byte("inspected"))
-	},
-		teatest.WithCheckInterval(100*time.Millisecond),
-		teatest.WithDuration(5*time.Second),
-	)
+	waitFor(t, tm.Output(), []byte("inspected"))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-
-	teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
-		return bytes.Contains(bts, []byte("converting"))
-	},
-		teatest.WithCheckInterval(100*time.Millisecond),
-		teatest.WithDuration(5*time.Second),
-	)
+	waitFor(t, tm.Output(), []byte("converting"))
 
 	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlC})
 	tm.WaitFinished(t)
+}
+
+func waitFor(t testing.TB, r io.Reader, want []byte) {
+	t.Helper()
+	waitForFunc(t, r, func(b []byte) bool { return bytes.Contains(b, want) })
+}
+
+func waitForFunc(t testing.TB, r io.Reader, f func([]byte) bool) {
+	t.Helper()
+	teatest.WaitFor(t, r, f, teatest.WithDuration(time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 }
 
 var _ Queue = (*fakeQueue)(nil)

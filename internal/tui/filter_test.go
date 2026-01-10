@@ -12,55 +12,55 @@ import (
 func TestFilterState_Show(t *testing.T) {
 	tests := []struct {
 		name   string
-		state  filterState
+		state  mediaFilterState
 		status pipeline.Status
 		want   bool
 	}{
 		{
 			name:   "show all",
-			state:  filterState{},
+			state:  mediaFilterState{},
 			status: pipeline.Waiting,
 			want:   true,
 		},
 		{
 			name:   "hide skipped",
-			state:  filterState{hideSkipped: true},
+			state:  mediaFilterState{hideSkipped: true},
 			status: pipeline.Skipped,
 			want:   false,
 		},
 		{
 			name:   "show skipped",
-			state:  filterState{hideSkipped: false},
+			state:  mediaFilterState{hideSkipped: false},
 			status: pipeline.Skipped,
 			want:   true,
 		},
 		{
 			name:   "hide rejected",
-			state:  filterState{hideRejected: true},
+			state:  mediaFilterState{hideRejected: true},
 			status: pipeline.Rejected,
 			want:   false,
 		},
 		{
 			name:   "show rejected",
-			state:  filterState{hideRejected: false},
+			state:  mediaFilterState{hideRejected: false},
 			status: pipeline.Rejected,
 			want:   true,
 		},
 		{
 			name:   "hide converted",
-			state:  filterState{hideConverted: true},
+			state:  mediaFilterState{hideConverted: true},
 			status: pipeline.Converted,
 			want:   false,
 		},
 		{
 			name:   "show converted",
-			state:  filterState{hideConverted: false},
+			state:  mediaFilterState{hideConverted: false},
 			status: pipeline.Converted,
 			want:   true,
 		},
 		{
 			name:   "other status (waiting)",
-			state:  filterState{hideSkipped: true, hideRejected: true, hideConverted: true},
+			state:  mediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: true},
 			status: pipeline.Waiting,
 			want:   true,
 		},
@@ -76,38 +76,41 @@ func TestFilterState_Show(t *testing.T) {
 
 func TestFilter(t *testing.T) {
 	keyMap := defaultFilterKeyMap()
-	var f tea.Model = filter{keyMap: keyMap}
+	var f tea.Model = mediaFilter{keyMap: keyMap}
 
 	cmd := f.Init()
 	require.NotNil(t, cmd)
 	msg := cmd()
-	require.IsType(t, filterStateChangedMsg{}, msg)
-	assert.Equal(t, filterState{}, filterState(msg.(filterStateChangedMsg)))
+	require.IsType(t, mediaFilterChangedMsg{}, msg)
+	assert.Equal(t, mediaFilterState{}, mediaFilterState(msg.(mediaFilterChangedMsg)))
+
+	// active the mediaFilter
+	f, _ = f.Update(mediaFilterActivateMsg{true})
 
 	// note: these must be executed in order
 	tests := []struct {
 		key  string
-		want filterState
+		want mediaFilterState
 	}{
-		{"s", filterState{true, false, false}},
-		{"s", filterState{false, false, false}},
-		{"r", filterState{false, true, false}},
-		{"c", filterState{false, true, true}},
+		{"s", mediaFilterState{true, false, false}},
+		{"s", mediaFilterState{false, false, false}},
+		{"r", mediaFilterState{false, true, false}},
+		{"c", mediaFilterState{false, true, true}},
 	}
 	for _, tt := range tests {
 		var cmd tea.Cmd
 		f, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(tt.key)})
-		assert.Equal(t, tt.want, f.(filter).filterState)
+		assert.Equal(t, tt.want, f.(mediaFilter).mediaFilterState)
 		require.NotNil(t, cmd)
 		msg := cmd()
-		require.IsType(t, filterStateChangedMsg{}, msg)
-		assert.Equal(t, tt.want, filterState(msg.(filterStateChangedMsg)))
+		require.IsType(t, mediaFilterChangedMsg{}, msg)
+		assert.Equal(t, tt.want, mediaFilterState(msg.(mediaFilterChangedMsg)))
 	}
 
 	// Test unknown key
 	_, cmd = f.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")})
 	assert.Nil(t, cmd)
 
-	// filter has no output
+	// mediaFilter has no output
 	assert.Equal(t, "", f.View())
 }

@@ -20,7 +20,7 @@ const (
 )
 
 var configLabels = []string{sourceLabel, profileLabel, overwriteLabel, removeLabel}
-var boolToString = map[bool]string{true: "on", false: "off"}
+var boolToString = map[bool]string{true: "active", false: "off"}
 
 func newConfigPane(cfg pipeline.Configuration, styles ConfigStyles) configPane {
 	var labelWidth int

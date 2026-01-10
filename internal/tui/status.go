@@ -14,7 +14,7 @@ const (
 	stateBlinkInterval = 500 * time.Millisecond
 )
 
-// blinkStateMsg is a message that blinks the processing state in the statusBar (if batch processing is on).
+// blinkStateMsg is a message that blinks the processing state in the statusBar (if batch processing is active).
 type blinkStateMsg struct{}
 
 var _ tea.Model = statusLine{}

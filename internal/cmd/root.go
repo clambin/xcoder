@@ -96,7 +96,8 @@ func runUI(ctx context.Context, v *viper.Viper, args []string) error {
 	u := tui.New(&queue, cfg)
 	a := tea.NewProgram(u, tea.WithAltScreen(), tea.WithoutCatchPanics())
 
-	l := cfg.Logger(u.LogWriter(), nil)
+	w := u.LogWriter()
+	l := cfg.Logger(w, nil)
 	l.Info("starting program")
 
 	var g errgroup.Group

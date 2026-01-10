@@ -27,12 +27,11 @@ var (
 type queueViewer struct {
 	tea.Model
 	keyMap       queueViewerKeyMap
-	active       bool
 	textFilterOn bool
 	showFullPath bool
 }
 
-func newQueueViewer(keyMap queueViewerKeyMap, tableStyles table.FilterTableStyles) queueViewer {
+func newQueueViewer(keyMap queueViewerKeyMap, tableStyles table.FilterTableStyles) tea.Model {
 	return queueViewer{
 		Model: table.NewFilterTable(
 			"media files",
@@ -45,18 +44,16 @@ func newQueueViewer(keyMap queueViewerKeyMap, tableStyles table.FilterTableStyle
 	}
 }
 
-func (q queueViewer) Update(msg tea.Msg) (queueViewer, tea.Cmd) {
+func (q queueViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case setPaneMsg:
-		q.active = activePane(msg) == queuePane
+	case paneSizeMsg:
+		q.Model, cmd = q.Model.Update(table.SetSizeMsg{Width: msg.Width, Height: msg.Height})
 	case table.FilterStateChangeMsg:
 		q.textFilterOn = msg.State
+		cmd = textFilterStateChangCmd(q.textFilterOn)
 	case tea.KeyMsg:
-		if !q.active {
-			break
-		}
-		// if the text filter is on, it receives all inputs.
+		// if the text mediaFilter is active, it receives all inputs.
 		if q.textFilterOn {
 			q.Model, cmd = q.Model.Update(msg)
 			break
@@ -64,7 +61,8 @@ func (q queueViewer) Update(msg tea.Msg) (queueViewer, tea.Cmd) {
 		switch {
 		case key.Matches(msg, q.keyMap.FullPath):
 			q.showFullPath = !q.showFullPath
-			cmd = func() tea.Msg { return refreshTableMsg{} }
+			// note: don't issue table reload here: msgs aren't guaranteed to be processed in order
+			cmd = showFullPathCmd(q.showFullPath)
 		default:
 			q.Model, cmd = q.Model.Update(msg)
 		}
@@ -80,22 +78,5 @@ func (q queueViewer) View() string {
 }
 
 func (q queueViewer) TextFilterOn() bool {
-	return q.active && q.textFilterOn
-}
-
-func (q queueViewer) setSizeCmd(width, height int) tea.Cmd {
-	return func() tea.Msg { return table.SetSizeMsg{Width: width, Height: height} }
-}
-
-// queueViewerKeyMap contains the key bindings for the queueViewer.
-type queueViewerKeyMap struct {
-	FilterTableKeyMap table.FilterTableKeyMap
-	FullPath          key.Binding
-}
-
-func defaultQueueViewerKeyMap() queueViewerKeyMap {
-	return queueViewerKeyMap{
-		FilterTableKeyMap: table.DefaultFilterTableKeyMap(),
-		FullPath:          key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "show full path")),
-	}
+	return q.textFilterOn
 }

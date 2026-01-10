@@ -10,19 +10,15 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
-// filterStateChangedMsg is a BubbleTea message that indicates that the media filter changed state.
-// Its value is the new filterState.
-type filterStateChangedMsg filterState
-
-// filterState holds the current state of the media filter. It determines which media files should be shown/hidden.
-type filterState struct {
+// mediaFilterState holds the current state of the media mediaFilter. It determines which media files should be shown/hidden.
+type mediaFilterState struct {
 	hideSkipped   bool
 	hideRejected  bool
 	hideConverted bool
 }
 
 // Show returns true if the given item should be shown
-func (s filterState) Show(item *pipeline.WorkItem) bool {
+func (s mediaFilterState) Show(item *pipeline.WorkItem) bool {
 	switch item.WorkStatus().Status {
 	case pipeline.Rejected:
 		return !s.hideRejected
@@ -35,8 +31,8 @@ func (s filterState) Show(item *pipeline.WorkItem) bool {
 	}
 }
 
-// String returns a string representation of the filter state
-func (s filterState) String() string {
+// String returns a string representation of the mediaFilter state
+func (s mediaFilterState) String() string {
 	on := map[string]struct{}{
 		"skipped":   {},
 		"rejected":  {},
@@ -62,37 +58,43 @@ func (s filterState) String() string {
 	return strings.Join(onString, ",")
 }
 
-var _ tea.Model = filter{}
+var _ tea.Model = mediaFilter{}
 
-// filter determines which media files should be shown/hidden
-type filter struct {
-	keyMap      FilterKeyMap
-	filterState filterState
+// mediaFilter determines which media files should be shown/hidden
+type mediaFilter struct {
+	keyMap           FilterKeyMap
+	mediaFilterState mediaFilterState
+	active           bool
 }
 
-func (f filter) Init() tea.Cmd {
-	return func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+func (f mediaFilter) Init() tea.Cmd {
+	return func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) }
 }
 
-func (f filter) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (f mediaFilter) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case mediaFilterActivateMsg:
+		f.active = msg.active
 	case tea.KeyMsg:
+		if !f.active {
+			break
+		}
 		switch {
 		case key.Matches(msg, f.keyMap.ShowSkippedFiles):
-			f.filterState.hideSkipped = !f.filterState.hideSkipped
-			return f, func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+			f.mediaFilterState.hideSkipped = !f.mediaFilterState.hideSkipped
+			return f, func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) }
 		case key.Matches(msg, f.keyMap.ShowRejectedFiles):
-			f.filterState.hideRejected = !f.filterState.hideRejected
-			return f, func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+			f.mediaFilterState.hideRejected = !f.mediaFilterState.hideRejected
+			return f, func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) }
 		case key.Matches(msg, f.keyMap.ShowConvertedFiles):
-			f.filterState.hideConverted = !f.filterState.hideConverted
-			return f, func() tea.Msg { return filterStateChangedMsg(f.filterState) }
+			f.mediaFilterState.hideConverted = !f.mediaFilterState.hideConverted
+			return f, func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) }
 		}
 	}
 	return f, nil
 }
 
-func (f filter) View() string {
-	// not used: controller renders filter state directly
+func (f mediaFilter) View() string {
+	// not used: controller renders mediaFilter state directly
 	return ""
 }

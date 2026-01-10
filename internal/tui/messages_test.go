@@ -14,37 +14,37 @@ import (
 func Test_setTitleCmd(t *testing.T) {
 	tests := []struct {
 		name  string
-		state filterState
+		state mediaFilterState
 		want  string
 	}{
 		{
 			name:  "show all",
-			state: filterState{},
+			state: mediaFilterState{},
 			want:  "",
 		},
 		{
 			name:  "hide all",
-			state: filterState{hideSkipped: true, hideRejected: true, hideConverted: true},
+			state: mediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: true},
 			want:  "none",
 		},
 		{
 			name:  "hide skipped",
-			state: filterState{hideSkipped: true},
+			state: mediaFilterState{hideSkipped: true},
 			want:  "converted,rejected",
 		},
 		{
 			name:  "hide rejected",
-			state: filterState{hideRejected: true},
+			state: mediaFilterState{hideRejected: true},
 			want:  "converted,skipped",
 		},
 		{
 			name:  "hide converted",
-			state: filterState{hideConverted: true},
+			state: mediaFilterState{hideConverted: true},
 			want:  "rejected,skipped",
 		},
 		{
 			name:  "show only skipped",
-			state: filterState{hideRejected: true, hideConverted: true},
+			state: mediaFilterState{hideRejected: true, hideConverted: true},
 			want:  "skipped",
 		},
 	}
@@ -90,7 +90,7 @@ func Test_loadTableCmd(t *testing.T) {
 			}
 		}
 	}
-	f := filterState{hideSkipped: true}
+	f := mediaFilterState{hideSkipped: true}
 	msg := loadTableCmd(items, f, false)()
 	require.IsType(t, table.SetRowsMsg{}, msg)
 	want := []table.Row{

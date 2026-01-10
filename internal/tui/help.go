@@ -3,23 +3,23 @@ package tui
 import (
 	"codeberg.org/clambin/bubbles/helper"
 	"codeberg.org/clambin/bubbles/table"
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/clambin/xcoder/internal/tui/pane"
 )
 
 // helpController is a helper that displays help for the active pane.
 type helpController struct {
-	panes      map[activePane]helper.Helper
-	activePane activePane
+	panes      map[pane.Name]helper.Helper
+	activePane pane.Name
 }
 
-func newHelpController(controllerKeyMap ControllerKeyMap, filterKeyMap help.KeyMap, styles helper.Styles) helpController {
-	c := helpController{panes: make(map[activePane]helper.Helper)}
+func newHelpController(keyMap KeyMap, styles helper.Styles) helpController {
+	c := helpController{panes: make(map[pane.Name]helper.Helper)}
 
 	// queue help
-	h := controllerKeyMap.FullHelp()
-	filterBindings := filterKeyMap.ShortHelp()
+	h := keyMap.Controller.FullHelp()
+	filterBindings := keyMap.Filter.ShortHelp()
 	filterBindings = append(filterBindings, table.DefaultFilterTableKeyMap().FilterKeyMap.ShortHelp()...)
 	c.panes[queuePane] = helper.New().Styles(styles).Sections([]helper.Section{
 		{Title: "General", Keys: h[0]},
@@ -28,8 +28,8 @@ func newHelpController(controllerKeyMap ControllerKeyMap, filterKeyMap help.KeyM
 		{Title: "Filters", Keys: filterBindings},
 	})
 	c.panes[logPane] = helper.New().Styles(styles).Sections([]helper.Section{
-		{Title: "General", Keys: controllerKeyMap.ShortHelp()},
-		{Title: "Navigation", Keys: []key.Binding{controllerKeyMap.CloseLogs}},
+		{Title: "General", Keys: keyMap.Controller.ShortHelp()},
+		{Title: "Navigation", Keys: []key.Binding{keyMap.LogViewer.CloseLogs}},
 	})
 	return c
 }
@@ -40,8 +40,10 @@ func (c helpController) activeHelpPane() helper.Helper {
 
 func (c helpController) Update(msg tea.Msg) (helpController, tea.Cmd) {
 	switch msg := msg.(type) {
-	case setPaneMsg:
-		c.activePane = activePane(msg)
+	case pane.ActivateMsg:
+		c.activePane = msg.Pane
 	}
 	return c, nil
 }
+
+// TODO: add View().  This becomes its own tea.Model.

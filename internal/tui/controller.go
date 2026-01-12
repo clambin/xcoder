@@ -38,7 +38,7 @@ type Controller struct {
 	mediaFilterStyle lipgloss.Style
 	queue            Queue
 	statusLine       tea.Model
-	filter           tea.Model
+	mediaFilter      tea.Model
 	panes            tea.Model
 	logWriter        io.Writer
 	helpController   helpController
@@ -47,7 +47,7 @@ type Controller struct {
 	selectedRow      table.Row
 	width            int
 	height           int
-	filterState      mediaFilterState
+	mediaFilterState mediaFilterState
 	showFullPath     bool
 	textFilterOn     bool
 }
@@ -64,7 +64,7 @@ func New(queue Queue, cfg pipeline.Configuration) Controller {
 		queue:            queue,
 		configPane:       newConfigPane(cfg, styles.Config),
 		statusLine:       newStatusLine(queue, styles.Status),
-		filter:           mediaFilter{keyMap: keyMap.Filter},
+		mediaFilter:      mediaFilter{keyMap: keyMap.Filter},
 		mediaFilterStyle: styles.MediaFilter,
 		keyMap:           keyMap,
 		helpController:   newHelpController(keyMap, styles.Help),
@@ -88,6 +88,7 @@ func (c Controller) Init() tea.Cmd {
 	return tea.Batch(
 		c.statusLine.Init(),
 		c.panes.Init(),
+		c.mediaFilter.Init(),
 		mediaFilterActivateCmd(true),
 		cmd(pane.ActivateMsg{Pane: queuePane}),
 		tea.Tick(refreshInterval, autoRefreshCmd()),
@@ -103,7 +104,7 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if _, ok := msg.(tea.KeyMsg); !ok {
 		c.helpController, cmd = c.helpController.Update(msg)
 		cmds = append(cmds, cmd)
-		c.filter, cmd = c.filter.Update(msg)
+		c.mediaFilter, cmd = c.mediaFilter.Update(msg)
 		cmds = append(cmds, cmd)
 		c.panes, cmd = c.panes.Update(msg)
 		cmds = append(cmds, cmd)
@@ -121,8 +122,9 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, paneSizeCmd(msg.Width, paneHeight))
 	case showLogsMsg:
 		paneNames := map[bool]pane.Name{true: logPane, false: queuePane}
-		c.filter, _ = c.filter.Update(mediaFilterActivateMsg{active: !msg.on})
+		c.mediaFilter, _ = c.mediaFilter.Update(mediaFilterActivateMsg{active: !msg.on})
 		c.panes, cmd = c.panes.Update(pane.ActivateMsg{Pane: paneNames[msg.on]})
+		c.helpController, cmd = c.helpController.Update(pane.ActivateMsg{Pane: paneNames[msg.on]})
 		cmds = append(cmds, cmd)
 	case showFullPathMsg:
 		c.showFullPath = msg.on
@@ -140,13 +142,14 @@ func (c Controller) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 	case mediaFilterChangedMsg:
 		// mediaFilter state change. record the state and schedule a reload of the table.
-		c.filterState = mediaFilterState(msg)
+		c.mediaFilterState = mediaFilterState(msg)
 		cmds = append(cmds, refreshTableCmd())
 	case refreshTableMsg:
 		// refresh the table: set the title (based active the mediaFilter) and reload the table.
+		// TODO: this can just be a loadTableCmd(): title can get refreshed by MediaFilterChangedMsg
 		cmds = append(cmds,
-			setTitleCmd(c.filterState, c.mediaFilterStyle),
-			loadTableCmd(c.queue.All(), c.filterState, c.showFullPath),
+			setTitleCmd(c.mediaFilterState, c.mediaFilterStyle),
+			loadTableCmd(c.queue.All(), c.mediaFilterState, c.showFullPath),
 		)
 	case table.SetRowsMsg:
 		// if we don't know the selected row yet (i.e., the user hasn't scrolled yet),
@@ -177,7 +180,12 @@ func (c Controller) handleKeyMsg(msg tea.KeyMsg) (Controller, tea.Cmd) {
 	case key.Matches(msg, c.keyMap.Controller.Quit):
 		// quit
 		return c, tea.Quit
-	case key.Matches(msg, c.keyMap.Controller.ShowLogs) /*&& !c.logPane.active*/ :
+	case key.Matches(msg, c.keyMap.Controller.ShowLogs):
+		// TODO: this also catches 'l' being pressed when the log pane is active.
+		// In there, it should close the logs pane, not open it again.
+		//
+		// Should we move all queueViewer commands to its own keyMap, help and Update handler?
+
 		// show logs (only when the log pane is not active)
 		return c, showLogsCmd(true)
 	case key.Matches(msg, c.keyMap.Controller.Activate):
@@ -196,7 +204,7 @@ func (c Controller) handleKeyMsg(msg tea.KeyMsg) (Controller, tea.Cmd) {
 		return c, nil
 	default:
 		var cmds []tea.Cmd
-		c.filter, cmd = c.filter.Update(msg)
+		c.mediaFilter, cmd = c.mediaFilter.Update(msg)
 		cmds = append(cmds, cmd)
 		c.panes, cmd = c.panes.Update(msg)
 		cmds = append(cmds, cmd)

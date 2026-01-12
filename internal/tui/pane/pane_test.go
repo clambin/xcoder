@@ -108,7 +108,7 @@ func (p testPane) Init() tea.Cmd {
 	return p.init
 }
 
-func (p testPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (p testPane) Update(_ tea.Msg) (tea.Model, tea.Cmd) {
 	p.calls++
 	return p, nil
 }

@@ -76,7 +76,3 @@ func (q queueViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (q queueViewer) View() string {
 	return q.Model.View()
 }
-
-func (q queueViewer) TextFilterOn() bool {
-	return q.textFilterOn
-}

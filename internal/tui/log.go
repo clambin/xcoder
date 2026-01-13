@@ -1,4 +1,4 @@
-package refactor
+package tui
 
 import (
 	"io"
@@ -17,13 +17,13 @@ type LogViewer struct {
 	keyMap      LogViewerKeyMap
 }
 
-func NewLogViewer(keyMap LogViewerKeyMap, style frame.Styles) *LogViewer {
+func NewLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) *LogViewer {
 	return &LogViewer{
 		Model: stream.NewStream(80, 25,
 			stream.WithShowToggles(true),
 			stream.WithKeyMap(stream.KeyMap{WordWrap: keyMap.WordWrap, AutoScroll: keyMap.AutoScroll}),
 		),
-		frameStyles: style,
+		frameStyles: style.Frame,
 		keyMap:      keyMap,
 	}
 }

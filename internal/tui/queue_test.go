@@ -1,4 +1,4 @@
-package refactor
+package tui
 
 import (
 	"errors"
@@ -8,12 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"codeberg.org/clambin/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/exp/golden"
 	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/clambin/xcoder/internal/pipeline"
-	"github.com/muesli/termenv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,11 +34,7 @@ var (
 	}
 )
 
-func init() {
-	lipgloss.SetColorProfile(termenv.ANSI)
-}
-
-func TestManager_Actions(t *testing.T) {
+func TestQueueViewer_Actions(t *testing.T) {
 	worklist := []*pipeline.WorkItem{
 		{
 			Source: pipeline.MediaFile{Path: "test.mp4", VideoStats: h264VideoStats},
@@ -50,34 +44,34 @@ func TestManager_Actions(t *testing.T) {
 	worklist[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Inspected})
 
 	q := fakeQueue{queue: worklist}
-	mgr := NewQueueViewer(&q, table.FilterTableStyles{}, DefaultKeyMap())
-	sendAndWait(mgr, RefreshUIMsg{})
+	qv := NewQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
+	sendAndWait(qv, RefreshUIMsg{})
 
 	// initialize model: wait until the table is loaded and the selectedRow is set.
-	sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyEnter})
+	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyEnter})
 	assert.Equal(t, pipeline.Converting, q.queue[0].WorkStatus().Status)
 
 	// fullPath
-	assert.False(t, mgr.showFullPath)
-	sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
-	assert.True(t, mgr.showFullPath)
+	assert.False(t, qv.showFullPath)
+	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
+	assert.True(t, qv.showFullPath)
 
 	// activate queue
 	assert.False(t, q.Active())
-	sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
 	assert.True(t, q.Active())
 
 	// switch on text filter
-	assert.False(t, mgr.textFilterOn)
-	sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
-	assert.True(t, mgr.textFilterOn)
+	assert.False(t, qv.textFilterOn)
+	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	assert.True(t, qv.textFilterOn)
 	// type some text
-	sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
-	sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyEsc})
-	assert.False(t, mgr.textFilterOn)
+	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
+	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyEsc})
+	assert.False(t, qv.textFilterOn)
 }
 
-func TestManager_Filter(t *testing.T) {
+func TestQueueViewer_Filter(t *testing.T) {
 	stats := []pipeline.Status{
 		pipeline.Waiting,
 		pipeline.Inspected,
@@ -102,15 +96,18 @@ func TestManager_Filter(t *testing.T) {
 
 	q := fakeQueue{queue: worklist}
 
-	mgr := NewQueueViewer(&q, table.FilterTableStyles{}, DefaultKeyMap())
+	qv := NewQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
 	// QueueViewer's table needs a size, or it doesn't render
-	mgr.SetSize(256, 10)
-	sendAndWait(mgr, RefreshUIMsg{})
+	qv.SetSize(256, 10)
 
 	for _, r := range []rune{'x', 'r', 's', 'c'} {
 		t.Run(string(r), func(t *testing.T) {
-			sendAndWait(mgr, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
-			requireEqual(t, mgr.View())
+			// user changes filter
+			sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+			// controller issues RefreshUIMsg
+			sendAndWait(qv, RefreshUIMsg{})
+			// check screen is updated
+			golden.RequireEqual(t, qv.View())
 		})
 	}
 }
@@ -123,9 +120,11 @@ type fakeQueue struct {
 }
 
 func (f *fakeQueue) Stats() map[pipeline.Status]int {
-	return map[pipeline.Status]int{
-		pipeline.Inspected: 1,
+	stats := make(map[pipeline.Status]int)
+	for _, item := range f.queue {
+		stats[item.WorkStatus().Status]++
 	}
+	return stats
 }
 
 func (f *fakeQueue) All() iter.Seq[*pipeline.WorkItem] {

@@ -1,4 +1,4 @@
-package refactor
+package tui
 
 import (
 	"maps"
@@ -65,21 +65,28 @@ func (f *MediaFilter) Init() tea.Cmd {
 }
 
 func (f *MediaFilter) Update(msg tea.Msg) tea.Cmd {
+	var action bool
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, f.KeyMap.ShowSkippedFiles):
 			f.mediaFilterState.hideSkipped = !f.mediaFilterState.hideSkipped
-			return func() tea.Msg { return MediaFilterChangedMsg(f.mediaFilterState) }
+			action = true
 		case key.Matches(msg, f.KeyMap.ShowRejectedFiles):
 			f.mediaFilterState.hideRejected = !f.mediaFilterState.hideRejected
-			return func() tea.Msg { return MediaFilterChangedMsg(f.mediaFilterState) }
+			action = true
 		case key.Matches(msg, f.KeyMap.ShowConvertedFiles):
 			f.mediaFilterState.hideConverted = !f.mediaFilterState.hideConverted
-			return func() tea.Msg { return MediaFilterChangedMsg(f.mediaFilterState) }
+			action = true
 		}
 	}
-	return nil
+	if !action {
+		return nil
+	}
+	return tea.Batch(
+		func() tea.Msg { return MediaFilterChangedMsg(f.mediaFilterState) },
+		func() tea.Msg { return RefreshUIMsg{} },
+	)
 }
 
 func (f *MediaFilter) View() string {

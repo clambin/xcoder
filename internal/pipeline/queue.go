@@ -63,6 +63,7 @@ func (q *Queue) Size() int {
 }
 
 func (q *Queue) All() iter.Seq[*WorkItem] {
+	// TODO: no real added value of making this an iterator. plus callers can't reserve memory. just return a copy of the slice
 	return func(yield func(*WorkItem) bool) {
 		q.lock.RLock()
 		defer q.lock.RUnlock()

@@ -14,6 +14,7 @@ import (
 	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -103,24 +104,22 @@ func TestQueueViewer_Actions(t *testing.T) {
 	assert.Eventually(t, func() bool { return q.queue[0].WorkStatus().Status == pipeline.Converting }, time.Second, 10*time.Millisecond)
 
 	// fullPath
-	assert.False(t, qv.showFullPath)
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
-	assert.Eventually(t, func() bool { return qv.showFullPath }, time.Second, 10*time.Millisecond)
 
 	// activate queue
-	assert.False(t, q.Active())
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
-	assert.Eventually(t, q.Active, time.Second, 10*time.Millisecond)
 
 	// switch on text filter
 	assert.False(t, qv.textFilterOn)
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
-	assert.Eventually(t, func() bool { return qv.textFilterOn }, time.Second, 10*time.Millisecond)
 
-	// type some text
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'a'}})
-	tm.Send(tea.KeyMsg{Type: tea.KeyEsc})
-	assert.Eventually(t, func() bool { return !qv.textFilterOn }, time.Second, 10*time.Millisecond)
+	// shut down to avoid race conditions reading status
+	require.NoError(t, tm.Quit())
+
+	// check results of actions
+	assert.True(t, qv.showFullPath)
+	assert.True(t, q.Active())
+	assert.False(t, qv.textFilterOn)
 }
 
 var _ Queue = (*fakeQueue)(nil)

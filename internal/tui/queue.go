@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"codeberg.org/clambin/bubbles/table"
@@ -72,7 +71,7 @@ func (q *queueViewer) SetSize(width, height int) {
 }
 
 func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
-	fmt.Printf("msg: %#+v\n", msg)
+	// fmt.Printf("msg: %#+v\n", msg)
 
 	var cmd tea.Cmd
 	switch msg := msg.(type) {

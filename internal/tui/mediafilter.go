@@ -10,15 +10,15 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
-// MediaFilterState holds the current state of the MediaFilter. It determines which media files should be shown/hidden.
-type MediaFilterState struct {
+// mediaFilterState holds the current state of the mediaFilter. It determines which media files should be shown/hidden.
+type mediaFilterState struct {
 	hideSkipped   bool
 	hideRejected  bool
 	hideConverted bool
 }
 
 // Show returns true if the given item should be shown
-func (s MediaFilterState) Show(item *pipeline.WorkItem) bool {
+func (s mediaFilterState) Show(item *pipeline.WorkItem) bool {
 	switch item.WorkStatus().Status {
 	case pipeline.Rejected:
 		return !s.hideRejected
@@ -31,8 +31,8 @@ func (s MediaFilterState) Show(item *pipeline.WorkItem) bool {
 	}
 }
 
-// String returns a string representation of the MediaFilterState
-func (s MediaFilterState) String() string {
+// String returns a string representation of the mediaFilterState
+func (s mediaFilterState) String() string {
 	on := map[string]struct{}{"skipped": {}, "rejected": {}, "converted": {}}
 	if s.hideSkipped {
 		delete(on, "skipped")
@@ -54,17 +54,17 @@ func (s MediaFilterState) String() string {
 	return strings.Join(onString, ",")
 }
 
-// MediaFilter determines which media files should be shown/hidden
-type MediaFilter struct {
+// mediaFilter determines which media files should be shown/hidden
+type mediaFilter struct {
 	KeyMap           MediaFilterKeyMap
-	mediaFilterState MediaFilterState
+	mediaFilterState mediaFilterState
 }
 
-func (f *MediaFilter) Init() tea.Cmd {
-	return func() tea.Msg { return MediaFilterChangedMsg(f.mediaFilterState) }
+func (f *mediaFilter) Init() tea.Cmd {
+	return func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) }
 }
 
-func (f *MediaFilter) Update(msg tea.Msg) tea.Cmd {
+func (f *mediaFilter) Update(msg tea.Msg) tea.Cmd {
 	var action bool
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -84,12 +84,12 @@ func (f *MediaFilter) Update(msg tea.Msg) tea.Cmd {
 		return nil
 	}
 	return tea.Batch(
-		func() tea.Msg { return MediaFilterChangedMsg(f.mediaFilterState) },
-		func() tea.Msg { return RefreshUIMsg{} },
+		func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) },
+		func() tea.Msg { return refreshUIMsg{} },
 	)
 }
 
-func (f *MediaFilter) View() string {
-	// not used: controller renders mediaFilter state directly from MediaFilterChangedMsg
+func (f *mediaFilter) View() string {
+	// not used: controller renders mediaFilter state directly from mediaFilterChangedMsg
 	return ""
 }

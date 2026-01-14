@@ -10,55 +10,55 @@ import (
 func TestFilterState_Show(t *testing.T) {
 	tests := []struct {
 		name   string
-		state  MediaFilterState
+		state  mediaFilterState
 		status pipeline.Status
 		want   bool
 	}{
 		{
 			name:   "show all",
-			state:  MediaFilterState{},
+			state:  mediaFilterState{},
 			status: pipeline.Waiting,
 			want:   true,
 		},
 		{
 			name:   "hide skipped",
-			state:  MediaFilterState{hideSkipped: true},
+			state:  mediaFilterState{hideSkipped: true},
 			status: pipeline.Skipped,
 			want:   false,
 		},
 		{
 			name:   "show skipped",
-			state:  MediaFilterState{hideSkipped: false},
+			state:  mediaFilterState{hideSkipped: false},
 			status: pipeline.Skipped,
 			want:   true,
 		},
 		{
 			name:   "hide rejected",
-			state:  MediaFilterState{hideRejected: true},
+			state:  mediaFilterState{hideRejected: true},
 			status: pipeline.Rejected,
 			want:   false,
 		},
 		{
 			name:   "show rejected",
-			state:  MediaFilterState{hideRejected: false},
+			state:  mediaFilterState{hideRejected: false},
 			status: pipeline.Rejected,
 			want:   true,
 		},
 		{
 			name:   "hide converted",
-			state:  MediaFilterState{hideConverted: true},
+			state:  mediaFilterState{hideConverted: true},
 			status: pipeline.Converted,
 			want:   false,
 		},
 		{
 			name:   "show converted",
-			state:  MediaFilterState{hideConverted: false},
+			state:  mediaFilterState{hideConverted: false},
 			status: pipeline.Converted,
 			want:   true,
 		},
 		{
 			name:   "other status (waiting)",
-			state:  MediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: true},
+			state:  mediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: true},
 			status: pipeline.Waiting,
 			want:   true,
 		},
@@ -75,47 +75,47 @@ func TestFilterState_Show(t *testing.T) {
 func TestFilterState_String(t *testing.T) {
 	tests := []struct {
 		name  string
-		state MediaFilterState
+		state mediaFilterState
 		want  string
 	}{
 		{
 			name:  "all show",
-			state: MediaFilterState{hideSkipped: false, hideRejected: false, hideConverted: false},
+			state: mediaFilterState{hideSkipped: false, hideRejected: false, hideConverted: false},
 			want:  "",
 		},
 		{
 			name:  "none show",
-			state: MediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: true},
+			state: mediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: true},
 			want:  "none",
 		},
 		{
 			name:  "only skipped",
-			state: MediaFilterState{hideSkipped: false, hideRejected: true, hideConverted: true},
+			state: mediaFilterState{hideSkipped: false, hideRejected: true, hideConverted: true},
 			want:  "skipped",
 		},
 		{
 			name:  "only rejected",
-			state: MediaFilterState{hideSkipped: true, hideRejected: false, hideConverted: true},
+			state: mediaFilterState{hideSkipped: true, hideRejected: false, hideConverted: true},
 			want:  "rejected",
 		},
 		{
 			name:  "only converted",
-			state: MediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: false},
+			state: mediaFilterState{hideSkipped: true, hideRejected: true, hideConverted: false},
 			want:  "converted",
 		},
 		{
 			name:  "skipped and rejected",
-			state: MediaFilterState{hideSkipped: false, hideRejected: false, hideConverted: true},
+			state: mediaFilterState{hideSkipped: false, hideRejected: false, hideConverted: true},
 			want:  "rejected,skipped",
 		},
 		{
 			name:  "skipped and converted",
-			state: MediaFilterState{hideSkipped: false, hideRejected: true, hideConverted: false},
+			state: mediaFilterState{hideSkipped: false, hideRejected: true, hideConverted: false},
 			want:  "converted,skipped",
 		},
 		{
 			name:  "rejected and converted",
-			state: MediaFilterState{hideSkipped: true, hideRejected: false, hideConverted: false},
+			state: mediaFilterState{hideSkipped: true, hideRejected: false, hideConverted: false},
 			want:  "converted,rejected",
 		},
 	}

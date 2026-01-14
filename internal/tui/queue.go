@@ -36,53 +36,53 @@ type Queue interface {
 
 var _ Queue = (*pipeline.Queue)(nil)
 
-type QueueViewer struct {
+type queueViewer struct {
 	mediaFilterStyle lipgloss.Style
 	table            tea.Model
 	queue            Queue
 	keyMap           QueueViewerKeyMap
 	selectedRow      table.Row
-	mediaFilter      MediaFilter
+	mediaFilter      mediaFilter
 	textFilterOn     bool
 	showFullPath     bool
 }
 
-func NewQueueViewer(queue Queue, styles QueueViewerStyles, keyMap QueueViewerKeyMap) *QueueViewer {
-	return &QueueViewer{
+func newQueueViewer(queue Queue, styles QueueViewerStyles, keyMap QueueViewerKeyMap) *queueViewer {
+	return &queueViewer{
 		table:            table.NewFilterTable(title, columns, nil, styles.Table, keyMap.FilterTableKeyMap),
 		queue:            queue,
 		keyMap:           keyMap,
-		mediaFilter:      MediaFilter{KeyMap: keyMap.MediaFilterKeyMap},
+		mediaFilter:      mediaFilter{KeyMap: keyMap.MediaFilterKeyMap},
 		mediaFilterStyle: styles.MediaFilter,
 	}
 }
 
-func (q *QueueViewer) Init() tea.Cmd {
+func (q *queueViewer) Init() tea.Cmd {
 	return nil
 }
 
-func (q *QueueViewer) SetSize(width, height int) {
+func (q *queueViewer) SetSize(width, height int) {
 	var cmd tea.Cmd
 	// TODO: table doesn't lend itself well to SetSize() approach. Should have its own SetSize method
-	// TODO: QueueViewer should draw its frame (+title) itself. table shouldn't be concerned with frames
+	// TODO: queueViewer should draw its frame (+title) itself. table shouldn't be concerned with frames
 	q.table, cmd = q.table.Update(table.SetSizeMsg{Width: width, Height: height})
 	for cmd != nil {
 		q.table, cmd = q.table.Update(cmd())
 	}
 }
 
-func (q *QueueViewer) Update(msg tea.Msg) tea.Cmd {
+func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case table.FilterStateChangeMsg:
 		q.textFilterOn = msg.State
-	case RefreshUIMsg:
+	case refreshUIMsg:
 		cmd = loadTableCmd(q.queue.All(), q.mediaFilter.mediaFilterState, q.showFullPath)
 	case table.RowChangedMsg:
 		// mark the selected row so we know which queue item to convert when the user hits <enter>.
 		// TODO: does this consistently work? even if table is first loaded?
 		q.selectedRow = msg.Row
-	case MediaFilterChangedMsg:
+	case mediaFilterChangedMsg:
 		newTitle := title
 		if filter := q.mediaFilter.mediaFilterState.String(); filter != "" {
 			newTitle += " (" + q.mediaFilterStyle.Render(filter) + ")"
@@ -101,12 +101,12 @@ func (q *QueueViewer) Update(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, q.keyMap.Convert):
 			if row := q.selectedRow; row != nil {
 				q.queue.Queue(row[len(row)-1].(table.UserData).Data.(*pipeline.WorkItem))
-				cmd = func() tea.Msg { return RefreshUIMsg{} }
+				cmd = func() tea.Msg { return refreshUIMsg{} }
 			}
 		case key.Matches(msg, q.keyMap.ShowFullPath):
 			q.showFullPath = !q.showFullPath
 			// refresh the table
-			cmd = func() tea.Msg { return RefreshUIMsg{} }
+			cmd = func() tea.Msg { return refreshUIMsg{} }
 		default:
 			// route key to mediaFilter
 			if cmd = q.mediaFilter.Update(msg); cmd == nil {
@@ -121,7 +121,7 @@ func (q *QueueViewer) Update(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-func (q *QueueViewer) View() string {
+func (q *queueViewer) View() string {
 	// q.mediaFilter.mediaFilterState.String()
 	// TODO: frame should be drawn here, not in table, so we can set the title directly.
 	v := q.table.View()
@@ -129,7 +129,7 @@ func (q *QueueViewer) View() string {
 }
 
 // loadTableCmd builds the table with the current Queue state and issues a command to load it in the table.
-func loadTableCmd(items iter.Seq[*pipeline.WorkItem], f MediaFilterState, showFullPath bool) tea.Cmd {
+func loadTableCmd(items iter.Seq[*pipeline.WorkItem], f mediaFilterState, showFullPath bool) tea.Cmd {
 	return func() tea.Msg {
 		var rows []table.Row
 		for item := range items {

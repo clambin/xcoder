@@ -27,8 +27,8 @@ type Application struct {
 	// TODO: map[paneID]component?
 	configViewer configView
 	helpViewer   helpViewer
-	queueViewer  *QueueViewer
-	logViewer    *LogViewer
+	queueViewer  *queueViewer
+	logViewer    *logViewer
 	statusLine   *statusLine
 	activePane   paneID
 	keyMap       KeyMap
@@ -54,8 +54,8 @@ func New(queue Queue, config pipeline.Configuration) Application {
 	}
 	return Application{
 		configViewer: newConfigView(config, styles.Config),
-		queueViewer:  NewQueueViewer(queue, styles.QueueViewer, keyMap.QueueViewer),
-		logViewer:    NewLogViewer(keyMap.LogViewer, styles.LogViewer),
+		queueViewer:  newQueueViewer(queue, styles.QueueViewer, keyMap.QueueViewer),
+		logViewer:    newLogViewer(keyMap.LogViewer, styles.LogViewer),
 		helpViewer:   newHelpViewer(h, styles.Help),
 		statusLine:   newStatusLine(queue, styles.Status),
 		activePane:   queuePane,
@@ -72,7 +72,7 @@ func (a Application) Init() tea.Cmd {
 		a.queueViewer.Init(),
 		a.logViewer.Init(),
 		tea.Tick(refreshInterval, func(t time.Time) tea.Msg {
-			return AutoRefreshUIMsg{}
+			return autoRefreshUIMsg{}
 		}),
 	)
 }
@@ -83,18 +83,18 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		return a.resizeComponents(msg)
-	case AutoRefreshUIMsg:
+	case autoRefreshUIMsg:
 		cmd = tea.Batch(
-			func() tea.Msg { return RefreshUIMsg{} },
-			tea.Tick(refreshInterval, func(t time.Time) tea.Msg { return AutoRefreshUIMsg{} }),
+			func() tea.Msg { return refreshUIMsg{} },
+			tea.Tick(refreshInterval, func(t time.Time) tea.Msg { return autoRefreshUIMsg{} }),
 		)
-	case RefreshUIMsg:
+	case refreshUIMsg:
 		cmd = tea.Batch(
 			a.queueViewer.Update(msg),
 			a.logViewer.Update(msg),
 			a.statusLine.Update(msg),
 		)
-	case LogViewerClosedMsg:
+	case logViewerClosedMsg:
 		a.activePane = queuePane
 	case tea.KeyMsg:
 		switch {
@@ -105,7 +105,7 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.activePane = logPane
 		default:
 			// TODO: this means only queueViewer and logViewer can handle key events.
-			// Do any others need it?  MediaFilter is handled by queueViewer. Anyone else?
+			// Do any others need it?  mediaFilter is handled by queueViewer. Anyone else?
 			switch a.activePane {
 			case queuePane:
 				cmd = a.queueViewer.Update(msg)
@@ -141,7 +141,7 @@ func (a Application) resizeComponents(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd
 	// update the pane sizes
 	a.queueViewer.SetSize(msg.Width, paneHeight)
 	a.logViewer.SetSize(msg.Width, paneHeight)
-	return a, func() tea.Msg { return RefreshUIMsg{} }
+	return a, func() tea.Msg { return refreshUIMsg{} }
 }
 
 func (a Application) viewHeader() string {

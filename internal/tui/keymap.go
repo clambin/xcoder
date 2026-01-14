@@ -23,7 +23,7 @@ func DefaultKeyMap() KeyMap {
 	}
 }
 
-// QueueViewerKeyMap defines the keybindings for the QueueViewer
+// QueueViewerKeyMap defines the keybindings for the queueViewer
 type QueueViewerKeyMap struct {
 	FilterTableKeyMap table.FilterTableKeyMap
 	MediaFilterKeyMap MediaFilterKeyMap

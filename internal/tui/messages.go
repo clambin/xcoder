@@ -1,13 +1,13 @@
 package tui
 
-// MediaFilterChangedMsg is sent when the MediaFilter changes
-type MediaFilterChangedMsg MediaFilterState
+// mediaFilterChangedMsg is sent when the mediaFilter changes
+type mediaFilterChangedMsg mediaFilterState
 
-// RefreshUIMsg updates all UI components
-type RefreshUIMsg struct{}
+// refreshUIMsg updates all UI components
+type refreshUIMsg struct{}
 
-// AutoRefreshUIMsg is the tick msg to automatically refresh all UI components
-type AutoRefreshUIMsg struct{}
+// autoRefreshUIMsg is the tick msg to automatically refresh all UI components
+type autoRefreshUIMsg struct{}
 
-// LogViewerClosedMsg indicates that the log viewer should be closed
-type LogViewerClosedMsg struct{}
+// logViewerClosedMsg indicates that the log viewer should be closed
+type logViewerClosedMsg struct{}

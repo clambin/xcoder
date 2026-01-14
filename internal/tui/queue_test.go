@@ -44,8 +44,8 @@ func TestQueueViewer_Actions(t *testing.T) {
 	worklist[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Inspected})
 
 	q := fakeQueue{queue: worklist}
-	qv := NewQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
-	sendAndWait(qv, RefreshUIMsg{})
+	qv := newQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
+	sendAndWait(qv, refreshUIMsg{})
 
 	// initialize model: wait until the table is loaded and the selectedRow is set.
 	sendAndWait(qv, tea.KeyMsg{Type: tea.KeyEnter})
@@ -96,16 +96,16 @@ func TestQueueViewer_Filter(t *testing.T) {
 
 	q := fakeQueue{queue: worklist}
 
-	qv := NewQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
-	// QueueViewer's table needs a size, or it doesn't render
+	qv := newQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
+	// queueViewer's table needs a size, or it doesn't render
 	qv.SetSize(256, 10)
 
 	for _, r := range []rune{'x', 'r', 's', 'c'} {
 		t.Run(string(r), func(t *testing.T) {
 			// user changes filter
 			sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
-			// controller issues RefreshUIMsg
-			sendAndWait(qv, RefreshUIMsg{})
+			// controller issues refreshUIMsg
+			sendAndWait(qv, refreshUIMsg{})
 			// check screen is updated
 			golden.RequireEqual(t, qv.View())
 		})

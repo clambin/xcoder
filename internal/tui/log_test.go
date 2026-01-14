@@ -11,7 +11,7 @@ import (
 )
 
 func TestLogViewer2(t *testing.T) {
-	l := NewLogViewer(DefaultLogViewerKeyMap(), LogViewerStyles{Frame: frame.Styles{
+	l := newLogViewer(DefaultLogViewerKeyMap(), LogViewerStyles{Frame: frame.Styles{
 		Title:  lipgloss.NewStyle().Foreground(lipgloss.Color("#ffffff")),
 		Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).Foreground(colors.Aqua),
 	}})
@@ -28,7 +28,7 @@ func TestLogViewer2(t *testing.T) {
 var _ tea.Model = wrapper{}
 
 type wrapper struct {
-	c *LogViewer
+	c *logViewer
 }
 
 func (w wrapper) Init() tea.Cmd {

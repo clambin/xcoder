@@ -10,15 +10,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// LogViewer displays the log/slog output
-type LogViewer struct {
+// logViewer displays the log/slog output
+type logViewer struct {
 	tea.Model
 	frameStyles frame.Styles
 	keyMap      LogViewerKeyMap
 }
 
-func NewLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) *LogViewer {
-	return &LogViewer{
+func newLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) *logViewer {
+	return &logViewer{
 		Model: stream.NewStream(80, 25,
 			stream.WithShowToggles(true),
 			stream.WithKeyMap(stream.KeyMap{WordWrap: keyMap.WordWrap, AutoScroll: keyMap.AutoScroll}),
@@ -28,11 +28,11 @@ func NewLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) *LogViewer {
 	}
 }
 
-func (l *LogViewer) Init() tea.Cmd {
+func (l *logViewer) Init() tea.Cmd {
 	return l.Model.Init()
 }
 
-func (l *LogViewer) SetSize(width, height int) {
+func (l *logViewer) SetSize(width, height int) {
 	// TODO: stream should just have a SetSize() method
 	l.Model, _ = l.Model.Update(stream.SetSizeMsg{
 		Width:  max(0, width-l.frameStyles.Border.GetHorizontalBorderSize()),
@@ -40,13 +40,13 @@ func (l *LogViewer) SetSize(width, height int) {
 	})
 }
 
-func (l *LogViewer) Update(msg tea.Msg) tea.Cmd {
+func (l *logViewer) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, l.keyMap.CloseLogs):
-			return func() tea.Msg { return LogViewerClosedMsg{} }
+			return func() tea.Msg { return logViewerClosedMsg{} }
 		default:
 			l.Model, cmd = l.Model.Update(msg)
 		}
@@ -56,10 +56,10 @@ func (l *LogViewer) Update(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-func (l *LogViewer) View() string {
+func (l *logViewer) View() string {
 	return frame.Draw("logs", lipgloss.Center, l.Model.View(), l.frameStyles)
 }
 
-func (l *LogViewer) LogWriter() io.Writer {
+func (l *logViewer) LogWriter() io.Writer {
 	return l.Model.(io.Writer)
 }

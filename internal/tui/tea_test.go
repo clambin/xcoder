@@ -1,7 +1,13 @@
 package tui
 
 import (
+	"bytes"
+	"io"
+	"testing"
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/exp/teatest"
 )
 
 type component interface {
@@ -47,4 +53,14 @@ func (q *msgQueue) pop() tea.Msg {
 	var msg tea.Msg
 	msg, *q = (*q)[0], (*q)[1:]
 	return msg
+}
+
+func waitFor(t testing.TB, r io.Reader, want []byte) {
+	t.Helper()
+	waitForFunc(t, r, func(b []byte) bool { return bytes.Contains(b, want) })
+}
+
+func waitForFunc(t testing.TB, r io.Reader, f func([]byte) bool) {
+	t.Helper()
+	teatest.WaitFor(t, r, f, teatest.WithDuration(time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 }

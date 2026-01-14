@@ -1,0 +1,10 @@
+SOURCE                   SOURCE STATS              TARGET STATS              STATUS      COMPLETED  REMAINING ERROR                                   
+test-0.mp4               h264/1080/10.00 mbps      hevc/1080/5.00 mbps       waiting                                                                  
+test-1.mp4               h264/1080/10.00 mbps      hevc/1080/5.00 mbps       inspected                                                                
+test-4.mp4               h264/1080/10.00 mbps      hevc/1080/5.00 mbps       [38;5;214mconverting[0m                                                               
+test-5.mp4               h264/1080/10.00 mbps      hevc/1080/5.00 mbps       [91mfailed[0m                           test error                              
+test-6.mp4               h264/1080/10.00 mbps      hevc/1080/5.00 mbps       [38;5;106mconverted[0m                                                                
+                                                                                                                                                      
+                                                                                                                                                      
+                                                                                                                                                      
+                                                                                                                                                      

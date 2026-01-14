@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"codeberg.org/clambin/bubbles/table"
@@ -71,6 +72,8 @@ func (q *queueViewer) SetSize(width, height int) {
 }
 
 func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
+	fmt.Printf("msg: %#+v\n", msg)
+
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case table.FilterStateChangeMsg:
@@ -124,8 +127,7 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 
 func (q *queueViewer) View() string {
 	// TODO: frame should be drawn here, not in table, so we can set the title directly.
-	v := q.table.View()
-	return v // q.table.View()
+	return q.table.View()
 }
 
 // loadTableCmd builds the table with the current Queue state and issues a command to load it in the table.

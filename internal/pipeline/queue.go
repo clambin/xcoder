@@ -2,8 +2,8 @@ package pipeline
 
 import (
 	"context"
-	"iter"
 	"log/slog"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -62,17 +62,10 @@ func (q *Queue) Size() int {
 	return len(q.queue)
 }
 
-func (q *Queue) All() iter.Seq[*WorkItem] {
-	// TODO: no real added value of making this an iterator. plus callers can't reserve memory. just return a copy of the slice
-	return func(yield func(*WorkItem) bool) {
-		q.lock.RLock()
-		defer q.lock.RUnlock()
-		for _, item := range q.queue {
-			if !yield(item) {
-				return
-			}
-		}
-	}
+func (q *Queue) All() []*WorkItem {
+	q.lock.RLock()
+	defer q.lock.RUnlock()
+	return slices.Clone(q.queue)
 }
 
 func (q *Queue) Active() bool {

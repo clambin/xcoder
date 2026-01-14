@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"iter"
 	"path/filepath"
 
 	"codeberg.org/clambin/bubbles/table"
@@ -29,7 +28,7 @@ var (
 type Queue interface {
 	Queue(item *pipeline.WorkItem)
 	SetActive(active bool)
-	All() iter.Seq[*pipeline.WorkItem]
+	All() []*pipeline.WorkItem
 	Active() bool
 	Stats() map[pipeline.Status]int
 }
@@ -130,10 +129,10 @@ func (q *queueViewer) View() string {
 }
 
 // loadTableCmd builds the table with the current Queue state and issues a command to load it in the table.
-func loadTableCmd(items iter.Seq[*pipeline.WorkItem], f mediaFilterState, showFullPath bool) tea.Cmd {
+func loadTableCmd(items []*pipeline.WorkItem, f mediaFilterState, showFullPath bool) tea.Cmd {
 	return func() tea.Msg {
 		var rows []table.Row
-		for item := range items {
+		for _, item := range items {
 			if f.Show(item) {
 				rows = append(rows, itemToRow(item, showFullPath))
 			}

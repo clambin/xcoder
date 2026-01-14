@@ -3,7 +3,7 @@ package tui
 import (
 	"errors"
 	"fmt"
-	"iter"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -127,14 +127,8 @@ func (f *fakeQueue) Stats() map[pipeline.Status]int {
 	return stats
 }
 
-func (f *fakeQueue) All() iter.Seq[*pipeline.WorkItem] {
-	return func(yield func(*pipeline.WorkItem) bool) {
-		for _, item := range f.queue {
-			if !yield(item) {
-				return
-			}
-		}
-	}
+func (f *fakeQueue) All() []*pipeline.WorkItem {
+	return slices.Clone(f.queue)
 }
 
 func (f *fakeQueue) Queue(*pipeline.WorkItem) {

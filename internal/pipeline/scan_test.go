@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"log/slog"
-	"slices"
 	"testing"
 
 	"github.com/psanford/memfs"
@@ -25,7 +24,7 @@ func TestScanFS(t *testing.T) {
 	assert.Equal(t, "/foo/video.MKV", item.Source.Path)
 	require.NoError(t, <-errCh)
 
-	items := slices.Collect(queue.All())
+	items := queue.All()
 	require.Len(t, items, 1)
 	assert.Equal(t, "/foo/video.MKV", items[0].Source.Path)
 }

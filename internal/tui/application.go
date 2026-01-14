@@ -24,7 +24,6 @@ var _ tea.Model = Application{}
 
 // Application is the controller for the UI.
 type Application struct {
-	// TODO: map[paneID]component?
 	configViewer configView
 	helpViewer   helpViewer
 	queueViewer  *queueViewer

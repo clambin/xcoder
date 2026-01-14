@@ -63,7 +63,6 @@ func (q *queueViewer) Init() tea.Cmd {
 func (q *queueViewer) SetSize(width, height int) {
 	var cmd tea.Cmd
 	// TODO: table doesn't lend itself well to SetSize() approach. Should have its own SetSize method
-	// TODO: queueViewer should draw its frame (+title) itself. table shouldn't be concerned with frames
 	q.table, cmd = q.table.Update(table.SetSizeMsg{Width: width, Height: height})
 	for cmd != nil {
 		q.table, cmd = q.table.Update(cmd())
@@ -125,7 +124,6 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (q *queueViewer) View() string {
-	// TODO: frame should be drawn here, not in table, so we can set the title directly.
 	return q.table.View()
 }
 

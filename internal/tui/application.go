@@ -47,7 +47,7 @@ func New(queue Queue, config pipeline.Configuration) Application {
 			{Title: "Filter", Keys: keyMap.QueueViewer.MediaFilterKeyMap.ShortHelp()},
 		}),
 		logPane: helper.New().Styles(styles.Help).Sections([]helper.Section{
-			{Title: "General", Keys: []key.Binding{keyMap.Quit, keyMap.ShowLogs}},
+			{Title: "General", Keys: []key.Binding{keyMap.Quit}},
 			{Title: "Logs", Keys: keyMap.LogViewer.ShortHelp()},
 		}),
 	}

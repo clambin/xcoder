@@ -75,14 +75,16 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case table.FilterStateChangeMsg:
+		// text filter changed.  if on, we need to route all keys to the table.
 		q.textFilterOn = msg.State
 	case refreshUIMsg:
+		// refresh the table. this is done in a cmd, so it doesn't block the UI loop.
 		cmd = loadTableCmd(q.queue.All(), q.mediaFilter.mediaFilterState, q.showFullPath)
 	case table.RowChangedMsg:
 		// mark the selected row so we know which queue item to convert when the user hits <enter>.
-		// TODO: does this consistently work? even if table is first loaded?
 		q.selectedRow = msg.Row
 	case mediaFilterChangedMsg:
+		// filter changed. change the table title
 		newTitle := title
 		if filter := q.mediaFilter.mediaFilterState.String(); filter != "" {
 			newTitle += " (" + q.mediaFilterStyle.Render(filter) + ")"
@@ -122,7 +124,6 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (q *queueViewer) View() string {
-	// q.mediaFilter.mediaFilterState.String()
 	// TODO: frame should be drawn here, not in table, so we can set the title directly.
 	v := q.table.View()
 	return v // q.table.View()

@@ -6,8 +6,6 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
-// TODO: can't be static:  if screen width is not enough, we need to ellipse any values that are too long (especially the source)
-
 // configView displays the current configuration.
 // Since the configuration is currently static, we pre-render it.
 type configView struct {
@@ -39,7 +37,7 @@ func newConfigView(cfg pipeline.Configuration, styles ConfigStyles) configView {
 		var value string
 		switch label {
 		case sourceLabel:
-			value = cfg.Input
+			value = cfg.Input // TODO: if too long, truncate with ellipsis
 		case profileLabel:
 			value = cfg.ProfileName
 		case overwriteLabel:

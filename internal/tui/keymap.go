@@ -79,7 +79,7 @@ func DefaultLogViewerKeyMap() LogViewerKeyMap {
 	return LogViewerKeyMap{
 		WordWrap:   key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "wrap words")),
 		AutoScroll: key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "auto scroll")),
-		CloseLogs:  key.NewBinding(key.WithKeys(tea.KeyEscape.String(), "l"), key.WithHelp(tea.KeyEscape.String()+"/l", "close logs")),
+		CloseLogs:  key.NewBinding(key.WithKeys(tea.KeyEscape.String()), key.WithHelp(tea.KeyEscape.String(), "close logs")),
 	}
 }
 

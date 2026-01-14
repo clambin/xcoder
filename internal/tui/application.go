@@ -104,8 +104,6 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, a.keyMap.ShowLogs):
 			a.activePane = logPane
 		default:
-			// TODO: this means only queueViewer and logViewer can handle key events.
-			// Do any others need it?  mediaFilter is handled by queueViewer. Anyone else?
 			switch a.activePane {
 			case queuePane:
 				cmd = a.queueViewer.Update(msg)

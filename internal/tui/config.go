@@ -6,9 +6,9 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
-// configPane displays the current configuration.
+// configView displays the current configuration.
 // Since the configuration is currently static, we pre-render it.
-type configPane struct {
+type configView struct {
 	content string
 }
 
@@ -20,9 +20,9 @@ const (
 )
 
 var configLabels = []string{sourceLabel, profileLabel, overwriteLabel, removeLabel}
-var boolToString = map[bool]string{true: "on", false: "off"}
+var boolToString = map[bool]string{true: "active", false: "off"}
 
-func newConfigPane(cfg pipeline.Configuration, styles ConfigStyles) configPane {
+func newConfigView(cfg pipeline.Configuration, styles ConfigStyles) configView {
 	var labelWidth int
 	for _, label := range configLabels {
 		labelWidth = max(labelWidth, len(label))
@@ -37,7 +37,7 @@ func newConfigPane(cfg pipeline.Configuration, styles ConfigStyles) configPane {
 		var value string
 		switch label {
 		case sourceLabel:
-			value = cfg.Input
+			value = cfg.Input // TODO: if too long, truncate with ellipsis
 		case profileLabel:
 			value = cfg.ProfileName
 		case overwriteLabel:
@@ -47,9 +47,9 @@ func newConfigPane(cfg pipeline.Configuration, styles ConfigStyles) configPane {
 		}
 		out.WriteString(styles.TextStyle.Render(value))
 	}
-	return configPane{content: out.String()}
+	return configView{content: out.String()}
 }
 
-func (c configPane) View() string {
+func (c configView) View() string {
 	return c.content
 }

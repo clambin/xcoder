@@ -23,15 +23,24 @@ var (
 type Styles struct {
 	Config      ConfigStyles
 	Help        helper.Styles
-	TableStyle  table.FilterTableStyles
-	FrameStyle  frame.Styles
+	QueueViewer QueueViewerStyles
+	LogViewer   LogViewerStyles
 	Status      StatusStyles
-	MediaFilter lipgloss.Style
 }
 
 type ConfigStyles struct {
 	LabelStyle lipgloss.Style
 	TextStyle  lipgloss.Style
+}
+
+type QueueViewerStyles struct {
+	Frame       frame.Styles
+	Table       table.FilterTableStyles
+	MediaFilter lipgloss.Style
+}
+
+type LogViewerStyles struct {
+	Frame frame.Styles
 }
 
 type StatusStyles struct {
@@ -41,10 +50,6 @@ type StatusStyles struct {
 
 func DefaultStyles() Styles {
 	return Styles{
-		FrameStyle: frame.Styles{
-			Title:  lipgloss.NewStyle().Foreground(colors.Green),
-			Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
-		},
 		Config: ConfigStyles{
 			LabelStyle: lipgloss.NewStyle().Foreground(colors.Orange1),
 			TextStyle:  lipgloss.NewStyle().Foreground(colors.Grey50),
@@ -54,34 +59,46 @@ func DefaultStyles() Styles {
 			Key:    lipgloss.NewStyle().Foreground(colors.IndianRed),
 			Desc:   lipgloss.NewStyle().Foreground(colors.Grey50),
 		},
+		QueueViewer: QueueViewerStyles{
+			Frame: frame.Styles{
+				Title:  lipgloss.NewStyle().Foreground(colors.Green),
+				Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
+			},
+			Table: table.FilterTableStyles{
+				Table: table.Styles{
+					Header:   lipgloss.NewStyle().Foreground(colors.White),
+					Selected: lipgloss.NewStyle().Foreground(colors.White).Background(colors.Blue),
+					Cell:     lipgloss.NewStyle().Foreground(colors.Blue),
+					Frame: frame.Styles{
+						Title:  lipgloss.NewStyle().Foreground(colors.Green),
+						Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
+					},
+				},
+				Filter: table.FilterStyles{
+					Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
+					TextArea: textarea.Style{
+						Base:             lipgloss.Style{},
+						CursorLine:       lipgloss.Style{},
+						CursorLineNumber: lipgloss.Style{},
+						EndOfBuffer:      lipgloss.Style{},
+						LineNumber:       lipgloss.Style{},
+						Placeholder:      lipgloss.Style{},
+						Prompt:           lipgloss.Style{},
+						Text:             lipgloss.Style{},
+					},
+				},
+			},
+			MediaFilter: lipgloss.NewStyle().Foreground(colors.DeepPink1Alt).Bold(true).Italic(true),
+		},
+		LogViewer: LogViewerStyles{
+			Frame: frame.Styles{
+				Title:  lipgloss.NewStyle().Foreground(colors.Green),
+				Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
+			},
+		},
 		Status: StatusStyles{
-			Main:       lipgloss.NewStyle().Background(colors.Blue),
+			Main:       lipgloss.NewStyle().Foreground(colors.White).Background(colors.Blue),
 			Processing: lipgloss.NewStyle().Foreground(lipgloss.Color("#8B0000")),
 		},
-		TableStyle: table.FilterTableStyles{
-			Table: table.Styles{
-				Header:   lipgloss.NewStyle().Foreground(colors.White),
-				Selected: lipgloss.NewStyle().Foreground(colors.White).Background(colors.Blue),
-				Cell:     lipgloss.NewStyle().Foreground(colors.Blue),
-				Frame: frame.Styles{
-					Title:  lipgloss.NewStyle().Foreground(colors.Green),
-					Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
-				},
-			},
-			Filter: table.FilterStyles{
-				Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
-				TextArea: textarea.Style{
-					Base:             lipgloss.Style{},
-					CursorLine:       lipgloss.Style{},
-					CursorLineNumber: lipgloss.Style{},
-					EndOfBuffer:      lipgloss.Style{},
-					LineNumber:       lipgloss.Style{},
-					Placeholder:      lipgloss.Style{},
-					Prompt:           lipgloss.Style{},
-					Text:             lipgloss.Style{},
-				},
-			},
-		},
-		MediaFilter: lipgloss.NewStyle().Foreground(colors.DeepPink1Alt).Bold(true).Italic(true),
 	}
 }

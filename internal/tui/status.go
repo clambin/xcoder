@@ -2,22 +2,13 @@ package tui
 
 import (
 	"fmt"
-	"time"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/clambin/xcoder/internal/pipeline"
 )
-
-const (
-	stateBlinkInterval = 500 * time.Millisecond
-)
-
-// blinkStateMsg is a message blinks the processing state (if batch processing is on).
-type blinkStateMsg struct{}
-
-var _ tea.Model = statusLine{}
 
 type statusLine struct {
 	styles    StatusStyles
@@ -27,66 +18,66 @@ type statusLine struct {
 	showState bool
 }
 
-func newStatusLine(queue Queue, styles StatusStyles) statusLine {
-	s := spinner.New(spinner.WithSpinner(spinner.Dot))
-	//s.Spinner.FPS = 250 * time.Millisecond
-	return statusLine{
+func newStatusLine(queue Queue, styles StatusStyles) *statusLine {
+	return &statusLine{
 		queue:   queue,
-		spinner: s,
+		spinner: spinner.New(spinner.WithSpinner(spinner.Dot)),
 		styles:  styles,
 	}
 }
 
-func (s statusLine) Init() tea.Cmd {
-	return tea.Batch(
-		func() tea.Msg { return s.spinner.Tick() },
-		tea.Tick(stateBlinkInterval, func(t time.Time) tea.Msg { return blinkStateMsg{} }),
-	)
+func (s *statusLine) Init() tea.Cmd {
+	return func() tea.Msg { return s.spinner.Tick() }
 }
 
-func (s statusLine) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s *statusLine) SetSize(width, _ int) {
+	s.width = width
+}
+
+func (s *statusLine) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		s.width = msg.Width
-		return s, nil
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		s.spinner, cmd = s.spinner.Update(msg)
-		return s, cmd
-	case blinkStateMsg:
-		s.showState = !s.showState
-		return s, tea.Tick(stateBlinkInterval, func(t time.Time) tea.Msg { return blinkStateMsg{} })
+		if msg.ID == s.spinner.ID() {
+			s.spinner, cmd = s.spinner.Update(msg)
+			s.showState = !s.showState
+		}
+		return cmd
 	default:
-		return s, nil
+		return nil
 	}
 }
 
-func (s statusLine) View() string {
+func (s *statusLine) View() string {
 	status := s.viewStatus()
 	state := s.viewState()
-	filler := s.styles.Main.Width(s.width - lipgloss.Width(status) - lipgloss.Width(state)).Render(" ")
-	return lipgloss.JoinHorizontal(lipgloss.Left, status, filler, state)
+	filler := strings.Repeat(" ", max(0, s.width-4-lipgloss.Width(status)-lipgloss.Width(state)))
+	return s.styles.Main.
+		Padding(0, 2, 0, 2).
+		Render(
+			lipgloss.JoinHorizontal(lipgloss.Left, status, filler, state),
+		)
 }
 
-func (s statusLine) viewStatus() string {
+func (s *statusLine) viewStatus() string {
 	var status string
 	if converting := s.queue.Stats()[pipeline.Converting]; converting > 0 {
 		status = fmt.Sprintf("Converting %d file(s) ... %s", converting, s.spinner.View())
 	}
-	return s.styles.Main.Padding(0, 0, 0, 2).Render(status)
+	return status
 }
 
-func (s statusLine) viewState() string {
+func (s *statusLine) viewState() string {
 	var state string
 	switch s.queue.Active() {
 	case false:
 		state = "OFF"
 	case true:
-		stateContent := "  "
+		stateContent := "   "
 		if s.showState {
-			stateContent = "ON"
+			stateContent = "ON "
 		}
 		state = s.styles.Processing.Render(stateContent)
 	}
-	return s.styles.Main.Padding(0, 2, 0, 0).Render("Batch processing: " + state)
+	return "Batch processing: " + state
 }

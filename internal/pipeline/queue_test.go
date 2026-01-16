@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"slices"
 	"testing"
 	"time"
 
@@ -14,7 +13,7 @@ func TestQueue(t *testing.T) {
 	var l Queue
 
 	// default Queue is empty and inactive
-	assert.Empty(t, slices.Collect(l.All()))
+	assert.Empty(t, l.All())
 	assert.Zero(t, l.Size())
 	assert.False(t, l.Active())
 

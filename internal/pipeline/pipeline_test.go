@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 	"time"
 
@@ -29,7 +28,7 @@ func TestRun(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(cfg.Input, "video.mkv"), []byte{}, 0644))
 
 	assert.Eventually(t, func() bool {
-		items := slices.Collect(queue.All())
+		items := queue.All()
 		if len(items) != 1 {
 			return false
 		}

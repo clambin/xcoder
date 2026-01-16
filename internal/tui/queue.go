@@ -37,10 +37,9 @@ var _ Queue = (*pipeline.Queue)(nil)
 
 type queueViewer struct {
 	mediaFilterStyle lipgloss.Style
-	table            tea.Model
+	table            *table.FilterTable
 	queue            Queue
 	keyMap           QueueViewerKeyMap
-	selectedRow      table.Row
 	mediaFilter      mediaFilter
 	textFilterOn     bool
 	showFullPath     bool
@@ -61,12 +60,7 @@ func (q *queueViewer) Init() tea.Cmd {
 }
 
 func (q *queueViewer) SetSize(width, height int) {
-	var cmd tea.Cmd
-	// TODO: table doesn't lend itself well to SetSize() approach. Should have its own SetSize method
-	q.table, cmd = q.table.Update(table.SetSizeMsg{Width: width, Height: height})
-	for cmd != nil {
-		q.table, cmd = q.table.Update(cmd())
-	}
+	q.table.SetSize(width, height)
 }
 
 func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
@@ -80,20 +74,19 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 	case refreshUIMsg:
 		// refresh the table. this is done in a cmd, so it doesn't block the UI loop.
 		cmd = loadTableCmd(q.queue.All(), q.mediaFilter.mediaFilterState, q.showFullPath)
-	case table.RowChangedMsg:
-		// mark the selected row so we know which queue item to convert when the user hits <enter>.
-		q.selectedRow = msg.Row
 	case mediaFilterChangedMsg:
 		// filter changed. change the table title
 		newTitle := title
 		if filter := q.mediaFilter.mediaFilterState.String(); filter != "" {
 			newTitle += " (" + q.mediaFilterStyle.Render(filter) + ")"
 		}
-		cmd = func() tea.Msg { return table.SetTitleMsg{Title: newTitle} }
+		q.table.SetTitle(newTitle)
+	case setRowsMsg:
+		q.table.SetRows(msg.rows)
 	case tea.KeyMsg:
 		// if the text filter is active, it receives all inputs.
 		if q.textFilterOn {
-			q.table, cmd = q.table.Update(msg)
+			cmd = q.table.Update(msg)
 			break
 		}
 		switch {
@@ -101,7 +94,7 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 			// toggle queue active state
 			q.queue.SetActive(!q.queue.Active())
 		case key.Matches(msg, q.keyMap.Convert):
-			if row := q.selectedRow; row != nil {
+			if row := q.table.SelectedRow; row != nil {
 				q.queue.Queue(row[len(row)-1].(table.UserData).Data.(*pipeline.WorkItem))
 				cmd = func() tea.Msg { return refreshUIMsg{} }
 			}
@@ -113,12 +106,12 @@ func (q *queueViewer) Update(msg tea.Msg) tea.Cmd {
 			// route key to mediaFilter
 			if cmd = q.mediaFilter.Update(msg); cmd == nil {
 				// if no action, route to table
-				q.table, cmd = q.table.Update(msg)
+				cmd = q.table.Update(msg)
 			}
 		}
 	default:
 		// any other message is passed to the table
-		q.table, cmd = q.table.Update(msg)
+		cmd = q.table.Update(msg)
 	}
 	return cmd
 }
@@ -136,7 +129,7 @@ func loadTableCmd(items []*pipeline.WorkItem, f mediaFilterState, showFullPath b
 				rows = append(rows, itemToRow(item, showFullPath))
 			}
 		}
-		return table.SetRowsMsg{Rows: rows}
+		return setRowsMsg{rows: rows}
 	}
 }
 

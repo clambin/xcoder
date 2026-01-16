@@ -97,10 +97,10 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.activePane = queuePane
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, a.keyMap.Quit):
+		case key.Matches(msg, a.keyMap.Quit) && !a.queueViewer.textFilterOn:
 			// hard exit: no need to process any more messages
 			return a, tea.Quit
-		case key.Matches(msg, a.keyMap.ShowLogs):
+		case key.Matches(msg, a.keyMap.ShowLogs) && !a.queueViewer.textFilterOn:
 			a.activePane = logPane
 		default:
 			switch a.activePane {

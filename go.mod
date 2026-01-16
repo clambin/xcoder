@@ -3,14 +3,14 @@ module github.com/clambin/xcoder
 go 1.25
 
 require (
-	codeberg.org/clambin/bubbles v0.5.1
+	codeberg.org/clambin/bubbles v0.6.1
 	codeberg.org/clambin/go-common/charmer v0.4.0
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/charmbracelet/x/exp/golden v0.0.0-20260114172249-f5a4d7d87cd4
-	github.com/charmbracelet/x/exp/teatest v0.0.0-20260114172249-f5a4d7d87cd4
+	github.com/charmbracelet/x/exp/golden v0.0.0-20260116010723-b770f9f0bfed
+	github.com/charmbracelet/x/exp/teatest v0.0.0-20260116010723-b770f9f0bfed
 	github.com/muesli/termenv v0.16.0
 	github.com/psanford/memfs v0.0.0-20241019191636-4ef911798f9b
 	github.com/spf13/cobra v1.10.2
@@ -25,10 +25,10 @@ require (
 	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
 	github.com/charmbracelet/colorprofile v0.3.3 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.11.3 // indirect
+	github.com/charmbracelet/x/ansi v0.11.4 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
-	github.com/clipperhouse/displaywidth v0.6.1 // indirect
+	github.com/clipperhouse/displaywidth v0.7.0 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

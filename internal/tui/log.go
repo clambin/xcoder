@@ -12,14 +12,14 @@ import (
 
 // logViewer displays the log/slog output
 type logViewer struct {
-	tea.Model
-	frameStyles frame.Styles
-	keyMap      LogViewerKeyMap
+	streamViewer *stream.Stream
+	frameStyles  frame.Styles
+	keyMap       LogViewerKeyMap
 }
 
 func newLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) *logViewer {
 	return &logViewer{
-		Model: stream.NewStream(80, 25,
+		streamViewer: stream.NewStream(80, 25,
 			stream.WithShowToggles(true),
 			stream.WithKeyMap(stream.KeyMap{WordWrap: keyMap.WordWrap, AutoScroll: keyMap.AutoScroll}),
 		),
@@ -29,15 +29,14 @@ func newLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) *logViewer {
 }
 
 func (l *logViewer) Init() tea.Cmd {
-	return l.Model.Init()
+	return l.streamViewer.Init()
 }
 
 func (l *logViewer) SetSize(width, height int) {
-	// TODO: stream should just have a SetSize() method
-	l.Model, _ = l.Model.Update(stream.SetSizeMsg{
-		Width:  max(0, width-l.frameStyles.Border.GetHorizontalBorderSize()),
-		Height: max(0, height-l.frameStyles.Border.GetVerticalBorderSize()),
-	})
+	l.streamViewer.SetSize(
+		max(0, width-l.frameStyles.Border.GetHorizontalBorderSize()),
+		max(0, height-l.frameStyles.Border.GetVerticalBorderSize()),
+	)
 }
 
 func (l *logViewer) Update(msg tea.Msg) tea.Cmd {
@@ -48,18 +47,18 @@ func (l *logViewer) Update(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, l.keyMap.CloseLogs):
 			return func() tea.Msg { return logViewerClosedMsg{} }
 		default:
-			l.Model, cmd = l.Model.Update(msg)
+			cmd = l.streamViewer.Update(msg)
 		}
 	default:
-		l.Model, cmd = l.Model.Update(msg)
+		cmd = l.streamViewer.Update(msg)
 	}
 	return cmd
 }
 
 func (l *logViewer) View() string {
-	return frame.Draw("logs", lipgloss.Center, l.Model.View(), l.frameStyles)
+	return frame.Draw("logs", lipgloss.Center, l.streamViewer.View(), l.frameStyles)
 }
 
 func (l *logViewer) LogWriter() io.Writer {
-	return l.Model.(io.Writer)
+	return l.streamViewer
 }

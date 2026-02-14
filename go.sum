@@ -4,6 +4,8 @@ codeberg.org/clambin/bubbles v0.8.0 h1:vJp2dsGTvo9ZkI4IFr1XogC1IL0xUiyBts/KF9the
 codeberg.org/clambin/bubbles v0.8.0/go.mod h1:xTXlsF9JkUVkp380PKdluHIy81HDKP1Ud+dnJjqoQiE=
 codeberg.org/clambin/go-common/charmer v0.4.0 h1:UmhNOIGhD1WxyPqZ40nesC7GInucnnvGlnPAIiSI/40=
 codeberg.org/clambin/go-common/charmer v0.4.0/go.mod h1:FTjKYy65/VDkT/5CPEyUUnDWCfTj5LjwuX0PcOEgUes=
+codeberg.org/clambin/go-common/charmer v0.4.1 h1:WkRy9vpoCqghWBShiPqWkkhEOWrq3a9S6hcoaij8sTA=
+codeberg.org/clambin/go-common/charmer v0.4.1/go.mod h1:okSKC9dmKQuXUEW85fdN8QjFK0LpXowLANCGfyACxL8=
 codeberg.org/clambin/go-common/set v0.6.0 h1:R+Pe98XsmW3sdMtBZ/G/FKsgeeynhbqoCTrL+pGApUQ=
 codeberg.org/clambin/go-common/set v0.6.0/go.mod h1:PRd4gka5V+Tn3BmUkXkEjUGlEsLjCqKOFjG1inc+Zpc=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=

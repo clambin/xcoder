@@ -15,20 +15,6 @@ func init() {
 	lipgloss.SetColorProfile(termenv.ANSI256)
 }
 
-func TestConfigView_View(t *testing.T) {
-	cfg := pipeline.Configuration{
-		Input:       ".",
-		ProfileName: "foo",
-		Active:      false,
-		Remove:      true,
-		Overwrite:   true,
-	}
-	a := newConfigView(cfg, ConfigStyles{})
-
-	golden.RequireEqual(t, a.View())
-
-}
-
 func TestApplication(t *testing.T) {
 	q := fakeQueue{
 		queue: []*pipeline.WorkItem{

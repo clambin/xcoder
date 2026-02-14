@@ -36,7 +36,7 @@ func TestStatusLine_BatchStatus(t *testing.T) {
 }
 
 func TestStatusLine_Converting(t *testing.T) {
-	const expectedWidth = 30
+	const expectedWidth = 52
 	q := fakeQueue{
 		queue: []*pipeline.WorkItem{
 			{Source: pipeline.MediaFile{Path: "file1.mp4"}, Target: pipeline.MediaFile{Path: "file1.hevc.mkv"}},

@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -49,13 +48,18 @@ func (s *statusLine) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (s *statusLine) View() string {
-	status := s.viewStatus()
 	state := s.viewState()
-	filler := strings.Repeat(" ", max(0, s.width-4-lipgloss.Width(status)-lipgloss.Width(state)))
 	return s.styles.Main.
 		Padding(0, 2, 0, 2).
+		MaxHeight(1).
 		Render(
-			lipgloss.JoinHorizontal(lipgloss.Left, status, filler, state),
+			lipgloss.JoinHorizontal(lipgloss.Left,
+				lipgloss.NewStyle().
+					Padding(0, 1, 0, 0).
+					Width(max(0, s.width-lipgloss.Width(state)-4)).
+					Render(s.viewStatus()),
+				state,
+			),
 		)
 }
 

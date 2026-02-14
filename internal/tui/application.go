@@ -143,10 +143,9 @@ func (a Application) resizeComponents(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd
 
 func (a Application) viewHeader() string {
 	config := lipgloss.NewStyle().Padding(0, 5, 0, 0).Render(a.configViewer.View())
-	width := max(0, a.width-lipgloss.Width(config))
 	return lipgloss.JoinHorizontal(lipgloss.Left,
 		config,
-		a.helpViewer.view(a.activePane, width),
+		a.helpViewer.view(a.activePane, max(0, a.width-lipgloss.Width(config))),
 	)
 }
 

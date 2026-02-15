@@ -34,13 +34,13 @@ type ConfigStyles struct {
 }
 
 type QueueViewerStyles struct {
-	Frame       frame.Styles
+	Frame       frame.Style
 	Table       table.FilterTableStyles
 	MediaFilter lipgloss.Style
 }
 
 type LogViewerStyles struct {
-	Frame frame.Styles
+	Frame frame.Style
 }
 
 type StatusStyles struct {
@@ -60,7 +60,7 @@ func DefaultStyles() Styles {
 			Desc:   lipgloss.NewStyle().Foreground(colors.Grey50),
 		},
 		QueueViewer: QueueViewerStyles{
-			Frame: frame.Styles{
+			Frame: frame.Style{
 				Title:  lipgloss.NewStyle().Foreground(colors.Green),
 				Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
 			},
@@ -69,13 +69,8 @@ func DefaultStyles() Styles {
 					Header:   lipgloss.NewStyle().Foreground(colors.White),
 					Selected: lipgloss.NewStyle().Foreground(colors.White).Background(colors.Blue),
 					Cell:     lipgloss.NewStyle().Foreground(colors.Blue),
-					Frame: frame.Styles{
-						Title:  lipgloss.NewStyle().Foreground(colors.Green),
-						Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
-					},
 				},
 				Filter: table.FilterStyles{
-					Border: lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
 					TextArea: textarea.Style{
 						Base:             lipgloss.Style{},
 						CursorLine:       lipgloss.Style{},
@@ -91,7 +86,7 @@ func DefaultStyles() Styles {
 			MediaFilter: lipgloss.NewStyle().Foreground(colors.DeepPink1Alt).Bold(true).Italic(true),
 		},
 		LogViewer: LogViewerStyles{
-			Frame: frame.Styles{
+			Frame: frame.Style{
 				Title:  lipgloss.NewStyle().Foreground(colors.Green),
 				Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
 			},

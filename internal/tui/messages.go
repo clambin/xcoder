@@ -2,9 +2,6 @@ package tui
 
 import "codeberg.org/clambin/bubbles/table"
 
-// mediaFilterChangedMsg is sent when the mediaFilter changes
-type mediaFilterChangedMsg mediaFilterState
-
 // refreshUIMsg updates all UI components
 type refreshUIMsg struct{}
 

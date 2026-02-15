@@ -3,14 +3,15 @@ module github.com/clambin/xcoder
 go 1.25
 
 require (
-	codeberg.org/clambin/bubbles v0.8.0
+	codeberg.org/clambin/bubbles v0.9.0
 	codeberg.org/clambin/go-common/charmer v0.4.1
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/charmbracelet/x/exp/golden v0.0.0-20260209194814-eeb2896ac759
-	github.com/charmbracelet/x/exp/teatest v0.0.0-20260209194814-eeb2896ac759
+	github.com/charmbracelet/x/ansi v0.11.6
+	github.com/charmbracelet/x/exp/golden v0.0.0-20260216111343-536eb63c1f4c
+	github.com/charmbracelet/x/exp/teatest v0.0.0-20260216111343-536eb63c1f4c
 	github.com/muesli/termenv v0.16.0
 	github.com/psanford/memfs v0.0.0-20241019191636-4ef911798f9b
 	github.com/spf13/cobra v1.10.2
@@ -25,7 +26,6 @@ require (
 	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.9.0 // indirect

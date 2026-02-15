@@ -9,6 +9,8 @@ import (
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
+var _ tea.Model = statusLine{}
+
 type statusLine struct {
 	styles    StatusStyles
 	queue     Queue
@@ -17,23 +19,24 @@ type statusLine struct {
 	showState bool
 }
 
-func newStatusLine(queue Queue, styles StatusStyles) *statusLine {
-	return &statusLine{
+func newStatusLine(queue Queue, styles StatusStyles, opts ...spinner.Option) statusLine {
+	return statusLine{
 		queue:   queue,
-		spinner: spinner.New(spinner.WithSpinner(spinner.Dot)),
+		spinner: spinner.New(opts...),
 		styles:  styles,
 	}
 }
 
-func (s *statusLine) Init() tea.Cmd {
+func (s statusLine) Init() tea.Cmd {
 	return func() tea.Msg { return s.spinner.Tick() }
 }
 
-func (s *statusLine) SetSize(width, _ int) {
+func (s statusLine) SetSize(width, _ int) statusLine {
 	s.width = width
+	return s
 }
 
-func (s *statusLine) Update(msg tea.Msg) tea.Cmd {
+func (s statusLine) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -41,13 +44,13 @@ func (s *statusLine) Update(msg tea.Msg) tea.Cmd {
 			s.spinner, cmd = s.spinner.Update(msg)
 			s.showState = !s.showState
 		}
-		return cmd
+		return s, cmd
 	default:
-		return nil
+		return s, nil
 	}
 }
 
-func (s *statusLine) View() string {
+func (s statusLine) View() string {
 	state := s.viewState()
 	return s.styles.Main.
 		Padding(0, 2, 0, 2).
@@ -63,7 +66,7 @@ func (s *statusLine) View() string {
 		)
 }
 
-func (s *statusLine) viewStatus() string {
+func (s statusLine) viewStatus() string {
 	var status string
 	if converting := s.queue.Stats()[pipeline.Converting]; converting > 0 {
 		status = fmt.Sprintf("Converting %d file(s) ... %s", converting, s.spinner.View())
@@ -71,7 +74,7 @@ func (s *statusLine) viewStatus() string {
 	return status
 }
 
-func (s *statusLine) viewState() string {
+func (s statusLine) viewState() string {
 	var state string
 	switch s.queue.Active() {
 	case false:

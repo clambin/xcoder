@@ -60,11 +60,11 @@ type mediaFilter struct {
 	mediaFilterState mediaFilterState
 }
 
-func (f *mediaFilter) Init() tea.Cmd {
-	return func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) }
+func (f mediaFilter) Init() tea.Cmd {
+	return nil
 }
 
-func (f *mediaFilter) Update(msg tea.Msg) tea.Cmd {
+func (f mediaFilter) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var action bool
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -80,16 +80,13 @@ func (f *mediaFilter) Update(msg tea.Msg) tea.Cmd {
 			action = true
 		}
 	}
-	if !action {
-		return nil
+	var cmd tea.Cmd
+	if action {
+		cmd = func() tea.Msg { return refreshUIMsg{} }
 	}
-	return tea.Batch(
-		func() tea.Msg { return mediaFilterChangedMsg(f.mediaFilterState) },
-		func() tea.Msg { return refreshUIMsg{} },
-	)
+	return f, cmd
 }
 
-func (f *mediaFilter) View() string {
-	// not used: controller renders mediaFilter state directly from mediaFilterChangedMsg
-	return ""
+func (f mediaFilter) View() string {
+	return f.mediaFilterState.String()
 }

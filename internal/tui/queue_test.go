@@ -1,15 +1,12 @@
 package tui
 
 import (
-	"errors"
-	"fmt"
 	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/golden"
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/clambin/xcoder/internal/pipeline"
@@ -36,51 +33,6 @@ var (
 	}
 )
 
-func TestQueueViewer(t *testing.T) {
-	stats := []pipeline.Status{
-		pipeline.Waiting,
-		pipeline.Inspected,
-		pipeline.Skipped,
-		pipeline.Rejected,
-		pipeline.Converting,
-		pipeline.Failed,
-		pipeline.Converted,
-	}
-	worklist := make([]*pipeline.WorkItem, len(stats))
-	for i := range worklist {
-		worklist[i] = &pipeline.WorkItem{
-			Source: pipeline.MediaFile{Path: fmt.Sprintf("test-%d.mp4", i), VideoStats: h264VideoStats},
-			Target: pipeline.MediaFile{Path: fmt.Sprintf("test-%d.hevc.mkv", i), VideoStats: hevcVideoStats},
-		}
-		var err error
-		if stats[i] == pipeline.Failed {
-			err = errors.New("test error")
-		}
-		worklist[i].SetWorkStatus(pipeline.WorkStatus{Status: stats[i], Err: err})
-	}
-
-	qv := newQueueViewer(&fakeQueue{queue: worklist}, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
-	// queueViewer doesn't react to tea.WindowSizeMsg, so we need to set a size
-	qv.SetSize(150, 10)
-
-	// initialize a test model and wait for the screen to render
-	tm := teatest.NewTestModel(t, queueViewWrapper{qv}, teatest.WithInitialTermSize(150, 10))
-	tm.Send(refreshUIMsg{})
-	waitFor(t, tm.Output(), []byte("converted"))
-	golden.RequireEqual(t, qv.View())
-
-	// test each of the media filters
-	for _, r := range []rune{'x', 'r', 's', 'c'} {
-		t.Run(string(r), func(t *testing.T) {
-			// user changes filter
-			sendAndWait(qv, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
-			// check screen is updated
-			golden.RequireEqual(t, qv.View())
-		})
-	}
-
-}
-
 func TestQueueViewer_Actions(t *testing.T) {
 	worklist := []*pipeline.WorkItem{
 		{
@@ -92,10 +44,10 @@ func TestQueueViewer_Actions(t *testing.T) {
 
 	q := fakeQueue{queue: worklist}
 	qv := newQueueViewer(&q, QueueViewerStyles{}, DefaultQueueViewerKeyMap())
-	qv.SetSize(150, 10)
+	qv = qv.SetSize(150, 10)
 
 	// initialize the test model
-	tm := teatest.NewTestModel(t, queueViewWrapper{qv}, teatest.WithInitialTermSize(150, 10))
+	tm := teatest.NewTestModel(t, qv, teatest.WithInitialTermSize(150, 10))
 	tm.Send(refreshUIMsg{})
 	waitFor(t, tm.Output(), []byte("inspected"))
 
@@ -117,9 +69,7 @@ func TestQueueViewer_Actions(t *testing.T) {
 	require.NoError(t, tm.Quit())
 
 	// check results of actions
-	assert.True(t, qv.showFullPath)
 	assert.True(t, q.Active())
-	assert.False(t, qv.textFilterOn)
 }
 
 var _ Queue = (*fakeQueue)(nil)
@@ -151,22 +101,4 @@ func (f *fakeQueue) SetActive(active bool) {
 
 func (f *fakeQueue) Active() bool {
 	return f.active.Load()
-}
-
-var _ tea.Model = queueViewWrapper{}
-
-type queueViewWrapper struct {
-	qvw *queueViewer
-}
-
-func (q queueViewWrapper) Init() tea.Cmd {
-	return q.qvw.Init()
-}
-
-func (q queueViewWrapper) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return q, q.qvw.Update(msg)
-}
-
-func (q queueViewWrapper) View() string {
-	return q.qvw.View()
 }

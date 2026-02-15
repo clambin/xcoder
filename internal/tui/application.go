@@ -26,10 +26,9 @@ var _ tea.Model = Application{}
 type Application struct {
 	configViewer configView
 	helpViewer   helpViewer
-	queueViewer  *queueViewer
-	logViewer    *logViewer
-	statusLine   *statusLine
+	statusLine   tea.Model
 	activePane   paneID
+	panes        map[paneID]tea.Model
 	keyMap       KeyMap
 	width        int
 	height       int
@@ -53,27 +52,31 @@ func New(queue Queue, config pipeline.Configuration) Application {
 	}
 	return Application{
 		configViewer: newConfigView(config, styles.Config),
-		queueViewer:  newQueueViewer(queue, styles.QueueViewer, keyMap.QueueViewer),
-		logViewer:    newLogViewer(keyMap.LogViewer, styles.LogViewer),
 		helpViewer:   newHelpViewer(h, styles.Help),
 		statusLine:   newStatusLine(queue, styles.Status),
 		activePane:   queuePane,
-		keyMap:       keyMap,
+		panes: map[paneID]tea.Model{
+			queuePane: newQueueViewer(queue, styles.QueueViewer, keyMap.QueueViewer),
+			logPane:   newLogViewer(keyMap.LogViewer, styles.LogViewer),
+		},
+		keyMap: keyMap,
 	}
 }
 
 func (a Application) LogWriter() io.Writer {
-	return a.logViewer.LogWriter()
+	return a.panes[logPane].(logViewer).LogWriter()
 }
 
 func (a Application) Init() tea.Cmd {
-	return tea.Batch(
-		a.queueViewer.Init(),
-		a.logViewer.Init(),
-		tea.Tick(refreshInterval, func(t time.Time) tea.Msg {
-			return autoRefreshUIMsg{}
-		}),
+	cmds := make([]tea.Cmd, 0, 2+len(a.panes))
+	for _, p := range a.panes {
+		cmds = append(cmds, p.Init())
+	}
+	cmds = append(cmds,
+		a.statusLine.Init(),
+		func() tea.Msg { return autoRefreshUIMsg{} },
 	)
+	return tea.Batch(cmds...)
 }
 
 func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -87,35 +90,39 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			func() tea.Msg { return refreshUIMsg{} },
 			tea.Tick(refreshInterval, func(t time.Time) tea.Msg { return autoRefreshUIMsg{} }),
 		)
-	case refreshUIMsg:
-		cmd = tea.Batch(
-			a.queueViewer.Update(msg),
-			a.logViewer.Update(msg),
-			a.statusLine.Update(msg),
-		)
 	case logViewerClosedMsg:
 		a.activePane = queuePane
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, a.keyMap.Quit) && !a.queueViewer.textFilterOn:
+		case key.Matches(msg, a.keyMap.Quit) && !a.panes[queuePane].(queueViewer).textFilterOn:
 			// hard exit: no need to process any more messages
 			return a, tea.Quit
-		case key.Matches(msg, a.keyMap.ShowLogs) && !a.queueViewer.textFilterOn:
+		case key.Matches(msg, a.keyMap.ShowLogs) && !a.panes[queuePane].(queueViewer).textFilterOn:
 			a.activePane = logPane
 		default:
-			switch a.activePane {
-			case queuePane:
-				cmd = a.queueViewer.Update(msg)
-			case logPane:
-				cmd = a.logViewer.Update(msg)
-			}
+			a.panes[a.activePane], cmd = a.panes[a.activePane].Update(msg)
 		}
+		/*
+			case refreshUIMsg:
+					cmds := make([]tea.Cmd, 0, 1+len(a.panes))
+					var pcmd tea.Cmd
+					for p := range a.panes {
+						a.panes[p], pcmd = a.panes[p].Update(msg)
+						cmds = append(cmds, pcmd)
+					}
+					a.statusLine, pcmd = a.statusLine.Update(msg)
+					cmd = tea.Batch(append(cmds, pcmd)...)
+
+		*/
 	default:
-		cmd = tea.Batch(
-			a.queueViewer.Update(msg),
-			a.logViewer.Update(msg),
-			a.statusLine.Update(msg),
-		)
+		cmds := make([]tea.Cmd, 0, 1+len(a.panes))
+		var pcmd tea.Cmd
+		for p := range a.panes {
+			a.panes[p], pcmd = a.panes[p].Update(msg)
+			cmds = append(cmds, pcmd)
+		}
+		a.statusLine, pcmd = a.statusLine.Update(msg)
+		cmd = tea.Batch(append(cmds, pcmd)...)
 	}
 
 	return a, cmd
@@ -124,20 +131,20 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (a Application) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top,
 		a.viewHeader(),
-		a.viewBody(),
-		a.viewFooter(),
+		a.panes[a.activePane].View(),
+		a.statusLine.View(),
 	)
 }
 
 func (a Application) resizeComponents(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	a.width = msg.Width
 	a.height = msg.Height
-	a.statusLine.SetSize(msg.Width, 1)
+	a.statusLine = a.statusLine.(statusLine).SetSize(msg.Width, 1)
 	// how much room is left for the panes?
-	paneHeight := a.height - lipgloss.Height(a.viewHeader()) - lipgloss.Height(a.viewFooter())
+	paneHeight := a.height - lipgloss.Height(a.viewHeader()) - 1
 	// update the pane sizes
-	a.queueViewer.SetSize(msg.Width, paneHeight)
-	a.logViewer.SetSize(msg.Width, paneHeight)
+	a.panes[queuePane] = a.panes[queuePane].(queueViewer).SetSize(msg.Width, paneHeight)
+	a.panes[logPane] = a.panes[logPane].(logViewer).SetSize(msg.Width, paneHeight)
 	return a, func() tea.Msg { return refreshUIMsg{} }
 }
 
@@ -147,19 +154,4 @@ func (a Application) viewHeader() string {
 		config,
 		a.helpViewer.view(a.activePane, max(0, a.width-lipgloss.Width(config))),
 	)
-}
-
-func (a Application) viewBody() string {
-	switch a.activePane {
-	case queuePane:
-		return a.queueViewer.View()
-	case logPane:
-		return a.logViewer.View()
-	default:
-		return ""
-	}
-}
-
-func (a Application) viewFooter() string {
-	return a.statusLine.View()
 }

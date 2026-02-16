@@ -3,7 +3,7 @@ module github.com/clambin/xcoder
 go 1.25
 
 require (
-	codeberg.org/clambin/bubbles v0.8.0
+	codeberg.org/clambin/bubbles v0.9.0
 	codeberg.org/clambin/go-common/charmer v0.4.1
 	codeberg.org/clambin/go-common/set v0.6.0
 	github.com/charmbracelet/bubbles v1.0.0
@@ -24,7 +24,6 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
-	github.com/charmbracelet/harmonica v0.2.0 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect

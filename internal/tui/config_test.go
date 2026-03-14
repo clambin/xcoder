@@ -15,8 +15,5 @@ func TestConfigView_View(t *testing.T) {
 		Remove:      true,
 		Overwrite:   true,
 	}
-	a := newConfigView(cfg, ConfigStyles{})
-
-	golden.RequireEqual(t, a.View())
-
+	golden.RequireEqual(t, newConfigView(cfg, ConfigStyles{}))
 }

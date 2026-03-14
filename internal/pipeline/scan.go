@@ -7,11 +7,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"codeberg.org/clambin/go-common/set"
 )
 
-var videoExtensions = set.New(".mkv", ".mp4", ".avi", ".mov")
+var videoExtensions = map[string]struct{}{
+	".mkv": {},
+	".mp4": {},
+	".avi": {},
+	".mov": {},
+}
 
 func Scan(ctx context.Context, baseDir string, queue *Queue, ch chan<- *WorkItem, logger *slog.Logger) error {
 	return ScanFS(ctx, os.DirFS(baseDir), baseDir, queue, ch, logger)
@@ -32,7 +35,7 @@ func ScanFS(ctx context.Context, fileSystem fs.FS, baseDir string, queue *Queue,
 		if d.IsDir() {
 			return nil
 		}
-		if !videoExtensions.Contains(strings.ToLower(filepath.Ext(path))) {
+		if _, ok := videoExtensions[strings.ToLower(filepath.Ext(path))]; !ok {
 			l.Debug("not a video file")
 			return nil
 		}

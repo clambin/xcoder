@@ -3,11 +3,11 @@ package tui
 import (
 	"path/filepath"
 
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"codeberg.org/clambin/bubbles/frame"
 	"codeberg.org/clambin/bubbles/table"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
@@ -36,22 +36,20 @@ type Queue interface {
 	Stats() map[pipeline.Status]int
 }
 
-var _ tea.Model = queueViewer{}
-
 type queueViewer struct {
-	tea.Model
-	mediaFilterStyle lipgloss.Style
 	frameStyle       frame.Style
+	mediaFilterStyle lipgloss.Style
 	queue            Queue
 	keyMap           QueueViewerKeyMap
-	mediaFilter      tea.Model
-	textFilterOn     bool
-	showFullPath     bool
+	mediaFilter      mediaFilter
+	table.FilterTable
+	textFilterOn bool
+	showFullPath bool
 }
 
 func newQueueViewer(queue Queue, styles QueueViewerStyles, keyMap QueueViewerKeyMap) queueViewer {
 	return queueViewer{
-		Model:            table.NewFilterTable().Columns(columns).Styles(styles.Table).KeyMap(keyMap.FilterTableKeyMap),
+		FilterTable:      table.NewFilterTable().Columns(columns).Styles(styles.Table).KeyMap(keyMap.FilterTableKeyMap),
 		queue:            queue,
 		keyMap:           keyMap,
 		mediaFilter:      mediaFilter{KeyMap: keyMap.MediaFilterKeyMap},
@@ -60,7 +58,7 @@ func newQueueViewer(queue Queue, styles QueueViewerStyles, keyMap QueueViewerKey
 	}
 }
 
-func (q queueViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (q queueViewer) Update(msg tea.Msg) (queueViewer, tea.Cmd) {
 	// fmt.Printf("msg: %#+v\n", msg)
 
 	var cmd tea.Cmd
@@ -70,13 +68,13 @@ func (q queueViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		q.textFilterOn = msg.State
 	case refreshUIMsg:
 		// refresh the table. this is done in a cmd, so it doesn't block the UI loop.
-		cmd = loadTableCmd(q.queue.All(), q.mediaFilter.(mediaFilter).mediaFilterState, q.showFullPath)
+		cmd = loadTableCmd(q.queue.All(), q.mediaFilter.mediaFilterState, q.showFullPath)
 	case setRowsMsg:
-		q.Model = q.Model.(table.FilterTable).Rows(msg.rows)
+		q.FilterTable = q.Rows(msg.rows)
 	case tea.KeyMsg:
 		// if the text filter is active, it receives all inputs.
 		if q.textFilterOn {
-			q.Model, cmd = q.Model.Update(msg)
+			q.FilterTable, cmd = q.FilterTable.Update(msg)
 			break
 		}
 		switch {
@@ -84,7 +82,7 @@ func (q queueViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// toggle queue active state
 			q.queue.SetActive(!q.queue.Active())
 		case key.Matches(msg, q.keyMap.Convert):
-			if row := q.Model.(table.FilterTable).SelectedRow(); row != nil {
+			if row := q.SelectedRow(); row != nil {
 				q.queue.Queue(row[len(row)-1].(table.UserData).Data.(*pipeline.WorkItem))
 				cmd = func() tea.Msg { return refreshUIMsg{} }
 			}
@@ -96,29 +94,28 @@ func (q queueViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// route key to mediaFilter
 			if q.mediaFilter, cmd = q.mediaFilter.Update(msg); cmd == nil {
 				// if no action, route to table
-				q.Model, cmd = q.Model.Update(msg)
+				q.FilterTable, cmd = q.FilterTable.Update(msg)
 			}
 		}
 	default:
 		// any other message is passed to the table
-		q.Model, cmd = q.Model.Update(msg)
+		q.FilterTable, cmd = q.FilterTable.Update(msg)
 	}
 	return q, cmd
 }
 
 func (q queueViewer) View() string {
-	v := q.Model.View()
 	frameTitle := title
 	if f := q.mediaFilter.View(); f != "" {
 		frameTitle += " (" + q.mediaFilterStyle.Render(f) + ")"
 	}
-	return frame.Draw(frameTitle, lipgloss.Center, v, q.frameStyle)
+	return frame.Render(frameTitle, lipgloss.Center, q.frameStyle, q.FilterTable.View())
 }
 
 func (q queueViewer) SetSize(width, height int) queueViewer {
 	borderWidth := q.frameStyle.Border.GetHorizontalBorderSize()
 	borderHeight := q.frameStyle.Border.GetVerticalBorderSize()
-	q.Model = q.Model.(table.FilterTable).Size(width-borderWidth, height-borderHeight)
+	q.FilterTable = q.Size(width-borderWidth, height-borderHeight)
 	return q
 }
 

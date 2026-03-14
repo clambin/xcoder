@@ -3,13 +3,11 @@ package tui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/clambin/xcoder/internal/pipeline"
 )
-
-var _ tea.Model = statusLine{}
 
 type statusLine struct {
 	styles    StatusStyles
@@ -36,7 +34,7 @@ func (s statusLine) SetSize(width, _ int) statusLine {
 	return s
 }
 
-func (s statusLine) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (s statusLine) Update(msg tea.Msg) (statusLine, tea.Cmd) {
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -51,22 +49,22 @@ func (s statusLine) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (s statusLine) View() string {
-	state := s.viewState()
+	state := "Batch processing: " + s.state()
+	statusStyle := lipgloss.NewStyle().
+		Padding(0, 1, 0, 0).
+		Width(max(0, s.width-lipgloss.Width(state)-4))
 	return s.styles.Main.
 		Padding(0, 2, 0, 2).
 		MaxHeight(1).
 		Render(
 			lipgloss.JoinHorizontal(lipgloss.Left,
-				lipgloss.NewStyle().
-					Padding(0, 1, 0, 0).
-					Width(max(0, s.width-lipgloss.Width(state)-4)).
-					Render(s.viewStatus()),
+				statusStyle.Render(s.status()),
 				state,
 			),
 		)
 }
 
-func (s statusLine) viewStatus() string {
+func (s statusLine) status() string {
 	var status string
 	if converting := s.queue.Stats()[pipeline.Converting]; converting > 0 {
 		status = fmt.Sprintf("Converting %d file(s) ... %s", converting, s.spinner.View())
@@ -74,17 +72,14 @@ func (s statusLine) viewStatus() string {
 	return status
 }
 
-func (s statusLine) viewState() string {
-	var state string
-	switch s.queue.Active() {
-	case false:
-		state = "OFF"
-	case true:
-		stateContent := "   "
-		if s.showState {
-			stateContent = "ON "
-		}
-		state = s.styles.Processing.Render(stateContent)
+var stateOnContent = map[bool]string{
+	true:  "ON ",
+	false: "   ",
+}
+
+func (s statusLine) state() string {
+	if !s.queue.Active() {
+		return "OFF"
 	}
-	return "Batch processing: " + state
+	return s.styles.Processing.Render(stateOnContent[s.showState])
 }

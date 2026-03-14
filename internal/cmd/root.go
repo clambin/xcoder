@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
+	tea "charm.land/bubbletea/v2"
 	"codeberg.org/clambin/go-common/charmer"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/clambin/xcoder/internal/tui"
 	"github.com/spf13/cobra"
@@ -94,7 +94,7 @@ func runUI(ctx context.Context, v *viper.Viper, args []string) error {
 	queue.SetActive(cfg.Active)
 
 	u := tui.New(&queue, cfg)
-	a := tea.NewProgram(u, tea.WithAltScreen(), tea.WithoutCatchPanics())
+	a := tea.NewProgram(u, tea.WithoutCatchPanics())
 
 	w := u.LogWriter()
 	l := cfg.Logger(w, nil)

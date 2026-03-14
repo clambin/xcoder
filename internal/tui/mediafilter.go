@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
@@ -64,10 +64,10 @@ func (f mediaFilter) Init() tea.Cmd {
 	return nil
 }
 
-func (f mediaFilter) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (f mediaFilter) Update(msg tea.Msg) (mediaFilter, tea.Cmd) {
 	var action bool
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, f.KeyMap.ShowSkippedFiles):
 			f.mediaFilterState.hideSkipped = !f.mediaFilterState.hideSkipped

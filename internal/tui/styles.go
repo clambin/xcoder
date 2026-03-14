@@ -1,12 +1,12 @@
 package tui
 
 import (
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/lipgloss/v2"
 	"codeberg.org/clambin/bubbles/colors"
 	"codeberg.org/clambin/bubbles/frame"
 	"codeberg.org/clambin/bubbles/helper"
 	"codeberg.org/clambin/bubbles/table"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
@@ -71,7 +71,7 @@ func DefaultStyles() Styles {
 					Cell:     lipgloss.NewStyle().Foreground(colors.Blue),
 				},
 				Filter: table.FilterStyles{
-					TextArea: textarea.Style{
+					TextArea: textarea.StyleState{
 						Base:             lipgloss.Style{},
 						CursorLine:       lipgloss.Style{},
 						CursorLineNumber: lipgloss.Style{},

@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/teatest"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/exp/teatest/v2"
 	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/stretchr/testify/assert"
@@ -47,23 +47,23 @@ func TestQueueViewer_Actions(t *testing.T) {
 	qv = qv.SetSize(150, 10)
 
 	// initialize the test model
-	tm := teatest.NewTestModel(t, qv, teatest.WithInitialTermSize(150, 10))
+	tm := teatest.NewTestModel(t, app[queueViewer]{model: qv}, teatest.WithInitialTermSize(150, 10))
 	tm.Send(refreshUIMsg{})
 	waitFor(t, tm.Output(), []byte("inspected"))
 
 	// ask to convert the first item
-	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	tm.Send(tea.KeyPressMsg{Code: tea.KeyEnter})
 	assert.Eventually(t, func() bool { return q.queue[0].WorkStatus().Status == pipeline.Converting }, time.Second, 10*time.Millisecond)
 
 	// fullPath
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}})
+	tm.Send(tea.KeyPressMsg{Text: "f"})
 
 	// activate queue
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	tm.Send(tea.KeyPressMsg{Text: "p"})
 
 	// switch on text filter
 	assert.False(t, qv.textFilterOn)
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	tm.Send(tea.KeyPressMsg{Text: "/"})
 
 	// shut down to avoid race conditions reading status
 	require.NoError(t, tm.Quit())

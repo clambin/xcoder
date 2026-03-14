@@ -3,23 +3,23 @@ package tui
 import (
 	"io"
 
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"codeberg.org/clambin/bubbles/frame"
 	"codeberg.org/clambin/bubbles/stream"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 // logViewer displays the log/slog output
 type logViewer struct {
-	tea.Model
 	frameStyle frame.Style
 	keyMap     LogViewerKeyMap
+	stream.Stream
 }
 
 func newLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) logViewer {
 	return logViewer{
-		Model: stream.New(
+		Stream: stream.New(
 			stream.WithShowToggles(true),
 			stream.WithKeyMap(stream.KeyMap{WordWrap: keyMap.WordWrap, AutoScroll: keyMap.AutoScroll}),
 		),
@@ -28,29 +28,29 @@ func newLogViewer(keyMap LogViewerKeyMap, style LogViewerStyles) logViewer {
 	}
 }
 
-func (l logViewer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (l logViewer) Update(msg tea.Msg) (logViewer, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, l.keyMap.CloseLogs):
 			return l, func() tea.Msg { return logViewerClosedMsg{} }
 		}
 	}
 	var cmd tea.Cmd
-	l.Model, cmd = l.Model.Update(msg)
+	l.Stream, cmd = l.Stream.Update(msg)
 	return l, cmd
 }
 
 func (l logViewer) View() string {
-	return frame.Draw("logs", lipgloss.Center, l.Model.View(), l.frameStyle)
+	return frame.Render("logs", lipgloss.Center, l.frameStyle, l.Model.View())
 }
 
 func (l logViewer) LogWriter() io.Writer {
-	return l.Model.(stream.Stream)
+	return l.Stream
 }
 
 func (l logViewer) SetSize(width, height int) logViewer {
-	l.Model = l.Model.(stream.Stream).Size(
+	l.Stream = l.Size(
 		max(0, width-l.frameStyle.Border.GetHorizontalBorderSize()),
 		max(0, height-l.frameStyle.Border.GetVerticalBorderSize()),
 	)

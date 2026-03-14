@@ -1,10 +1,9 @@
 package tui
 
 import (
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
 	"codeberg.org/clambin/bubbles/table"
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type KeyMap struct {
@@ -37,7 +36,7 @@ func DefaultQueueViewerKeyMap() QueueViewerKeyMap {
 		FilterTableKeyMap: table.DefaultFilterTableKeyMap(),
 		MediaFilterKeyMap: DefaultMediaFilterKeyMap(),
 		ActivateQueue:     key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "toggle queue active state")),
-		Convert:           key.NewBinding(key.WithKeys(tea.KeyEnter.String()), key.WithHelp(tea.KeyEnter.String(), "convert selected item")),
+		Convert:           key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "convert selected item")),
 		ShowFullPath:      key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "show full path")),
 	}
 }
@@ -79,7 +78,7 @@ func DefaultLogViewerKeyMap() LogViewerKeyMap {
 	return LogViewerKeyMap{
 		WordWrap:   key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "wrap words")),
 		AutoScroll: key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "auto scroll")),
-		CloseLogs:  key.NewBinding(key.WithKeys(tea.KeyEscape.String()), key.WithHelp(tea.KeyEscape.String(), "close logs")),
+		CloseLogs:  key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "close logs")),
 	}
 }
 

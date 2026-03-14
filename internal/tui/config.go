@@ -3,21 +3,12 @@ package tui
 import (
 	"unicode/utf8"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/clambin/xcoder/internal/pipeline"
 )
 
 const (
-	maxValueWidth = 30
-)
-
-// configView displays the current configuration.
-// Since the configuration is currently static, we pre-render it.
-type configView struct {
-	content string
-}
-
-const (
+	maxValueWidth  = 30
 	sourceLabel    = "Source"
 	profileLabel   = "Profile"
 	overwriteLabel = "Overwrite"
@@ -27,10 +18,10 @@ const (
 var configLabels = []string{sourceLabel, profileLabel, overwriteLabel, removeLabel}
 var boolToString = map[bool]string{true: "active", false: "off"}
 
-func newConfigView(cfg pipeline.Configuration, styles ConfigStyles) configView {
-	var labelWidth int
+func newConfigView(cfg pipeline.Configuration, styles ConfigStyles) string {
+	var maxLabelLength int
 	for _, label := range configLabels {
-		labelWidth = max(labelWidth, len(label))
+		maxLabelLength = max(maxLabelLength, len(label))
 	}
 
 	parts := make([]string, len(configLabels))
@@ -47,18 +38,12 @@ func newConfigView(cfg pipeline.Configuration, styles ConfigStyles) configView {
 			value = boolToString[cfg.Remove]
 		}
 		parts[i] = lipgloss.JoinHorizontal(lipgloss.Left,
-			styles.LabelStyle.Width(labelWidth+2).Render(label+": "),
+			styles.LabelStyle.Width(maxLabelLength+2).Render(label+": "),
 			styles.TextStyle.Render(truncateLeft(value, maxValueWidth)),
 		)
 	}
-	return configView{content: lipgloss.NewStyle().
-		Padding(1, 0, 0, 0).
-		Render(lipgloss.JoinVertical(lipgloss.Top, parts...)),
-	}
-}
 
-func (c configView) View() string {
-	return c.content
+	return lipgloss.NewStyle().Render(lipgloss.JoinVertical(lipgloss.Top, parts...))
 }
 
 func truncateLeft(s string, maxWidth int) string {

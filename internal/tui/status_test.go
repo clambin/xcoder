@@ -4,8 +4,8 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/clambin/xcoder/internal/pipeline"
 	"github.com/stretchr/testify/assert"
@@ -14,8 +14,7 @@ import (
 func TestStatusLine_BatchStatus(t *testing.T) {
 	const expectedWidth = 30
 	var q fakeQueue
-	var s tea.Model = newStatusLine(&q, StatusStyles{})
-	s = s.(statusLine).SetSize(expectedWidth, 1)
+	s := newStatusLine(&q, StatusStyles{}).SetSize(expectedWidth, 1)
 
 	tests := []struct {
 		msg    tea.Msg
@@ -24,9 +23,9 @@ func TestStatusLine_BatchStatus(t *testing.T) {
 	}{
 		{s.Init()(), false, "       Batch processing: OFF  "},
 		{nil, true, "       Batch processing: ON   "},
-		{s.(statusLine).spinner.Tick(), true, "       Batch processing:      "},
-		{s.(statusLine).spinner.Tick(), false, "       Batch processing: OFF  "},
-		{s.(statusLine).spinner.Tick(), false, "       Batch processing: OFF  "},
+		{s.spinner.Tick(), true, "       Batch processing:      "},
+		{s.spinner.Tick(), false, "       Batch processing: OFF  "},
+		{s.spinner.Tick(), false, "       Batch processing: OFF  "},
 	}
 
 	for _, tt := range tests {
@@ -39,7 +38,7 @@ func TestStatusLine_BatchStatus(t *testing.T) {
 }
 
 func TestStatusLine_Converting(t *testing.T) {
-	const expectedWidth = 53
+	const expectedWidth = 54
 	q := fakeQueue{
 		queue: []*pipeline.WorkItem{
 			{Source: pipeline.MediaFile{Path: "file1.mp4"}, Target: pipeline.MediaFile{Path: "file1.hevc.mkv"}},
@@ -49,14 +48,14 @@ func TestStatusLine_Converting(t *testing.T) {
 	}
 	q.queue[0].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Converting})
 	q.queue[1].SetWorkStatus(pipeline.WorkStatus{Status: pipeline.Converting})
-	var s tea.Model = newStatusLine(&q, StatusStyles{}, spinner.WithSpinner(spinner.Dot))
-	s.(statusLine).SetSize(expectedWidth, 1)
+	s := newStatusLine(&q, StatusStyles{}, spinner.WithSpinner(spinner.Dot)).SetSize(expectedWidth, 1)
+	q.active.Store(true)
 
 	v := s.View()
 	assert.Equal(t, expectedWidth, utf8.RuneCountInString(ansi.Strip(v)))
-	assert.Equal(t, "  Converting 2 file(s) ... ⣾  Batch processing: OFF  ", v)
-	s, _ = s.Update(s.(statusLine).spinner.Tick())
+	assert.Equal(t, "  Converting 2 file(s) ... ⣾   Batch processing:      ", v)
+	s, _ = s.Update(s.spinner.Tick())
 	v = s.View()
 	assert.Equal(t, expectedWidth, utf8.RuneCountInString(ansi.Strip(v)))
-	assert.Equal(t, "  Converting 2 file(s) ... ⣽  Batch processing: OFF  ", v)
+	assert.Equal(t, "  Converting 2 file(s) ... ⣽   Batch processing: ON   ", v)
 }

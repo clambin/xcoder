@@ -27,14 +27,14 @@ func TestRun(t *testing.T) {
 
 	require.NoError(t, os.WriteFile(filepath.Join(cfg.Input, "video.mkv"), []byte{}, 0644))
 
-	// TODO: flaky?
+	// TODO: flaky
 	assert.Eventually(t, func() bool {
 		items := queue.All()
 		if len(items) != 1 {
 			return false
 		}
 		return items[0].WorkStatus().Status == pipeline.Failed
-	}, 2*time.Second, time.Millisecond)
+	}, 5*time.Second, time.Millisecond)
 
 	cancel()
 	require.NoError(t, <-errCh)

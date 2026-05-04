@@ -65,7 +65,7 @@ func Test_progress(t *testing.T) {
 }
 
 func Benchmark_progress(b *testing.B) {
-	// Benchmark_progress-10    	    2719	    445150 ns/op	    4290 B/op	       4 allocs/op
+	// Benchmark_progress-10    	    9432	    127117 ns/op	    4128 B/op	       2 allocs/op
 	var input strings.Builder
 	for line := range 1000 {
 		if line != 0 {
@@ -76,7 +76,7 @@ func Benchmark_progress(b *testing.B) {
 	input.WriteString("progress=end\n")
 	buf := input.String()
 	l := slog.New(slog.DiscardHandler)
-	b.ResetTimer()
+
 	b.ReportAllocs()
 	for b.Loop() {
 		for p := range progress(strings.NewReader(buf), l) {

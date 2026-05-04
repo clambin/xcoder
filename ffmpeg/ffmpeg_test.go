@@ -1,7 +1,6 @@
 package ffmpeg
 
 import (
-	"context"
 	"log/slog"
 	"net"
 	"strings"
@@ -77,9 +76,8 @@ func TestFFMPEG_runProgressSocket(t *testing.T) {
 	ff.progress = func(p Progress) {
 		prog.Store(p)
 	}
-	ctx, cancel := context.WithCancel(t.Context())
 	go func() {
-		require.NoError(t, ff.runProgressSocket(ctx, slog.New(slog.DiscardHandler)))
+		require.NoError(t, ff.runProgressSocket(slog.New(slog.DiscardHandler)))
 	}()
 
 	var conn net.Conn
@@ -96,5 +94,4 @@ func TestFFMPEG_runProgressSocket(t *testing.T) {
 		p, ok := prog.Load().(Progress)
 		return ok && p.Speed == 1.0 && p.Converted == time.Millisecond
 	}, time.Second, 50*time.Millisecond)
-	cancel()
 }

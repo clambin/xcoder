@@ -81,7 +81,7 @@ func (ff *FFMPEG) Build(ctx context.Context) *exec.Cmd {
 
 func (ff *FFMPEG) Run(ctx context.Context, logger *slog.Logger) error {
 	if ff.progressSocketPath != "" {
-		if err := ff.runProgressSocket(ctx, logger); err != nil {
+		if err := ff.runProgressSocket(logger); err != nil {
 			return err
 		}
 	}
@@ -95,13 +95,13 @@ func (ff *FFMPEG) Run(ctx context.Context, logger *slog.Logger) error {
 	return err
 }
 
-func (ff *FFMPEG) runProgressSocket(ctx context.Context, logger *slog.Logger) error {
+func (ff *FFMPEG) runProgressSocket(logger *slog.Logger) error {
 	l, err := net.Listen("unix", ff.progressSocketPath)
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
 	go func() {
-		if err := serveProgressSocket(ctx, l, ff.progress, logger); err != nil {
+		if err := serveProgressSocket(l, ff.progress, logger); err != nil {
 			logger.Error("status socket failure", "err", err)
 		}
 		if err := os.RemoveAll(filepath.Dir(ff.progressSocketPath)); err != nil {

@@ -18,7 +18,7 @@ func (p *Progress) Update(progress ffmpeg.Progress) {
 	defer p.lock.Unlock()
 	p.progress.Converted = progress.Converted
 	// if speed is zero, we won't be able to calculate the remaining time. in this case, we don't update and the
-	// remaining time will be calculated using the last  reported speed.
+	// remaining time will be calculated using the last reported speed.
 	if progress.Speed != 0 {
 		p.progress.Speed = progress.Speed
 	}

@@ -46,11 +46,16 @@ func progress(r io.Reader, logger *slog.Logger) iter.Seq[Progress] {
 		var prog Progress
 		for s.Scan() {
 			line := s.Bytes()
+			// logger.Debug("line", "value", string(line))
 			key, val, ok := bytes.Cut(line, []byte("="))
 			if !ok {
 				continue
 			}
 
+			val = bytes.TrimSpace(val)
+			if bytes.Equal(val, []byte("N/A")) {
+				continue
+			}
 			var err error
 			switch string(key) {
 			case "frame":
@@ -59,8 +64,7 @@ func progress(r io.Reader, logger *slog.Logger) iter.Seq[Progress] {
 				prog.FPS, err = strconv.ParseFloat(string(val), 64)
 			case "out_time_us":
 				var usec uint64
-				usec, err = strconv.ParseUint(string(val), 10, 64)
-				if err == nil {
+				if usec, err = strconv.ParseUint(string(val), 10, 64); err == nil {
 					prog.Converted = time.Duration(usec) * time.Microsecond
 				}
 			case "dup_frames":

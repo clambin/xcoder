@@ -164,28 +164,27 @@ func (e *engine) scanCmd(workItem *WorkItem) evl.Cmd {
 
 		// determine source media video stats
 		var err error
-		workItem.Source.VideoStats, err = probe(workItem.Source.Path)
-
-		if err == nil {
-			// determine target media filename
-			workItem.Target.Path = buildTargetFilename(workItem.Source, e.profile.TargetCodec, "mkv")
-
-			// determine target media video stats
-			workItem.Target.VideoStats, err = e.profile.Analyze(workItem.Source)
+		if workItem.Source.VideoStats, err = probe(workItem.Source.Path); err != nil {
+			workItem.SetStatus(StatusScanFailed, err)
+			logger.Warn("failed to probe media file", "err", err)
+			return nil
 		}
+
+		// determine target media filename
+		workItem.Target.Path = buildTargetFilename(workItem.Source, e.profile.TargetCodec, "mkv")
+
+		// determine target media video stats
+		workItem.Target.VideoStats, err = e.profile.Analyze(workItem.Source)
 
 		// set the workItem status
 		var status Status
 		if err == nil {
-			status = StatusScanned
+			workItem.SetStatus(StatusScanned, nil)
 		} else if _, ok := errors.AsType[*SourceSkippedError](err); ok {
-			status = StatusSkipped
+			workItem.SetStatus(StatusSkipped, err)
 		} else if _, ok := errors.AsType[*SourceRejectedError](err); ok {
-			status = StatusRejected
-		} else {
-			status = StatusScanFailed
+			workItem.SetStatus(StatusRejected, err)
 		}
-		workItem.SetStatus(status, err)
 
 		logger.Info("scanned media file", "status", status.String(), "err", err, "duration", time.Since(start))
 		return nil

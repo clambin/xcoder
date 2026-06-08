@@ -63,8 +63,8 @@ func progress(r io.Reader, logger *slog.Logger) iter.Seq[Progress] {
 			case "fps":
 				prog.FPS, err = strconv.ParseFloat(string(val), 64)
 			case "out_time_us":
-				var usec uint64
-				if usec, err = strconv.ParseUint(string(val), 10, 64); err == nil {
+				var usec int64
+				if usec, err = strconv.ParseInt(string(val), 10, 64); err == nil {
 					prog.Converted = time.Duration(usec) * time.Microsecond
 				}
 			case "dup_frames":

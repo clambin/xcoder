@@ -22,6 +22,7 @@ const (
 	maxConcurrentScans    = 4
 	maxConcurrentSessions = 2
 	scheduleInterval      = 100 * time.Millisecond
+	logProgressInterval   = time.Minute
 )
 
 type controller interface {
@@ -179,12 +180,15 @@ func (e *engine) scanCmd(workItem *WorkItem) evl.Cmd {
 		// set the workItem status
 		var status Status
 		if err == nil {
-			workItem.SetStatus(StatusScanned, nil)
+			status = StatusScanned
 		} else if _, ok := errors.AsType[*SourceSkippedError](err); ok {
-			workItem.SetStatus(StatusSkipped, err)
+			status = StatusSkipped
 		} else if _, ok := errors.AsType[*SourceRejectedError](err); ok {
-			workItem.SetStatus(StatusRejected, err)
+			status = StatusRejected
+		} else {
+			status = StatusScanFailed
 		}
+		workItem.SetStatus(status, err)
 
 		logger.Info("scanned media file", "status", status.String(), "err", err, "duration", time.Since(start))
 		return nil
@@ -296,8 +300,19 @@ func (e *engine) transcode(session *Session) error {
 	}
 
 	// callback function to mark and log progress
+	logger := e.logger.With(slog.String("source", session.WorkItem.Source.Path))
+	lastLogTimestamp := time.Now()
 	cb := func(p ffmpeg.Progress) {
 		session.progress.Store(&p)
+		if time.Since(lastLogTimestamp) > logProgressInterval {
+			speed, eta := processSessionProgress(session, p)
+			etaString := "N/A"
+			if speed > 0 {
+				etaString = eta.String()
+			}
+			logger.Debug("transcoding progress", "progress", speed, "eta", etaString)
+			lastLogTimestamp = time.Now()
+		}
 	}
 
 	t := ffmpeg.
@@ -314,6 +329,14 @@ func (e *engine) transcode(session *Session) error {
 
 	err = t.Run(context.Background(), e.logger.With(slog.String("source", session.WorkItem.Source.Path)))
 	return err
+}
+
+func processSessionProgress(session *Session, progress ffmpeg.Progress) (float64, time.Duration) {
+	var eta time.Duration
+	if progress.Speed > 0 {
+		eta = time.Duration(float64(session.WorkItem.Source.VideoStats.Duration-progress.Converted) / progress.Speed)
+	}
+	return progress.Speed, eta
 }
 
 // sessionTracker is a helper for engine that tracks active sessions.

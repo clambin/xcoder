@@ -135,3 +135,51 @@ func TestTranscoder_Transcode(t *testing.T) {
 	// (as they're in the target codec).
 	assert.Len(t, q.ItemsWithStatus(StatusSkipped), fileCount)
 }
+
+func Test_processSessionProgress(t *testing.T) {
+	tests := []struct {
+		name          string
+		duration      time.Duration
+		progress      ffmpeg.Progress
+		expectedSpeed float64
+		expectedETA   time.Duration
+	}{
+		{
+			name:          "start",
+			duration:      time.Hour,
+			progress:      ffmpeg.Progress{Converted: 0, Speed: 2},
+			expectedSpeed: 2,
+			expectedETA:   30 * time.Minute,
+		},
+		{
+			name:          "midway",
+			duration:      time.Hour,
+			progress:      ffmpeg.Progress{Converted: 30 * time.Minute, Speed: 2},
+			expectedSpeed: 2,
+			expectedETA:   15 * time.Minute,
+		},
+		{
+			name:          "finished",
+			duration:      time.Hour,
+			progress:      ffmpeg.Progress{Converted: time.Hour, Speed: 2},
+			expectedSpeed: 2,
+			expectedETA:   0,
+		},
+		{
+			name:          "stalled",
+			duration:      time.Hour,
+			progress:      ffmpeg.Progress{Converted: 0, Speed: 0},
+			expectedSpeed: 0,
+			expectedETA:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := Session{WorkItem: &WorkItem{Source: File{VideoStats: ffmpeg.VideoStats{Duration: tt.duration}}}}
+			speed, eta := processSessionProgress(&session, tt.progress)
+			assert.Equal(t, tt.expectedSpeed, speed)
+			assert.Equal(t, tt.expectedETA, eta)
+		})
+	}
+}

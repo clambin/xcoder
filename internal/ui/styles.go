@@ -45,14 +45,8 @@ func DefaultStyles() Styles {
 					Table: table.Styles{
 						Header:   lipgloss.NewStyle().Foreground(colors.White).Bold(true),
 						Selected: lipgloss.NewStyle().Foreground(colors.Blue).Background(colors.White),
-						Cell:     lipgloss.NewStyle().Foreground(colors.White),
+						Cell:     lipgloss.NewStyle().Foreground(colors.Grey70),
 					},
-					/*
-						Filter: table.FilterStyles{
-							TextArea: textarea.StyleState{
-							},
-						},
-					*/
 				},
 				FrameStyle: defaultFrameStyle,
 			},

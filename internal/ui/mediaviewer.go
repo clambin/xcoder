@@ -195,6 +195,8 @@ func (v workItemsViewer) Update(msg tea.Msg) (workItemsViewer, tea.Cmd) {
 }
 
 func (v workItemsViewer) View() string {
+	// TODO: add the media filters if enabled
+	// TODO: possibly add [n/m] where n is the number of displayed items and m is the total number of items
 	return frame.Render("media files", lipgloss.Center, v.styles.FrameStyle, v.FilterTable.View())
 }
 

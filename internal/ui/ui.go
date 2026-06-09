@@ -35,8 +35,7 @@ type Application struct {
 	logViewer   logViewer
 	statusLine  statusLine
 	mediaViewer mediaViewer
-	// TODO
-	height int
+	height      int
 	windows
 	mediaTableFilterIsOn bool
 }
@@ -71,8 +70,8 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		return a.resize(msg.Width, msg.Height), nil
 	case table.FilterStateChangeMsg:
+		// mediaViewer's text filter was switched on or off
 		a.mediaTableFilterIsOn = msg.State
-		// TODO
 		a.mediaViewer, _ = a.mediaViewer.Update(msg)
 		return a, nil
 	case tea.KeyPressMsg:

@@ -5,6 +5,7 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -113,6 +114,7 @@ type workItemsViewer struct {
 	sessionCount         int
 	width                int
 	height               int
+	totalRowCount        int
 	mediaFilterState     mediaFilterState
 	showFullPath         bool
 	mediaTableFilterIsOn bool
@@ -137,6 +139,7 @@ func (v workItemsViewer) Update(msg tea.Msg) (workItemsViewer, tea.Cmd) {
 			}),
 		)
 	case setRowsMsg:
+		v.totalRowCount = msg.totalRowCount
 		v.FilterTable = v.Rows(msg.rows)
 		return v, nil
 	case table.FilterStateChangeMsg:
@@ -163,6 +166,9 @@ func (v workItemsViewer) Update(msg tea.Msg) (workItemsViewer, tea.Cmd) {
 				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
 			case key.Matches(msg, v.keyMap.HideRejectedFiles):
 				v.mediaFilterState.hideRejected = !v.mediaFilterState.hideRejected
+				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
+			case key.Matches(msg, v.keyMap.HideConvertedFiles):
+				v.mediaFilterState.hideConverted = !v.mediaFilterState.hideConverted
 				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
 			case key.Matches(msg, v.keyMap.AutoProcess):
 				v.transcoder.SetActive(!v.transcoder.Active())
@@ -195,9 +201,7 @@ func (v workItemsViewer) Update(msg tea.Msg) (workItemsViewer, tea.Cmd) {
 }
 
 func (v workItemsViewer) View() string {
-	// TODO: add the media filters if enabled
-	// TODO: possibly add [n/m] where n is the number of displayed items and m is the total number of items
-	return frame.Render("media files", lipgloss.Center, v.styles.FrameStyle, v.FilterTable.View())
+	return frame.Render(v.buildTitle(), lipgloss.Center, v.styles.FrameStyle, v.FilterTable.View())
 }
 
 func (v workItemsViewer) SetSize(width, height int) workItemsViewer {
@@ -213,6 +217,24 @@ func (v workItemsViewer) SetSize(width, height int) workItemsViewer {
 	return v
 }
 
+// buildTitle builds the title for the workItemsViewer.
+func (v workItemsViewer) buildTitle() string {
+	title := "media files"
+	if mediaFilter := v.mediaFilterState.String(); mediaFilter != "" {
+		title += v.styles.MediaFilterStyle.Render(" [" + mediaFilter + "]")
+	}
+	var rowCountLabel string
+	visibleRowCount := v.VisibleRowCount()
+	switch {
+	case visibleRowCount != v.totalRowCount:
+		rowCountLabel = " [" + strconv.Itoa(visibleRowCount) + "/" + strconv.Itoa(v.totalRowCount) + "]"
+	default:
+		rowCountLabel = " [" + strconv.Itoa(v.totalRowCount) + "]"
+	}
+	title += v.styles.RowCountStyle.Render(rowCountLabel)
+	return title
+}
+
 // loadTableCmd builds the table with the current Queue state and issues a command to load it in the table.
 func refreshTableCmd(items []*transcoder.WorkItem, f mediaFilterState, showFullPath bool) tea.Cmd {
 	return func() tea.Msg {
@@ -222,7 +244,10 @@ func refreshTableCmd(items []*transcoder.WorkItem, f mediaFilterState, showFullP
 				rows = append(rows, itemToRow(item, showFullPath))
 			}
 		}
-		return setRowsMsg{rows: rows}
+		return setRowsMsg{
+			rows:          rows,
+			totalRowCount: len(items),
+		}
 	}
 }
 
@@ -425,7 +450,8 @@ func ltrim(s string, n int, trim rune) string {
 type refreshTable struct{}
 
 type setRowsMsg struct {
-	rows []table.Row
+	rows          []table.Row
+	totalRowCount int
 }
 
 // refreshTranscodeSessionsMsg tells transcodeSessionsViewer to refresh the transcode sessions

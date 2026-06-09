@@ -48,7 +48,9 @@ func DefaultStyles() Styles {
 						Cell:     lipgloss.NewStyle().Foreground(colors.Grey70),
 					},
 				},
-				FrameStyle: defaultFrameStyle,
+				FrameStyle:       defaultFrameStyle,
+				MediaFilterStyle: lipgloss.NewStyle().Foreground(colors.Magenta1),
+				RowCountStyle:    lipgloss.NewStyle().Foreground(colors.White),
 			},
 			MediaViewerSessionsStyles: MediaViewerSessionsStyles{
 				FrameStyle: defaultFrameStyle,
@@ -72,8 +74,10 @@ type MediaViewerStyles struct {
 }
 
 type MediaViewerItemStyles struct {
-	TableStyles table.FilterTableStyles
-	FrameStyle  frame.Style
+	TableStyles      table.FilterTableStyles
+	FrameStyle       frame.Style
+	MediaFilterStyle lipgloss.Style
+	RowCountStyle    lipgloss.Style
 }
 
 type MediaViewerSessionsStyles struct {

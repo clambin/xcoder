@@ -6,7 +6,7 @@ require (
 	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.7
 	charm.land/lipgloss/v2 v2.0.3
-	codeberg.org/clambin/bubbles v0.12.1
+	codeberg.org/clambin/bubbles v0.12.2
 	codeberg.org/clambin/go-common/charmer v0.4.1
 	codeberg.org/clambin/go-common/pubsub v0.3.0
 	github.com/charmbracelet/x/ansi v0.11.7

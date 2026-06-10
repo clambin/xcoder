@@ -122,9 +122,12 @@ func (e *engine) Update(msg evl.Event) evl.Cmd {
 		return e.scanCmd(workItem)
 	case transcodeCompleteEvent:
 		var cmd evl.Cmd
-		if status, _ := msg.workItem.Status(); status == StatusDone {
-			cmd = func() evl.Event { return newMediaEvent(msg.workItem.Target.Path) }
+		if status, _ := msg.workItem.Status(); status != StatusConverted {
+			return nil
 		}
+		// add the converted file to the work list
+		cmd = func() evl.Event { return newMediaEvent(msg.workItem.Target.Path) }
+		// if we need to remove the source, remove it both from the work list and from the filesystem
 		if e.removeSource {
 			// remove from the workItems
 			e.workItems.Remove(msg.workItem)
@@ -163,7 +166,12 @@ func (e *engine) scanCmd(workItem *WorkItem) evl.Cmd {
 			probe = ffmpeg.Probe
 		}
 
+		// wait for a probe slot
+		_ = e.probeSema.Acquire(context.Background(), 1)
+		defer e.probeSema.Release(1)
+
 		// determine source media video stats
+		workItem.SetStatus(StatusScanning, nil)
 		var err error
 		if workItem.Source.VideoStats, err = probe(workItem.Source.Path); err != nil {
 			workItem.SetStatus(StatusScanFailed, err)
@@ -262,7 +270,7 @@ func (e *engine) transcodeCmd(session *Session) evl.Cmd {
 		// mark the workItem status
 		switch err {
 		case nil:
-			session.WorkItem.SetStatus(StatusDone, nil)
+			session.WorkItem.SetStatus(StatusConverted, nil)
 			logger.Info("finished transcoding", "duration", time.Since(start))
 		default:
 			session.WorkItem.SetStatus(StatusFailed, err)

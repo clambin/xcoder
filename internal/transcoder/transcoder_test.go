@@ -129,7 +129,7 @@ func TestTranscoder_Transcode(t *testing.T) {
 	}, 5*time.Second, 10*time.Millisecond)
 
 	// all source files should be done
-	assert.Len(t, q.ItemsWithStatus(StatusDone), fileCount)
+	assert.Len(t, q.ItemsWithStatus(StatusConverted), fileCount)
 
 	// all target files should be added to the worklist, scanned and marked as skipped
 	// (as they're in the target codec).

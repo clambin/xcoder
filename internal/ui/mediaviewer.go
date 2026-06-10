@@ -13,6 +13,7 @@ import (
 	"charm.land/bubbles/v2/progress"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"codeberg.org/clambin/bubbles/colors"
 	"codeberg.org/clambin/bubbles/frame"
 	"codeberg.org/clambin/bubbles/helper"
 	"codeberg.org/clambin/bubbles/table"
@@ -94,12 +95,21 @@ func (v mediaViewer) helpSections() []helper.Section {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+var statusStyles = map[string]lipgloss.Style{
+	transcoder.StatusRejected.String():    lipgloss.NewStyle().Foreground(colors.IndianRed),
+	transcoder.StatusSkipped.String():     lipgloss.NewStyle().Foreground(colors.Yellow4Alt),
+	transcoder.StatusTranscoding.String(): lipgloss.NewStyle().Foreground(colors.Orange1),
+	transcoder.StatusFailed.String():      lipgloss.NewStyle().Foreground(colors.Red),
+	transcoder.StatusConverted.String():   lipgloss.NewStyle().Foreground(colors.Green4),
+}
+
+var statusTransformer = table.CellStyle{Style: lipgloss.NewStyle().Transform(table.StringStyler(statusStyles))}
+
 var workItemsColumns = []table.Column{
 	{Name: "Source"},
 	{Name: "Source Stats", Width: 20},
-	//{Name: "Target"},
 	{Name: "Target Stats", Width: 20},
-	{Name: "Status", Width: 12},
+	{Name: "Status", Width: 12, CellStyle: statusTransformer},
 	{Name: "Error"},
 }
 
@@ -201,7 +211,12 @@ func (v workItemsViewer) Update(msg tea.Msg) (workItemsViewer, tea.Cmd) {
 }
 
 func (v workItemsViewer) View() string {
-	return frame.Render(v.buildTitle(), lipgloss.Center, v.styles.FrameStyle, v.FilterTable.View())
+	content := v.FilterTable.View()
+	borderWidth, borderHeight := v.styles.FrameStyle.BorderSize()
+	if borderWidth > 0 || borderHeight > 0 {
+		content = frame.Render(v.buildTitle(), lipgloss.Center, v.styles.FrameStyle, content)
+	}
+	return content
 }
 
 func (v workItemsViewer) SetSize(width, height int) workItemsViewer {
@@ -287,7 +302,7 @@ func (s mediaFilterState) Show(item *transcoder.WorkItem) bool {
 		return !s.hideRejected
 	case transcoder.StatusSkipped:
 		return !s.hideSkipped
-	case transcoder.StatusDone:
+	case transcoder.StatusConverted:
 		return !s.hideConverted
 	default:
 		return true
@@ -296,15 +311,19 @@ func (s mediaFilterState) Show(item *transcoder.WorkItem) bool {
 
 // String returns a string representation of the mediaFilterState
 func (s mediaFilterState) String() string {
-	on := map[string]struct{}{"skipped": {}, "rejected": {}, "converted": {}}
+	on := map[string]struct{}{
+		transcoder.StatusSkipped.String():   {},
+		transcoder.StatusRejected.String():  {},
+		transcoder.StatusConverted.String(): {},
+	}
 	if s.hideSkipped {
-		delete(on, "skipped")
+		delete(on, transcoder.StatusSkipped.String())
 	}
 	if s.hideRejected {
-		delete(on, "rejected")
+		delete(on, transcoder.StatusRejected.String())
 	}
 	if s.hideConverted {
-		delete(on, "converted")
+		delete(on, transcoder.StatusConverted.String())
 	}
 	if len(on) == 3 {
 		return ""
@@ -372,7 +391,11 @@ func (v transcodeSessionsViewer) View() string {
 		sessions[i] = session.view()
 	}
 	content := lipgloss.JoinVertical(lipgloss.Top, sessions...)
-	return frame.Render("transcoder sessions", lipgloss.Center, v.styles.FrameStyle, content)
+	borderWidth, borderHeight := v.styles.FrameStyle.BorderSize()
+	if borderWidth > 0 || borderHeight > 0 {
+		content = frame.Render("transcoder sessions", lipgloss.Center, v.styles.FrameStyle, content)
+	}
+	return content
 }
 
 func (v transcodeSessionsViewer) Width(width int) transcodeSessionsViewer {

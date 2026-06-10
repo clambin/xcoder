@@ -39,7 +39,7 @@ func DefaultKeyMap() KeyMap {
 			HideRejectedFiles:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "toggle rejected files")),
 			HideConvertedFiles: key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "toggle converted files")),
 			ConvertSelected:    key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "convert selected file")),
-			AutoProcess:        key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "activate batch processing")),
+			AutoProcess:        key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "toggle batch processing")),
 			FilterTableKeyMap:  table.DefaultFilterTableKeyMap(),
 		},
 	}

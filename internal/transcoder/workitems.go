@@ -12,18 +12,20 @@ type Status int
 
 const (
 	StatusFound Status = iota
+	StatusScanning
 	StatusScanFailed
 	StatusScanned
 	StatusQueued
 	StatusRejected
 	StatusSkipped
 	StatusTranscoding
-	StatusDone
+	StatusConverted
 	StatusFailed
 )
 
 var statusStrings = map[Status]string{
 	StatusFound:       "found",
+	StatusScanning:    "scanning",
 	StatusScanFailed:  "scan failed",
 	StatusScanned:     "scanned",
 	StatusRejected:    "rejected",
@@ -31,7 +33,7 @@ var statusStrings = map[Status]string{
 	StatusQueued:      "queued",
 	StatusTranscoding: "transcoding",
 	StatusFailed:      "failed",
-	StatusDone:        "done",
+	StatusConverted:   "converted",
 }
 
 func (s Status) String() string {

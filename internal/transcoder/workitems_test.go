@@ -53,7 +53,7 @@ func TestWorkItems(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, items[1], item)
 		// unsuccessful GetFirst
-		_, ok = q.GetFirst(StatusDone)
+		_, ok = q.GetFirst(StatusConverted)
 		require.False(t, ok)
 
 	})

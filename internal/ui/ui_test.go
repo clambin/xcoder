@@ -24,3 +24,11 @@ func (f *fakeTranscoder) SetActive(_ bool) {
 func (f *fakeTranscoder) Subscribe() <-chan transcoder.SessionEvent {
 	panic("implement me")
 }
+
+func (f *fakeTranscoder) OverwriteTarget() bool {
+	return true
+}
+
+func (f *fakeTranscoder) RemoveSource() bool {
+	return true
+}

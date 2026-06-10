@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/spinner"
@@ -55,20 +56,43 @@ func (s statusLine) Update(msg tea.Msg) (statusLine, tea.Cmd) {
 }
 
 func (s statusLine) View() string {
-	state := "Batch processing: " + s.state()
-	status := lipgloss.NewStyle().
-		Padding(0, 1, 0, 0).
-		Width(max(0, s.width-lipgloss.Width(state)-4)).
-		Render(s.status())
+	state := s.state()
 	return s.styles.Main.
-		Padding(0, 2, 0, 2).
 		MaxHeight(1).
-		Render(lipgloss.JoinHorizontal(lipgloss.Left, status, state))
+		Padding(0, 2).
+		Render(lipgloss.JoinHorizontal(lipgloss.Left,
+			lipgloss.NewStyle().
+				Width(s.width-lipgloss.Width(state)-4).
+				Padding(0, 1, 0, 0).
+				Render(s.status()),
+			state,
+		))
 }
 
 func (s statusLine) setWidth(width int) statusLine {
 	s.width = width
 	return s
+}
+
+var boolToString = map[bool]string{
+	true:  "ON ",
+	false: "OFF",
+}
+
+func (s statusLine) state() string {
+	batchState := boolToString[s.transcoder.Active()]
+	if batchState == boolToString[true] {
+		if s.showState {
+			batchState = s.styles.Processing.Render(batchState)
+		} else {
+			batchState = strings.Repeat(" ", len(batchState))
+		}
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left,
+		"Overwrite target: "+boolToString[s.transcoder.OverwriteTarget()],
+		" Remove source: "+boolToString[s.transcoder.RemoveSource()],
+		" Batch processing: "+batchState,
+	)
 }
 
 func (s statusLine) status() string {
@@ -77,18 +101,6 @@ func (s statusLine) status() string {
 		status = fmt.Sprintf("Converting %d file(s) ... %s", converting, s.spinner.View())
 	}
 	return status
-}
-
-var stateOnContent = map[bool]string{
-	true:  "ON ",
-	false: "   ",
-}
-
-func (s statusLine) state() string {
-	if !s.transcoder.Active() {
-		return "OFF"
-	}
-	return s.styles.Processing.Render(stateOnContent[s.showState])
 }
 
 // blinkStatusMsg is a message that blinks the state if it's "on"

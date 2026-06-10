@@ -31,6 +31,8 @@ type controller interface {
 	Subscribe() <-chan SessionEvent
 	Unsubscribe(<-chan SessionEvent)
 	SessionCount() int
+	OverwriteTarget() bool
+	RemoveSource() bool
 }
 
 type Configuration struct {
@@ -151,6 +153,16 @@ func (e *engine) Active() bool {
 // SetActive sets the active state of the Transcoder.
 func (e *engine) SetActive(active bool) {
 	e.active.Store(active)
+}
+
+// OverwriteTarget returns whether the Transcoder will overwrite the target file if it exists.
+func (e *engine) OverwriteTarget() bool {
+	return e.overwriteTarget
+}
+
+// RemoveSource returns whether the Transcoder will remove the source file after transcoding successfully.
+func (e *engine) RemoveSource() bool {
+	return e.removeSource
 }
 
 // scanCmd returns an evl.Cmd that scans a new WorkItem to determine its media properties

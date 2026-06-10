@@ -23,6 +23,8 @@ type Transcoder interface {
 	SessionCount() int
 	SetActive(active bool)
 	Subscribe() <-chan transcoder.SessionEvent
+	OverwriteTarget() bool
+	RemoveSource() bool
 }
 
 var _ Transcoder = (*transcoder.Transcoder)(nil)

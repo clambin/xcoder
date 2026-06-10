@@ -25,8 +25,8 @@ type Styles struct {
 func DefaultStyles() Styles {
 	return Styles{
 		StatusStyles: StatusStyles{
-			Main:       lipgloss.NewStyle().Foreground(colors.White).Background(colors.Blue),
-			Processing: lipgloss.NewStyle().Foreground(lipgloss.Color("#8B0000")),
+			Main:       lipgloss.NewStyle().Foreground(colors.Black).Background(colors.Blue),
+			Processing: lipgloss.NewStyle().Foreground(colors.Red).Background(colors.Blue),
 		},
 		HelpStyles: helper.Styles{
 			Header: lipgloss.NewStyle().Foreground(colors.Yellow).Italic(true),

@@ -170,17 +170,19 @@ func (e *engine) RemoveSource() bool {
 func (e *engine) scanCmd(workItem *WorkItem) evl.Cmd {
 	return func() evl.Event {
 		logger := e.logger.With(slog.String("source", workItem.Source.Path))
-		logger.Info("scanning media file")
-		start := time.Now()
-
 		probe := e.probeFunc
 		if probe == nil {
 			probe = ffmpeg.Probe
 		}
 
+		logger.Debug("acquiring probe semaphore")
+
 		// wait for a probe slot
 		_ = e.probeSema.Acquire(context.Background(), 1)
 		defer e.probeSema.Release(1)
+
+		logger.Info("scanning media file")
+		start := time.Now()
 
 		// determine source media video stats
 		workItem.SetStatus(StatusScanning, nil)

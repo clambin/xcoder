@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"maps"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -311,29 +310,18 @@ func (s mediaFilterState) Show(item *transcoder.WorkItem) bool {
 
 // String returns a string representation of the mediaFilterState
 func (s mediaFilterState) String() string {
-	on := map[string]struct{}{
-		transcoder.StatusSkipped.String():   {},
-		transcoder.StatusRejected.String():  {},
-		transcoder.StatusConverted.String(): {},
-	}
+	activeFilters := make([]string, 0, 3)
 	if s.hideSkipped {
-		delete(on, transcoder.StatusSkipped.String())
+		activeFilters = append(activeFilters, "!"+transcoder.StatusSkipped.String())
 	}
 	if s.hideRejected {
-		delete(on, transcoder.StatusRejected.String())
+		activeFilters = append(activeFilters, "!"+transcoder.StatusRejected.String())
 	}
 	if s.hideConverted {
-		delete(on, transcoder.StatusConverted.String())
+		activeFilters = append(activeFilters, "!"+transcoder.StatusConverted.String())
 	}
-	if len(on) == 3 {
-		return ""
-	}
-	if len(on) == 0 {
-		return "none"
-	}
-	onString := slices.Collect(maps.Keys(on))
-	slices.Sort(onString)
-	return strings.Join(onString, ",")
+	slices.Sort(activeFilters)
+	return strings.Join(activeFilters, ",")
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -87,9 +87,9 @@ func TestMediaFilterState_String(t *testing.T) {
 		want string
 	}{
 		{"empty", mediaFilterState{}, ""},
-		{"single", mediaFilterState{hideSkipped: true}, "converted,rejected"},
-		{"multiple", mediaFilterState{hideSkipped: true, hideConverted: true}, "rejected"},
-		{"all", mediaFilterState{hideSkipped: true, hideConverted: true, hideRejected: true}, "none"},
+		{"single", mediaFilterState{hideSkipped: true}, "!skipped"},
+		{"multiple", mediaFilterState{hideSkipped: true, hideConverted: true}, "!converted,!skipped"},
+		{"all", mediaFilterState{hideSkipped: true, hideConverted: true, hideRejected: true}, "!converted,!rejected,!skipped"},
 	}
 
 	for _, tt := range tests {

@@ -49,7 +49,7 @@ func DefaultStyles() Styles {
 					},
 				},
 				FrameStyle:       defaultFrameStyle,
-				MediaFilterStyle: lipgloss.NewStyle().Foreground(colors.Magenta1),
+				MediaFilterStyle: lipgloss.NewStyle().Foreground(colors.Magenta1).Italic(true),
 				RowCountStyle:    lipgloss.NewStyle().Foreground(colors.White),
 			},
 			MediaViewerSessionsStyles: MediaViewerSessionsStyles{

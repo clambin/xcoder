@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/spinner"
@@ -16,13 +15,15 @@ type statusLine struct {
 	styles     StatusStyles
 	transcoder Transcoder
 	spinner    spinner.Model
+	profile    string
 	width      int
 	showState  bool
 }
 
-func newStatusLine(transcoder Transcoder, styles StatusStyles, opts ...spinner.Option) statusLine {
+func newStatusLine(transcoder Transcoder, profile string, styles StatusStyles, opts ...spinner.Option) statusLine {
 	return statusLine{
 		transcoder: transcoder,
+		profile:    profile,
 		spinner:    spinner.New(opts...),
 		styles:     styles,
 	}
@@ -75,23 +76,27 @@ func (s statusLine) setWidth(width int) statusLine {
 }
 
 var boolToString = map[bool]string{
-	true:  "ON ",
+	true:  "ON",
 	false: "OFF",
 }
 
 func (s statusLine) state() string {
-	batchState := boolToString[s.transcoder.Active()]
-	if batchState == boolToString[true] {
+	batchState := s.transcoder.Active()
+	batchStateString := fmt.Sprintf("%-3s", boolToString[batchState])
+
+	if batchState {
 		if s.showState {
-			batchState = s.styles.Processing.Render(batchState)
+			batchStateString = s.styles.Processing.Render(batchStateString)
 		} else {
-			batchState = strings.Repeat(" ", len(batchState))
+			batchStateString = "   "
 		}
 	}
-	return lipgloss.JoinHorizontal(lipgloss.Left,
-		"Overwrite target: "+boolToString[s.transcoder.OverwriteTarget()],
-		" Remove source: "+boolToString[s.transcoder.RemoveSource()],
-		" Batch processing: "+batchState,
+
+	return fmt.Sprintf("Profile: %s Overwrite target: %s Remove source: %s Batch processing: %s",
+		s.profile,
+		boolToString[s.transcoder.OverwriteTarget()],
+		boolToString[s.transcoder.RemoveSource()],
+		batchStateString,
 	)
 }
 

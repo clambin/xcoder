@@ -125,7 +125,7 @@ func runUI(ctx context.Context, v *viper.Viper, args []string) error {
 		}
 	}()
 
-	u := ui.New(&q, tr, r, ui.DefaultKeyMap(), ui.DefaultStyles())
+	u := ui.New(&q, tr, profileName, r, ui.DefaultKeyMap(), ui.DefaultStyles())
 	a := tea.NewProgram(u, tea.WithoutCatchPanics())
 	_, err = a.Run()
 	return err

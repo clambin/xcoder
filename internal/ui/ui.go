@@ -42,11 +42,11 @@ type Application struct {
 	mediaTableFilterIsOn bool
 }
 
-func New(workItems WorkItems, transcoder Transcoder, r io.Reader, keyMap KeyMap, styles Styles) Application {
+func New(workItems WorkItems, transcoder Transcoder, profileName string, r io.Reader, keyMap KeyMap, styles Styles) Application {
 	ch := transcoder.Subscribe()
 
 	a := Application{
-		statusLine:  newStatusLine(transcoder, styles.StatusStyles, spinner.WithSpinner(spinner.Meter)),
+		statusLine:  newStatusLine(transcoder, profileName, styles.StatusStyles, spinner.WithSpinner(spinner.Meter)),
 		logViewer:   newLogViewer(r, keyMap.LogViewerKeyMap, styles.LogViewerStyles),
 		mediaViewer: newMediaViewer(workItems, transcoder, ch, keyMap.MediaViewerKeyMap, styles.MediaViewerStyles),
 		keyMap:      keyMap.RootKeyMap,

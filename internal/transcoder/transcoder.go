@@ -25,6 +25,7 @@ const (
 	logProgressInterval   = time.Minute
 )
 
+// controller exports selected methods from engine, so they're available from Transcoder
 type controller interface {
 	Active() bool
 	SetActive(bool)
@@ -42,6 +43,7 @@ type Configuration struct {
 	RemoveSource    bool
 }
 
+// A Transcoder takes files from the WorkItems list and transcodes them.
 type Transcoder struct {
 	eventLoop *evl.EventLoop
 	controller
@@ -118,27 +120,31 @@ func (e *engine) Update(msg evl.Event) evl.Cmd {
 		)
 	case newMediaEvent:
 		// add the file to the work list
+		e.logger.Debug("newMediaEvent", "path", string(msg))
 		workItem := &WorkItem{Source: File{Path: string(msg)}}
 		e.workItems.Add(workItem)
 		// scan the workItem
 		return e.scanCmd(workItem)
 	case transcodeCompleteEvent:
-		var cmd evl.Cmd
 		if status, _ := msg.workItem.Status(); status != StatusConverted {
 			return nil
 		}
-		// add the converted file to the work list
-		cmd = func() evl.Event { return newMediaEvent(msg.workItem.Target.Path) }
+		e.logger.Debug("transcodeCompleteEvent")
 		// if we need to remove the source, remove it both from the work list and from the filesystem
 		if e.removeSource {
-			// remove from the workItems
-			e.workItems.Remove(msg.workItem)
 			// delete the file
-			if err := os.Remove(msg.workItem.Source.Path); err != nil {
+			err := os.Remove(msg.workItem.Source.Path)
+			switch err {
+			case nil:
+				// remove from the workItems
+				e.workItems.Remove(msg.workItem)
+			default:
 				e.logger.Warn("failed to remove source file", "path", msg.workItem.Source.Path, "err", err)
 			}
 		}
-		return cmd
+		// add the converted file to the work list
+		e.logger.Debug("queueing newMediaEvent", "path", msg.workItem.Target.Path)
+		return func() evl.Event { return newMediaEvent(msg.workItem.Target.Path) }
 	default:
 		return nil
 	}
@@ -181,7 +187,7 @@ func (e *engine) scanCmd(workItem *WorkItem) evl.Cmd {
 		_ = e.probeSema.Acquire(context.Background(), 1)
 		defer e.probeSema.Release(1)
 
-		logger.Info("scanning media file")
+		logger.Debug("scanning media file")
 		start := time.Now()
 
 		// determine source media video stats
@@ -212,7 +218,7 @@ func (e *engine) scanCmd(workItem *WorkItem) evl.Cmd {
 		}
 		workItem.SetStatus(status, err)
 
-		logger.Info("scanned media file", "status", status.String(), "err", err, "duration", time.Since(start))
+		logger.Debug("scanned media file", "status", status.String(), "err", err, "duration", time.Since(start))
 		return nil
 	}
 }
@@ -268,7 +274,7 @@ func (e *engine) transcodeCmd(session *Session) evl.Cmd {
 	return func() evl.Event {
 		start := time.Now()
 		logger := e.logger.With(slog.String("source", session.WorkItem.Source.Path))
-		e.logger.Info("started transcoding", "path", session.WorkItem.Source.Path)
+		logger.Info("started transcoding")
 
 		// inform the listeners that a new session is starting.
 		// we do this here rather than in the caller, so we don't block the event loop.
@@ -332,7 +338,7 @@ func (e *engine) transcode(session *Session) error {
 			if speed > 0 {
 				etaString = eta.String()
 			}
-			logger.Debug("transcoding progress", "progress", speed, "eta", etaString)
+			logger.Info("transcoding progress", "progress", speed, "eta", etaString)
 			lastLogTimestamp = time.Now()
 		}
 	}

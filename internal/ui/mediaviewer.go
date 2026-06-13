@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	tableRefreshInterval  = 250 * time.Millisecond
-	tickerRefreshInterval = time.Second
+	tableRefreshInterval   = 250 * time.Millisecond
+	sessionRefreshInterval = time.Second
 )
 
 // mediaViewer is the main window of the UI.  It displays the media files and running transcode sessions
@@ -335,7 +335,7 @@ type transcodeSessionsViewer struct {
 
 func (v transcodeSessionsViewer) Init() tea.Cmd {
 	return tea.Batch(
-		tea.Tick(tickerRefreshInterval, func(_ time.Time) tea.Msg {
+		tea.Tick(sessionRefreshInterval, func(_ time.Time) tea.Msg {
 			return refreshTranscodeSessionsMsg{}
 		}),
 		func() tea.Msg {
@@ -350,7 +350,7 @@ func (v transcodeSessionsViewer) Update(msg tea.Msg) (transcodeSessionsViewer, t
 		for i := range v.sessions {
 			v.sessions[i].update()
 		}
-		return v, tea.Tick(tickerRefreshInterval, func(t time.Time) tea.Msg {
+		return v, tea.Tick(sessionRefreshInterval, func(t time.Time) tea.Msg {
 			return refreshTranscodeSessionsMsg{}
 		})
 	case transcodeSessionEventMsg:

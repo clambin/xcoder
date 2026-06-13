@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/spinner"
@@ -82,7 +83,10 @@ var boolToString = map[bool]string{
 
 func (s statusLine) state() string {
 	batchState := s.transcoder.Active()
-	batchStateString := fmt.Sprintf("%-3s", boolToString[batchState])
+	batchStateString := boolToString[batchState]
+	if batchState {
+		batchStateString += " "
+	}
 
 	if batchState {
 		if s.showState {
@@ -92,12 +96,13 @@ func (s statusLine) state() string {
 		}
 	}
 
-	return fmt.Sprintf("Profile: %s Overwrite target: %s Remove source: %s Batch processing: %s",
-		s.profile,
-		boolToString[s.transcoder.OverwriteTarget()],
-		boolToString[s.transcoder.RemoveSource()],
-		batchStateString,
-	)
+	parts := []string{
+		"Profile:", s.profile,
+		"Overwrite target:", boolToString[s.transcoder.OverwriteTarget()],
+		"Remove source:", boolToString[s.transcoder.RemoveSource()],
+		"Batch processing:", batchStateString,
+	}
+	return strings.Join(parts, " ")
 }
 
 func (s statusLine) status() string {

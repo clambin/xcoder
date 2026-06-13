@@ -1,32 +1,26 @@
 package ui
 
 import (
-	"fmt"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"codeberg.org/clambin/bubbles/table"
 	"github.com/charmbracelet/x/exp/golden"
-	"github.com/clambin/xcoder/ffmpeg"
 	"github.com/clambin/xcoder/internal/transcoder"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWorkItemsViewer_View(t *testing.T) {
-	var skippedWorkItem, rejectedWorkItem, convertedWorkItem, failedWorkItem, transcodingWorkItem transcoder.WorkItem
-	skippedWorkItem.SetStatus(transcoder.StatusSkipped, assert.AnError)
-	rejectedWorkItem.SetStatus(transcoder.StatusRejected, assert.AnError)
-	convertedWorkItem.SetStatus(transcoder.StatusConverted, nil)
-	failedWorkItem.SetStatus(transcoder.StatusFailed, assert.AnError)
-	transcodingWorkItem.SetStatus(transcoder.StatusTranscoding, nil)
+func TestMediaViewer_View(t *testing.T) {
+	q := generateWorkItems()
+	v := newMediaViewer(q, nil, nil, MediaViewerKeyMap{}, MediaViewerStyles{}).SetSize(120, 10)
+	v, _ = v.Update(refreshTableCmd(q.Items(), mediaFilterState{}, false)())
 
-	workItems := []*transcoder.WorkItem{&skippedWorkItem, &rejectedWorkItem, &convertedWorkItem, &failedWorkItem, &transcodingWorkItem}
-	for i, workItem := range workItems {
-		workItem.Source.Path = fmt.Sprintf("file_%d", i)
-		workItem.Source.VideoStats = ffmpeg.VideoStats{VideoCodec: "h264", Height: 1080, BitRate: 8_000_000}
-		workItem.Target.VideoStats = ffmpeg.VideoStats{VideoCodec: "hevc", Height: 1080, BitRate: 4_000_000}
-	}
+	golden.RequireEqual(t, v.View())
+}
+
+func TestWorkItemsViewer_View(t *testing.T) {
+	q := generateWorkItems()
 
 	tests := []struct {
 		name string
@@ -45,7 +39,7 @@ func TestWorkItemsViewer_View(t *testing.T) {
 				styles:      DefaultStyles().MediaViewerItemStyles,
 			}.SetSize(100, 10)
 
-			v, _ = v.Update(refreshTableCmd(workItems, tt.mediaFilterState, true)())
+			v, _ = v.Update(refreshTableCmd(q.Items(), tt.mediaFilterState, true)())
 			golden.RequireEqual(t, v.View())
 		})
 	}

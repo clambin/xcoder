@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/exp/golden"
@@ -14,20 +15,46 @@ import (
 )
 
 func TestApplication(t *testing.T) {
-	var buff bytes.Buffer
-	for i := range 3 {
-		buff.WriteString(fmt.Sprintf("line %d", i+1))
+	tests := []struct {
+		name    string
+		keys    []tea.Key
+		waitFor string
+	}{
+		{"main", nil, ""},
+		{"logs", []tea.Key{{Text: "l"}}, "Autoscroll:"},
+		{"help", []tea.Key{{Text: "?"}}, "esc close logs"},
+		{"no skip", []tea.Key{{Text: "s"}}, "[!skipped]"},
+		{"no reject", []tea.Key{{Text: "r"}}, "[!rejected]"},
+		{"no convert", []tea.Key{{Text: "c"}}, "[!converted]"},
 	}
-	q := generateWorkItems()
-	var a tea.Model = New(q, &fakeTranscoder{}, "test", &buff, DefaultKeyMap(), DefaultStyles())
-	tm := teatest.NewTestModel(t, a)
-	teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
-		return bytes.Contains(bts, []byte("hevc"))
-	})
 
-	tm.Send(tea.QuitMsg{})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buff bytes.Buffer
+			for i := range 3 {
+				buff.WriteString(fmt.Sprintf("line %d", i+1))
+			}
+			q := generateWorkItems()
+			var a tea.Model = New(q, &fakeTranscoder{}, "test", &buff, DefaultKeyMap(), DefaultStyles())
+			tm := teatest.NewTestModel(t, a, teatest.WithInitialTermSize(120, 10))
+			teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
+				return bytes.Contains(bts, []byte("hevc"))
+			})
 
-	golden.RequireEqual(t, tm.FinalModel(t).View().Content)
+			if len(tt.keys) > 0 {
+				for _, key := range tt.keys {
+					tm.Send(tea.KeyPressMsg(key))
+				}
+				teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
+					return bytes.Contains(bts, []byte(tt.waitFor))
+				}, teatest.WithDuration(5*time.Second), teatest.WithCheckInterval(50*time.Millisecond))
+			}
+
+			tm.Send(tea.KeyPressMsg(tea.Key{Text: "q"}))
+
+			golden.RequireEqual(t, tm.FinalModel(t).View().Content)
+		})
+	}
 }
 
 func generateWorkItems() *transcoder.WorkItems {

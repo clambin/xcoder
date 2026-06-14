@@ -165,48 +165,44 @@ func (v workItemsViewer) Update(msg tea.Msg) (workItemsViewer, tea.Cmd) {
 		return v.SetSize(v.width, v.height), nil
 	case tea.KeyPressMsg:
 		// if the text filter is on, we ignore all key presses and route directly to the table.
-		if !v.mediaTableFilterIsOn {
-			switch {
-			case key.Matches(msg, v.keyMap.ShowFullPath):
-				v.showFullPath = !v.showFullPath
-				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
-			case key.Matches(msg, v.keyMap.HideSkippedFiles):
-				v.mediaFilterState.hideSkipped = !v.mediaFilterState.hideSkipped
-				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
-			case key.Matches(msg, v.keyMap.HideRejectedFiles):
-				v.mediaFilterState.hideRejected = !v.mediaFilterState.hideRejected
-				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
-			case key.Matches(msg, v.keyMap.HideConvertedFiles):
-				v.mediaFilterState.hideConverted = !v.mediaFilterState.hideConverted
-				return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
-			case key.Matches(msg, v.keyMap.AutoProcess):
-				v.transcoder.SetActive(!v.transcoder.Active())
-				return v, nil
-			case key.Matches(msg, v.keyMap.ConvertSelected):
-				if row := v.SelectedRow(); row != nil {
-					userData := row[len(row)-1].(table.UserData)
-					item, ok := userData.Data.(*transcoder.WorkItem)
-					if !ok {
-						panic("selected row is not a work item")
-					}
-					status, _ := item.Status()
-					if status != transcoder.StatusScanned {
-						return v, nil
-					}
-					item.SetStatus(transcoder.StatusQueued, nil)
-				}
-				return v, nil
-			}
+		if v.mediaTableFilterIsOn {
+			break
 		}
-		var cmd tea.Cmd
-		v.FilterTable, cmd = v.FilterTable.Update(msg)
-		return v, cmd
-
-	default:
-		var cmd tea.Cmd
-		v.FilterTable, cmd = v.FilterTable.Update(msg)
-		return v, cmd
+		switch {
+		case key.Matches(msg, v.keyMap.ShowFullPath):
+			v.showFullPath = !v.showFullPath
+			return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
+		case key.Matches(msg, v.keyMap.HideSkippedFiles):
+			v.mediaFilterState.hideSkipped = !v.mediaFilterState.hideSkipped
+			return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
+		case key.Matches(msg, v.keyMap.HideRejectedFiles):
+			v.mediaFilterState.hideRejected = !v.mediaFilterState.hideRejected
+			return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
+		case key.Matches(msg, v.keyMap.HideConvertedFiles):
+			v.mediaFilterState.hideConverted = !v.mediaFilterState.hideConverted
+			return v, refreshTableCmd(v.workItems.Items(), v.mediaFilterState, v.showFullPath)
+		case key.Matches(msg, v.keyMap.AutoProcess):
+			v.transcoder.SetActive(!v.transcoder.Active())
+			return v, nil
+		case key.Matches(msg, v.keyMap.ConvertSelected):
+			if row := v.SelectedRow(); row != nil {
+				userData := row[len(row)-1].(table.UserData)
+				item, ok := userData.Data.(*transcoder.WorkItem)
+				if !ok {
+					panic("selected row is not a work item")
+				}
+				status, _ := item.Status()
+				if status != transcoder.StatusScanned {
+					return v, nil
+				}
+				item.SetStatus(transcoder.StatusQueued, nil)
+			}
+			return v, nil
+		}
 	}
+	var cmd tea.Cmd
+	v.FilterTable, cmd = v.FilterTable.Update(msg)
+	return v, cmd
 }
 
 func (v workItemsViewer) View() string {

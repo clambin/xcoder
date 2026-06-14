@@ -1,0 +1,10 @@
+Source                           Source Stats         Target Stats         Status       Error                           
+file_0                           h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [38;5;106mskipped[m      assert.AnError general error fo…
+file_1                           h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [38;5;131mrejected[m     assert.AnError general error fo…
+file_2                           h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [38;5;28mconverted[m                                    
+file_3                           h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [91mfailed[m       assert.AnError general error fo…
+file_4                           h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [38;5;214mtranscoding[m                                  
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        
+                                                                                                                        

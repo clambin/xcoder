@@ -1,0 +1,10 @@
+[94m╭────────────────────────────────────────────────────────[m [32mlogs[m [94m────────────────────────────────────────────────────────╮[m
+[94m│[m                                           [94mAutoscroll: [m[91mon [m[94m    [m[94mWordwrap: [m[38;5;59moff[m                                           [94m│[m
+[94m│[m<stream closed>                                                                                                       [94m│[m
+[94m│[m<stream closed>                                                                                                       [94m│[m
+[94m│[m<stream closed>                                                                                                       [94m│[m
+[94m│[m<stream closed>                                                                                                       [94m│[m
+[94m│[m<stream closed>                                                                                                       [94m│[m
+[94m╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯[m
+[104m  [m[30;104m                                          Profile: test Overwrite target: ON Remove source: ON Batch processing: OFF[m[104m  [m
+[93m?/f1[m [38;5;246mtoggle help[m[38;2;60;60;60m • [m[93mw[m [38;5;246mwrap words[m[38;2;60;60;60m • [m[93ms[m [38;5;246mauto scroll[m                                                                         

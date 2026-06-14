@@ -1,0 +1,10 @@
+[3;93mGENERAL[m               [3;93mMEDIA[m                         [3;93mMEDIA FILTER[m               [3;93mLOGS[m                                     
+[93mq[m    [38;5;246mquit application[m [93mf[m     [38;5;246mtoggle full file path[m   [93m/[m     [38;5;246mfilter[m               [93mw[m   [38;5;246mwrap words[m                           
+[93m?/f1[m [38;5;246mtoggle help[m      [93ms[m     [38;5;246mtoggle skipped files[m    [93menter[m [38;5;246mclose filter[m         [93ms[m   [38;5;246mauto scroll[m                          
+[93ml[m    [38;5;246mtoggle logs[m      [93mr[m     [38;5;246mtoggle rejected files[m   [93mesc[m   [38;5;246mclear & close filter[m [93mesc[m [38;5;246mclose logs[m                           
+                      [93mc[m     [38;5;246mtoggle converted files[m                                                                      
+                      [93menter[m [38;5;246mconvert selected file[m                                                                       
+                      [93ma[m     [38;5;246mtoggle batch processing[m                                                                     
+                                                                                                                        
+[104m  [m[30;104m                                          Profile: test Overwrite target: ON Remove source: ON Batch processing: OFF[m[104m  [m
+[93m?/f1[m [38;5;246mtoggle help[m                                                                                                        

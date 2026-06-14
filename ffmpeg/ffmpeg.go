@@ -86,7 +86,8 @@ func (ff *FFMPEG) Run(ctx context.Context, logger *slog.Logger) error {
 		}
 	}
 	cmd := ff.Build(ctx)
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {

@@ -2,19 +2,22 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"codeberg.org/clambin/go-common/charmer"
-	"github.com/clambin/xcoder/internal/pipeline"
-	"github.com/clambin/xcoder/internal/tui"
+	"github.com/clambin/xcoder/internal/mediafiles"
+	"github.com/clambin/xcoder/internal/transcoder"
+	"github.com/clambin/xcoder/internal/ui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -85,28 +88,63 @@ func runUI(ctx context.Context, v *viper.Viper, args []string) error {
 	if len(args) == 0 {
 		args = []string{"."}
 	}
-	cfg, err := pipeline.GetConfigurationFromViper(v, args)
+
+	var q transcoder.WorkItems
+
+	profileName := v.GetString("profile")
+	profile, err := transcoder.GetProfile(profileName)
 	if err != nil {
-		return fmt.Errorf("invalid configuration: %w", err)
+		return fmt.Errorf("invalid profile name %q: %w", profileName, err)
 	}
 
-	var queue pipeline.Queue
-	queue.SetActive(cfg.Active)
+	r, logger, err := getLogger(v)
+	if err != nil {
+		return fmt.Errorf("invalid logger parameters: %w", err)
+	}
 
-	u := tui.New(&queue, cfg)
+	cfg := transcoder.Configuration{
+		BaseDir:         args[0],
+		Profile:         profile,
+		OverwriteTarget: v.GetBool("overwrite"),
+		RemoveSource:    v.GetBool("remove"),
+	}
+
+	tr := transcoder.New(&q, cfg, logger)
+	tr.SetActive(v.GetBool("active"))
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	go func() { _ = tr.Run(ctx) }()
+
+	go func() {
+		err := mediafiles.FindMediaFiles(cfg.BaseDir, func(path string) {
+			tr.AddMediaFile(path)
+		})
+		if err != nil {
+			logger.Error("failed to scan media files", "error", err)
+		}
+	}()
+
+	u := ui.New(&q, tr, profileName, r, ui.DefaultKeyMap(), ui.DefaultStyles())
 	a := tea.NewProgram(u, tea.WithoutCatchPanics())
-
-	w := u.LogWriter()
-	l := cfg.Logger(w, nil)
-	l.Info("starting program")
-
-	var g errgroup.Group
-	subCtx, cancel := context.WithCancel(ctx)
-
-	g.Go(func() error { return pipeline.Run(subCtx, cfg, &queue, l) })
-
 	_, err = a.Run()
-	cancel()
+	return err
+}
 
-	return errors.Join(err, g.Wait())
+func getLogger(v *viper.Viper) (io.Reader, *slog.Logger, error) {
+	var lvl slog.Level
+	if err := lvl.UnmarshalText([]byte(v.GetString("log.level"))); err != nil {
+		return nil, nil, fmt.Errorf("invalid log level %q: %w", v.GetString("log.level"), err)
+	}
+	opts := slog.HandlerOptions{Level: lvl}
+
+	r, w := io.Pipe()
+	switch strings.ToLower(v.GetString("log.format")) {
+	case "text":
+		return r, slog.New(slog.NewTextHandler(w, &opts)), nil
+	case "json":
+		return r, slog.New(slog.NewJSONHandler(w, &opts)), nil
+	default:
+		return nil, nil, fmt.Errorf("invalid log format %q", v.GetString("log.format"))
+	}
 }

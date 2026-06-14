@@ -41,6 +41,11 @@ func Test_progress(t *testing.T) {
 			want:  []Progress{{Converted: time.Millisecond, Speed: 1.1}},
 		},
 		{
+			name:  "valid spaces",
+			input: "speed= 1.1x\nout_time_us= 1000\nprogress=end\n",
+			want:  []Progress{{Converted: time.Millisecond, Speed: 1.1}},
+		},
+		{
 			name:  "multiple",
 			input: "speed=1.0x\nout_time_us=1\nprogress=continue\nspeed=1.1x\nout_time_us=2\nprogress=end\n",
 			want:  []Progress{{Converted: time.Microsecond, Speed: 1.0}, {Converted: 2 * time.Microsecond, Speed: 1.1}},
@@ -65,7 +70,7 @@ func Test_progress(t *testing.T) {
 }
 
 func Benchmark_progress(b *testing.B) {
-	// Benchmark_progress-10    	    9432	    127117 ns/op	    4128 B/op	       2 allocs/op
+	// Benchmark_progress-10    	    6948	    154579 ns/op	    4256 B/op	       3 allocs/op
 	var input strings.Builder
 	for line := range 1000 {
 		if line != 0 {

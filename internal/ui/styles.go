@@ -6,6 +6,7 @@ import (
 	"codeberg.org/clambin/bubbles/frame"
 	"codeberg.org/clambin/bubbles/helper"
 	"codeberg.org/clambin/bubbles/table"
+	"github.com/clambin/xcoder/internal/transcoder"
 )
 
 var (
@@ -13,6 +14,16 @@ var (
 		Title:  lipgloss.NewStyle().Foreground(colors.Green),
 		Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
 	}
+
+	statusStyles = map[string]lipgloss.Style{
+		transcoder.StatusRejected.String():    lipgloss.NewStyle().Foreground(colors.IndianRed),
+		transcoder.StatusSkipped.String():     lipgloss.NewStyle().Foreground(colors.Yellow4Alt),
+		transcoder.StatusTranscoding.String(): lipgloss.NewStyle().Foreground(colors.Orange1),
+		transcoder.StatusFailed.String():      lipgloss.NewStyle().Foreground(colors.Red),
+		transcoder.StatusConverted.String():   lipgloss.NewStyle().Foreground(colors.Green4),
+	}
+
+	lightWhite = colors.Grey70
 )
 
 type Styles struct {
@@ -31,9 +42,10 @@ func DefaultStyles() Styles {
 		HelpStyles: helper.Styles{
 			Header: lipgloss.NewStyle().Foreground(colors.Yellow).Italic(true),
 			Key:    lipgloss.NewStyle().Foreground(colors.Yellow),
-			Desc:   lipgloss.NewStyle().Foreground(colors.Grey58),
+			Desc:   lipgloss.NewStyle().Foreground(lightWhite),
 		},
 		LogViewerStyles: LogViewerStyles{
+			Text: lipgloss.NewStyle().Foreground(lightWhite),
 			Frame: frame.Style{
 				Title:  lipgloss.NewStyle().Foreground(colors.Green),
 				Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
@@ -44,8 +56,8 @@ func DefaultStyles() Styles {
 				TableStyles: table.FilterTableStyles{
 					Table: table.Styles{
 						Header:   lipgloss.NewStyle().Foreground(colors.White).Bold(true),
-						Selected: lipgloss.NewStyle().Foreground(colors.Blue).Background(colors.White),
-						Cell:     lipgloss.NewStyle().Foreground(colors.Grey70),
+						Selected: lipgloss.NewStyle().Foreground(colors.Black).Background(colors.White),
+						Cell:     lipgloss.NewStyle().Foreground(lightWhite),
 					},
 				},
 				FrameStyle:       defaultFrameStyle,
@@ -66,6 +78,7 @@ type StatusStyles struct {
 
 type LogViewerStyles struct {
 	Frame frame.Style
+	Text  lipgloss.Style
 }
 
 type MediaViewerStyles struct {

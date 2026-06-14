@@ -12,7 +12,6 @@ import (
 	"charm.land/bubbles/v2/progress"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"codeberg.org/clambin/bubbles/colors"
 	"codeberg.org/clambin/bubbles/frame"
 	"codeberg.org/clambin/bubbles/helper"
 	"codeberg.org/clambin/bubbles/table"
@@ -93,14 +92,6 @@ func (v mediaViewer) helpSections() []helper.Section {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-var statusStyles = map[string]lipgloss.Style{
-	transcoder.StatusRejected.String():    lipgloss.NewStyle().Foreground(colors.IndianRed),
-	transcoder.StatusSkipped.String():     lipgloss.NewStyle().Foreground(colors.Yellow4Alt),
-	transcoder.StatusTranscoding.String(): lipgloss.NewStyle().Foreground(colors.Orange1),
-	transcoder.StatusFailed.String():      lipgloss.NewStyle().Foreground(colors.Red),
-	transcoder.StatusConverted.String():   lipgloss.NewStyle().Foreground(colors.Green4),
-}
 
 var statusTransformer = table.CellStyle{Style: lipgloss.NewStyle().Transform(table.StringStyler(statusStyles))}
 
@@ -230,18 +221,14 @@ func (v workItemsViewer) SetSize(width, height int) workItemsViewer {
 // buildTitle builds the title for the workItemsViewer.
 func (v workItemsViewer) buildTitle() string {
 	title := "media files"
-	if mediaFilter := v.mediaFilterState.String(); mediaFilter != "" {
+	rowCountLabel := strconv.Itoa(v.totalRowCount)
+
+	mediaFilter := v.mediaFilterState.String()
+	if mediaFilter != "" {
 		title += v.styles.MediaFilterStyle.Render(" [" + mediaFilter + "]")
+		rowCountLabel = strconv.Itoa(v.VisibleRowCount()) + "/" + strconv.Itoa(v.totalRowCount)
 	}
-	var rowCountLabel string
-	visibleRowCount := v.VisibleRowCount()
-	switch {
-	case visibleRowCount != v.totalRowCount:
-		rowCountLabel = " [" + strconv.Itoa(visibleRowCount) + "/" + strconv.Itoa(v.totalRowCount) + "]"
-	default:
-		rowCountLabel = " [" + strconv.Itoa(v.totalRowCount) + "]"
-	}
-	title += v.styles.RowCountStyle.Render(rowCountLabel)
+	title += v.styles.RowCountStyle.Render(" [" + rowCountLabel + "]")
 	return title
 }
 

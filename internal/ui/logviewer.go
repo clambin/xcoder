@@ -12,8 +12,8 @@ import (
 
 // logViewer displays the log/slog output
 type logViewer struct {
-	frameStyle frame.Style
-	keyMap     LogViewerKeyMap
+	style  LogViewerStyles
+	keyMap LogViewerKeyMap
 	stream.Model
 }
 
@@ -23,8 +23,8 @@ func newLogViewer(r io.Reader, keyMap LogViewerKeyMap, style LogViewerStyles) lo
 			stream.WithShowToggles(true),
 			stream.WithKeyMap(stream.KeyMap{WordWrap: keyMap.WordWrap, AutoScroll: keyMap.AutoScroll}),
 		),
-		frameStyle: style.Frame,
-		keyMap:     keyMap,
+		style:  style,
+		keyMap: keyMap,
 	}
 }
 
@@ -35,11 +35,12 @@ func (l logViewer) Update(msg tea.Msg) (logViewer, tea.Cmd) {
 }
 
 func (l logViewer) View() string {
-	return frame.Render("logs", lipgloss.Center, l.frameStyle, l.Model.View())
+	content := l.style.Text.Render(l.Model.View())
+	return frame.Render("logs", lipgloss.Center, l.style.Frame, content)
 }
 
 func (l logViewer) SetSize(width, height int) logViewer {
-	borderWidth, borderHeight := l.frameStyle.BorderSize()
+	borderWidth, borderHeight := l.style.Frame.BorderSize()
 	l.Model = l.Model.SetSize(
 		max(0, width-borderWidth),
 		max(0, height-borderHeight),

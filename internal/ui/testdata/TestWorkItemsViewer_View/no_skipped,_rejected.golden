@@ -1,4 +1,4 @@
-[94m╭───────────────────────────────────────[m [32mmedia files[97m [3/5][m[m [94m────────────────────────────────────────╮[m
+[94m╭────────────────────────────────────────[m [32mmedia files[97m [5][m[m [94m─────────────────────────────────────────╮[m
 [94m│[mSource                Source Stats         Target Stats         Status       Error                [94m│[m
 [94m│[mfile_2                h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [38;5;28mconverted[m                         [94m│[m
 [94m│[mfile_3                h264/1080/8.00 mbps  hevc/1080/4.00 mbps  [91mfailed[m       assert.AnError gener…[94m│[m

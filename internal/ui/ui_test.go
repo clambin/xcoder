@@ -32,7 +32,7 @@ func TestApplication(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var buff bytes.Buffer
 			for i := range 3 {
-				buff.WriteString(fmt.Sprintf("line %d", i+1))
+				_, _ = fmt.Fprintf(&buff, "line %d", i+1)
 			}
 			q := generateWorkItems()
 			var a tea.Model = New(q, &fakeTranscoder{}, "test", &buff, DefaultKeyMap(), DefaultStyles())

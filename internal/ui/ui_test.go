@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,7 +33,7 @@ func TestApplication(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var buff bytes.Buffer
 			for i := range 3 {
-				_, _ = fmt.Fprintf(&buff, "line %d", i+1)
+				_, _ = fmt.Fprintf(&buff, "line %d\n", i+1)
 			}
 			q := generateWorkItems()
 			var a tea.Model = New(q, &fakeTranscoder{}, "test", &buff, DefaultKeyMap(), DefaultStyles())
@@ -79,7 +80,7 @@ func generateWorkItems() *transcoder.WorkItems {
 var _ Transcoder = (*fakeTranscoder)(nil)
 
 type fakeTranscoder struct {
-	active bool
+	active atomic.Bool
 	count  int
 }
 
@@ -88,11 +89,11 @@ func (f *fakeTranscoder) SessionCount() int {
 }
 
 func (f *fakeTranscoder) Active() bool {
-	return f.active
+	return f.active.Load()
 }
 
-func (f *fakeTranscoder) SetActive(_ bool) {
-	panic("implement me")
+func (f *fakeTranscoder) SetActive(active bool) {
+	f.active.Store(active)
 }
 
 func (f *fakeTranscoder) Subscribe() <-chan transcoder.SessionEvent {

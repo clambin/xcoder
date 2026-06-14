@@ -32,7 +32,7 @@ func TestStatusLine_BatchStatus(t *testing.T) {
 	}
 
 	for idx, tt := range tests {
-		x.active = tt.status
+		x.SetActive(tt.status)
 		s, _ = s.Update(blinkStatusMsg{})
 		got := s.View()
 		require.Len(t, got, expectedWidth)
@@ -43,10 +43,8 @@ func TestStatusLine_BatchStatus(t *testing.T) {
 
 func TestStatusLine_Converting(t *testing.T) {
 	const expectedWidth = 108
-	transcoder := fakeTranscoder{
-		active: true,
-		count:  2,
-	}
+	transcoder := fakeTranscoder{count: 2}
+	transcoder.SetActive(true)
 
 	s := newStatusLine(&transcoder, "test", StatusStyles{}, spinner.WithSpinner(spinner.Dot)).setWidth(expectedWidth)
 

@@ -15,8 +15,8 @@ const blinkStatusInterval = 500 * time.Millisecond
 type statusLine struct {
 	styles     StatusStyles
 	transcoder Transcoder
-	spinner    spinner.Model
 	profile    string
+	spinner    spinner.Model
 	width      int
 	showState  bool
 }

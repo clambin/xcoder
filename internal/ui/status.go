@@ -33,9 +33,7 @@ func newStatusLine(transcoder Transcoder, profile string, styles StatusStyles, o
 func (s statusLine) Init() tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg { return s.spinner.Tick() },
-		tea.Tick(blinkStatusInterval, func(_ time.Time) tea.Msg {
-			return blinkStatusMsg{}
-		}),
+		blinkStatusCmd(),
 	)
 }
 
@@ -43,15 +41,11 @@ func (s statusLine) Update(msg tea.Msg) (statusLine, tea.Cmd) {
 	switch msg := msg.(type) {
 	case spinner.TickMsg:
 		var cmd tea.Cmd
-		if msg.ID == s.spinner.ID() {
-			s.spinner, cmd = s.spinner.Update(msg)
-		}
+		s.spinner, cmd = s.spinner.Update(msg)
 		return s, cmd
 	case blinkStatusMsg:
 		s.showState = !s.showState
-		return s, tea.Tick(blinkStatusInterval, func(_ time.Time) tea.Msg {
-			return blinkStatusMsg{}
-		})
+		return s, blinkStatusCmd()
 	default:
 		return s, nil
 	}
@@ -115,3 +109,9 @@ func (s statusLine) status() string {
 
 // blinkStatusMsg is a message that blinks the state if it's "on"
 type blinkStatusMsg struct{}
+
+func blinkStatusCmd() tea.Cmd {
+	return tea.Tick(blinkStatusInterval, func(_ time.Time) tea.Msg {
+		return blinkStatusMsg{}
+	})
+}

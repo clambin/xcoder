@@ -6,65 +6,67 @@ import (
 	"unicode/utf8"
 
 	"charm.land/bubbles/v2/spinner"
-	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestStatusLine_BatchStatus(t *testing.T) {
+func TestStatusBar_BatchStatus(t *testing.T) {
 	const expectedWidth = 92
 	var x fakeTranscoder
-	s := newStatusLine(&x, "test", StatusStyles{}).setWidth(expectedWidth)
-	for _, msg := range flattenBatchCmd(s.Init()()) {
-		s, _ = s.Update(msg)
-	}
+	s := newStatusBar(&x, "test", StatusStyles{}).Width(expectedWidth)
 
 	tests := []struct {
 		status bool
 		want   string
 	}{
-		{true, "Profile: test Overwrite target: ON Remove source: ON Batch processing:      "},
 		{true, "Profile: test Overwrite target: ON Remove source: ON Batch processing: ON   "},
 		{true, "Profile: test Overwrite target: ON Remove source: ON Batch processing:      "},
+		{true, "Profile: test Overwrite target: ON Remove source: ON Batch processing: ON   "},
 		{false, "Profile: test Overwrite target: ON Remove source: ON Batch processing: OFF  "},
 		{false, "Profile: test Overwrite target: ON Remove source: ON Batch processing: OFF  "},
 	}
 
 	for idx, tt := range tests {
 		x.SetActive(tt.status)
-		s, _ = s.Update(blinkStatusMsg{})
+		s, _ = s.Update(refreshStatusBarMsg{})
 		got := s.View()
 		require.Len(t, got, expectedWidth)
 		assert.Equal(t, tt.want, strings.TrimLeft(got, " "), idx)
-
 	}
 }
 
-func TestStatusLine_Converting(t *testing.T) {
+func TestStatusBar_Converting(t *testing.T) {
 	const expectedWidth = 108
 	transcoder := fakeTranscoder{count: 2}
 	transcoder.SetActive(true)
 
-	s := newStatusLine(&transcoder, "test", StatusStyles{}, spinner.WithSpinner(spinner.Dot)).setWidth(expectedWidth)
+	styles := DefaultStyles().StatusStyles
+	s := newStatusBar(&transcoder, "test", styles, spinner.WithSpinner(spinner.Dot)).Width(expectedWidth)
 
-	v := s.View()
-	assert.Equal(t, expectedWidth, utf8.RuneCountInString(ansi.Strip(v)))
-	assert.Equal(t, "  Converting 2 file(s) ... ⣾    Profile: test Overwrite target: ON Remove source: ON Batch processing:      ", v)
-	s, _ = s.Update(s.spinner.Tick())
-	s, _ = s.Update(blinkStatusMsg{})
-	v = s.View()
-	assert.Equal(t, expectedWidth, utf8.RuneCountInString(ansi.Strip(v)))
-	assert.Equal(t, "  Converting 2 file(s) ... ⣽    Profile: test Overwrite target: ON Remove source: ON Batch processing: ON   ", v)
+	v := ansi.Strip(s.View())
+	assert.Equal(t, expectedWidth, utf8.RuneCountInString(v))
+	assert.Equal(t, "Converting 2 file(s) ... ⣾    Profile: test Overwrite target: ON Remove source: ON Batch processing:      ", strings.TrimLeft(v, " "))
+
+	s, _ = s.Update(s.statusbar.Init()())
+	s, _ = s.Update(refreshStatusBarMsg{})
+
+	v = ansi.Strip(s.View())
+	assert.Equal(t, expectedWidth, utf8.RuneCountInString(v))
+	assert.Equal(t, "Converting 2 file(s) ... ⣽    Profile: test Overwrite target: ON Remove source: ON Batch processing: ON   ", strings.TrimLeft(v, " "))
 }
 
-func flattenBatchCmd(msg tea.Msg) []tea.Msg {
-	if cmd, ok := msg.(tea.BatchMsg); ok {
-		msgs := make([]tea.Msg, len(cmd))
-		for i, m := range cmd {
-			msgs[i] = m()
-		}
-		return msgs
+func BenchmarkStatusBar_refresh(b *testing.B) {
+	// BenchmarkStatusBar_refresh-10    	  102093	     11683 ns/op	    3832 B/op	      86 allocs/op
+	transcoder := fakeTranscoder{count: 2}
+	transcoder.SetActive(true)
+
+	styles := DefaultStyles().StatusStyles
+	s := newStatusBar(&transcoder, "test", styles, spinner.WithSpinner(spinner.Dot)).Width(180)
+
+	b.ReportAllocs()
+	for b.Loop() {
+		s = s.refresh()
+		_ = s.View()
 	}
-	return []tea.Msg{msg}
 }

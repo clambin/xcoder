@@ -6,12 +6,12 @@ require (
 	charm.land/bubbles/v2 v2.1.1
 	charm.land/bubbletea/v2 v2.0.8
 	charm.land/lipgloss/v2 v2.0.6
-	codeberg.org/clambin/bubbles v0.14.0
+	codeberg.org/clambin/bubbles v0.14.1
 	codeberg.org/clambin/go-common/charmer v0.5.0
 	codeberg.org/clambin/go-common/pubsub v0.3.0
 	github.com/charmbracelet/x/ansi v0.11.8
-	github.com/charmbracelet/x/exp/golden v0.0.0-20260812204851-3e0d13df57b2
-	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260812204851-3e0d13df57b2
+	github.com/charmbracelet/x/exp/golden v0.0.0-20260813141921-f091cedeaf78
+	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260813141921-f091cedeaf78
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1

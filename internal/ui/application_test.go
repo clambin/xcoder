@@ -36,7 +36,9 @@ func TestApplication(t *testing.T) {
 				_, _ = fmt.Fprintf(&buff, "line %d\n", i+1)
 			}
 			q := generateWorkItems()
-			var a tea.Model = New(q, &fakeTranscoder{}, "test", &buff, DefaultKeyMap(), DefaultStyles())
+			var ft fakeTranscoder
+			ft.SetActive(true)
+			var a tea.Model = New(q, &ft, "test", &buff, DefaultKeyMap(), DefaultStyles())
 			tm := teatest.NewTestModel(t, a, teatest.WithInitialTermSize(120, 10))
 			teatest.WaitFor(t, tm.Output(), func(bts []byte) bool {
 				return bytes.Contains(bts, []byte("hevc"))

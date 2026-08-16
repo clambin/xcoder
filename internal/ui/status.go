@@ -6,8 +6,8 @@ import (
 
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"codeberg.org/clambin/bubbles/statusbar"
+	"github.com/charmbracelet/x/ansi"
 )
 
 const statusBarRefreshInterval = 500 * time.Millisecond
@@ -36,7 +36,10 @@ func newStatusBar(transcoder Transcoder, profile string, styles StatusStyles, op
 }
 
 func (s StatusBar) Init() tea.Cmd {
-	return tea.Batch(s.statusbar.Init(), refreshStatusBarCmd())
+	return tea.Batch(
+		s.statusbar.Init(),
+		refreshStatusBarCmd(),
+	)
 }
 
 func (s StatusBar) Update(msg tea.Msg) (StatusBar, tea.Cmd) {
@@ -56,7 +59,9 @@ func (s StatusBar) View() string {
 	renderedSpace := s.styles.Main.Render(" ")
 	renderedConfiguration := s.viewConfiguration()
 	renderedProcessingState := s.viewProcessingState()
-	width := s.width - 6 - lipgloss.Width(renderedConfiguration) - lipgloss.Width(renderedProcessingState)
+
+	// determine available width for the embedded statusbar
+	width := s.width - 6 - ansi.StringWidth(renderedConfiguration) - ansi.StringWidth(renderedProcessingState)
 
 	return renderedPadding +
 		s.statusbar.Width(width).View() +

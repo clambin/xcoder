@@ -35,7 +35,7 @@ type Application struct {
 	keyMap      RootKeyMap
 	helpWindow  helper.Helper
 	logViewer   logViewer
-	statusLine  statusLine
+	statusBar   StatusBar
 	mediaViewer mediaViewer
 	height      int
 	windows
@@ -46,7 +46,7 @@ func New(workItems WorkItems, transcoder Transcoder, profileName string, r io.Re
 	ch := transcoder.Subscribe()
 
 	a := Application{
-		statusLine:  newStatusLine(transcoder, profileName, styles.StatusStyles, spinner.WithSpinner(spinner.Meter)),
+		statusBar:   newStatusBar(transcoder, profileName, styles.StatusStyles, spinner.WithSpinner(spinner.Meter)),
 		logViewer:   newLogViewer(r, keyMap.LogViewerKeyMap, styles.LogViewerStyles),
 		mediaViewer: newMediaViewer(workItems, transcoder, ch, keyMap.MediaViewerKeyMap, styles.MediaViewerStyles),
 		keyMap:      keyMap.RootKeyMap,
@@ -56,6 +56,8 @@ func New(workItems WorkItems, transcoder Transcoder, profileName string, r io.Re
 
 	a.helpWindow = helper.New().Sections(sections).Styles(styles.HelpStyles)
 
+	a.statusBar.showProcessingOn = true
+
 	return a
 }
 
@@ -63,7 +65,7 @@ func (a Application) Init() tea.Cmd {
 	return tea.Batch(
 		a.mediaViewer.Init(),
 		a.logViewer.Init(),
-		a.statusLine.Init(),
+		a.statusBar.Init(),
 	)
 }
 
@@ -106,7 +108,7 @@ func (a Application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.mediaViewer, cmds[0] = a.mediaViewer.Update(msg)
 		a.logViewer, cmds[1] = a.logViewer.Update(msg)
 		a.helpWindow, cmds[2] = a.helpWindow.Update(msg)
-		a.statusLine, cmds[3] = a.statusLine.Update(msg)
+		a.statusBar, cmds[3] = a.statusBar.Update(msg)
 		return a, tea.Batch(cmds...)
 	}
 	return a, nil
@@ -126,7 +128,7 @@ func (a Application) View() tea.View {
 	v := tea.NewView(
 		lipgloss.JoinVertical(lipgloss.Top,
 			w,
-			a.statusLine.View(),
+			a.statusBar.View(),
 			a.helpWindow.ShortHelpView(a.shortHelp()),
 		),
 	)
@@ -136,7 +138,7 @@ func (a Application) View() tea.View {
 
 func (a Application) resize(width, height int) Application {
 	a.height = height
-	a.statusLine = a.statusLine.setWidth(width)
+	a.statusBar = a.statusBar.Width(width)
 	a.helpWindow.SetWidth(width)
 	height -= 2 // space for status & help lines
 	a.logViewer = a.logViewer.SetSize(width, max(0, height))

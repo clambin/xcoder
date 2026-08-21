@@ -72,10 +72,10 @@ func TestFFMPEG_Build(t *testing.T) {
 
 func TestFFMPEG_runProgressSocket(t *testing.T) {
 	var prog atomic.Value
-	ff := FFMPEG{progressSocketPath: t.TempDir() + "/ffmpeg.sock"}
-	ff.progress = func(p Progress) {
-		prog.Store(p)
-	}
+	ff := FFMPEG{progressSocketPath: t.TempDir() + "/ffmpeg.sock",
+		progress: func(p Progress) {
+			prog.Store(p)
+		}}
 	go func() {
 		require.NoError(t, ff.runProgressSocket(slog.New(slog.DiscardHandler)))
 	}()

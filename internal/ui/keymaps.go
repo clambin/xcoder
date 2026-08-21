@@ -14,34 +14,28 @@ type KeyMap struct {
 
 func DefaultKeyMap() KeyMap {
 	return KeyMap{
-		RootKeyMap: RootKeyMap{
-			Quit: key.NewBinding(
-				key.WithKeys("q"),
-				key.WithHelp("q", "quit application"),
-			),
-			Logs: key.NewBinding(
-				key.WithKeys("l"),
-				key.WithHelp("l", "toggle logs"),
-			),
-			Help: key.NewBinding(
-				key.WithKeys("?", "f1"),
-				key.WithHelp("?/f1", "toggle help"),
-			),
-		},
-		LogViewerKeyMap: LogViewerKeyMap{
-			WordWrap:   key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "wrap words")),
-			AutoScroll: key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "auto scroll")),
-			CloseLogs:  key.NewBinding(key.WithKeys("esc", "r"), key.WithHelp("esc", "close logs")),
-		},
-		MediaViewerKeyMap: MediaViewerKeyMap{
-			ShowFullPath:       key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "toggle full file path")),
-			HideSkippedFiles:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "toggle skipped files")),
-			HideRejectedFiles:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "toggle rejected files")),
-			HideConvertedFiles: key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "toggle converted files")),
-			ConvertSelected:    key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "convert selected file")),
-			AutoProcess:        key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "toggle batch processing")),
-			FilterTableKeyMap:  table.DefaultFilterTableKeyMap(),
-		},
+		Quit: key.NewBinding(
+			key.WithKeys("q"),
+			key.WithHelp("q", "quit application"),
+		),
+		Logs: key.NewBinding(
+			key.WithKeys("l"),
+			key.WithHelp("l", "toggle logs"),
+		),
+		Help: key.NewBinding(
+			key.WithKeys("?", "f1"),
+			key.WithHelp("?/f1", "toggle help"),
+		),
+		WordWrap:           key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "wrap words")),
+		AutoScroll:         key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "auto scroll")),
+		CloseLogs:          key.NewBinding(key.WithKeys("esc", "r"), key.WithHelp("esc", "close logs")),
+		ShowFullPath:       key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "toggle full file path")),
+		HideSkippedFiles:   key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "toggle skipped files")),
+		HideRejectedFiles:  key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "toggle rejected files")),
+		HideConvertedFiles: key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "toggle converted files")),
+		ConvertSelected:    key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "convert selected file")),
+		AutoProcess:        key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "toggle batch processing")),
+		FilterTableKeyMap:  table.DefaultFilterTableKeyMap(),
 	}
 }
 

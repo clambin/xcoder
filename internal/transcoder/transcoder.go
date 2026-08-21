@@ -52,16 +52,14 @@ type Transcoder struct {
 // New creates a new Transcoder instance
 func New(workItems *WorkItems, cfg Configuration, logger *slog.Logger) *Transcoder {
 	e := engine{
-		probeSema: semaphore.NewWeighted(maxConcurrentScans),
-		workItems: workItems,
-		logger:    logger,
-		profile:   cfg.Profile,
-		sessionTracker: sessionTracker{
-			sessions:              make(map[*Session]struct{}),
-			maxConcurrentSessions: maxConcurrentSessions,
-		},
-		overwriteTarget: cfg.OverwriteTarget,
-		removeSource:    cfg.RemoveSource,
+		probeSema:             semaphore.NewWeighted(maxConcurrentScans),
+		workItems:             workItems,
+		logger:                logger,
+		profile:               cfg.Profile,
+		sessions:              make(map[*Session]struct{}),
+		maxConcurrentSessions: maxConcurrentSessions,
+		overwriteTarget:       cfg.OverwriteTarget,
+		removeSource:          cfg.RemoveSource,
 	}
 
 	return &Transcoder{

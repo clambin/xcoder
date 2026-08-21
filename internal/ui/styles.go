@@ -35,38 +35,32 @@ type Styles struct {
 
 func DefaultStyles() Styles {
 	return Styles{
-		StatusStyles: StatusStyles{
-			Main:       lipgloss.NewStyle().Foreground(colors.Black).Background(colors.Blue),
-			Processing: lipgloss.NewStyle().Foreground(colors.Red),
-		},
+		Main:       lipgloss.NewStyle().Foreground(colors.Black).Background(colors.Blue),
+		Processing: lipgloss.NewStyle().Foreground(colors.Red),
 		HelpStyles: helper.Styles{
 			Header: lipgloss.NewStyle().Foreground(colors.Yellow).Italic(true),
 			Key:    lipgloss.NewStyle().Foreground(colors.Yellow),
 			Desc:   lipgloss.NewStyle().Foreground(lightWhite),
 		},
-		LogViewerStyles: LogViewerStyles{
-			Text: lipgloss.NewStyle().Foreground(lightWhite),
-			Frame: frame.Style{
-				Title:  lipgloss.NewStyle().Foreground(colors.Green),
-				Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
-			},
+		Text: lipgloss.NewStyle().Foreground(lightWhite),
+		Frame: frame.Style{
+			Title:  lipgloss.NewStyle().Foreground(colors.Green),
+			Border: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colors.Blue),
 		},
-		MediaViewerStyles: MediaViewerStyles{
-			MediaViewerItemStyles: MediaViewerItemStyles{
-				TableStyles: table.FilterTableStyles{
-					Table: table.Styles{
-						Header:   lipgloss.NewStyle().Foreground(colors.White).Bold(true),
-						Selected: lipgloss.NewStyle().Foreground(colors.Black).Background(colors.White),
-						Cell:     lipgloss.NewStyle().Foreground(lightWhite),
-					},
+		MediaViewerItemStyles: MediaViewerItemStyles{
+			TableStyles: table.FilterTableStyles{
+				Table: table.Styles{
+					Header:   lipgloss.NewStyle().Foreground(colors.White).Bold(true),
+					Selected: lipgloss.NewStyle().Foreground(colors.Black).Background(colors.White),
+					Cell:     lipgloss.NewStyle().Foreground(lightWhite),
 				},
-				FrameStyle:       defaultFrameStyle,
-				MediaFilterStyle: lipgloss.NewStyle().Foreground(colors.Magenta1).Italic(true),
-				RowCountStyle:    lipgloss.NewStyle().Foreground(colors.White),
 			},
-			MediaViewerSessionsStyles: MediaViewerSessionsStyles{
-				FrameStyle: defaultFrameStyle,
-			},
+			FrameStyle:       defaultFrameStyle,
+			MediaFilterStyle: lipgloss.NewStyle().Foreground(colors.Magenta1).Italic(true),
+			RowCountStyle:    lipgloss.NewStyle().Foreground(colors.White),
+		},
+		MediaViewerSessionsStyles: MediaViewerSessionsStyles{
+			FrameStyle: defaultFrameStyle,
 		},
 	}
 }

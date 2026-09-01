@@ -3,15 +3,15 @@ module github.com/clambin/xcoder
 go 1.27
 
 require (
-	charm.land/bubbles/v2 v2.2.0
+	charm.land/bubbles/v2 v2.2.1
 	charm.land/bubbletea/v2 v2.0.9
 	charm.land/lipgloss/v2 v2.0.6
 	codeberg.org/clambin/bubbles v0.14.1
 	codeberg.org/clambin/go-common/charmer v0.5.1
 	codeberg.org/clambin/go-common/pubsub v0.3.0
 	github.com/charmbracelet/x/ansi v0.11.8
-	github.com/charmbracelet/x/exp/golden v0.0.0-20260816001655-68d539dca504
-	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260816001655-68d539dca504
+	github.com/charmbracelet/x/exp/golden v0.0.0-20260830003929-9f48cc723c1c
+	github.com/charmbracelet/x/exp/teatest/v2 v2.0.0-20260830003929-9f48cc723c1c
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
